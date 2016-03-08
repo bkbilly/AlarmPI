@@ -1,0 +1,25 @@
+{
+	"settings": {},
+	"sensors": [
+		{
+			"name": "door",
+			"pin": 23,
+			"active": true,
+			"group": ["area1"]
+		},
+		{
+			"name": "window",
+			"pin": 25 ,
+			"active": true,
+			"group": ["area2"]
+		}
+	],
+	"alarms": [
+		{
+			"name": "Pc speaker",
+			"pin": 24,
+			"active": true,
+			"alert": false
+		}
+	]
+}
