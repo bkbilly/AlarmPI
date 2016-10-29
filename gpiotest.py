@@ -4,44 +4,45 @@ import json
 import signal
 import threading
 
-
 class DoorSensor():
     """docstring for DoorSensor"""
     def __init__(self, jsonfile):
-        # Global Variables
+        self.jsonfile = jsonfile
         self.setAlert = False
         self.kill_now = False
-        self.outputPins = []
 
         # Stop execution on exit
         signal.signal(signal.SIGINT, self.exit_gracefully)
         signal.signal(signal.SIGTERM, self.exit_gracefully)
 
-        # Infinite While that makes the Alarm work
+        self.myCallBack(0)
+
+        outputPins = self.getOutputPins(self.settings)
+        download_thread = threading.Thread(target=self.alert, args=([outputPins]))
+        download_thread.start()
+
         while True and self.kill_now == False:
-            #Read the JSON File and get the Inut and Output Pins
-            settings = self.readSettings(jsonfile)
-            inputPins = self.getInputPins(settings)
-            self.outputPins = self.getOutputPins(settings)
+            time.sleep(1)
 
-            alertPins = []
-            for inputPin in inputPins:
+    def myCallBack(self, inputPin):
+        foundInputPin = False
+        self.settings = self.readSettings(self.jsonfile)
+        self.setAlert = False
+        for sensor in self.settings["sensors"]:
+            if sensor["active"] == True:
+                foundInputPin = True
                 GPIO.setmode(GPIO.BCM)
-                GPIO.setup(inputPin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-                input_state = GPIO.input(inputPin)
-                if input_state == True:
-                    alertPins.append(inputPin)
-
-            if len(alertPins) == 0:
-                self.setAlert = False
-                print('...')
-            else:
-                if self.setAlert is False:
+                GPIO.setup(sensor["pin"], GPIO.IN, pull_up_down=GPIO.PUD_UP)
+                GPIO.remove_event_detect(inputPin)
+                GPIO.add_event_detect(sensor["pin"], GPIO.BOTH, callback=self.myCallBack)
+                if GPIO.input(sensor["pin"]) == 1:
+                    print sensor["name"]
                     self.setAlert = True
-                    download_thread = threading.Thread(target=self.alert, args=())
-                    download_thread.start()
-                print('ALERT!!!!')
-            time.sleep(0.4)
+        if foundInputPin == False:
+            GPIO.remove_event_detect(inputPin)
+        if self.setAlert == False:
+            print "No alarm!"
+
 
     def exit_gracefully(self, signum, frame):
         self.kill_now = True
@@ -51,13 +52,6 @@ class DoorSensor():
             settings = json.load(data_file)
         return settings
 
-    def getInputPins(self, settings):
-        inputPins = []
-        for sensor in settings["sensors"]:
-            if sensor["active"] is True:
-                inputPins.append(sensor["pin"])
-        return inputPins
-
     def getOutputPins(self, settings):
         outputPins = []
         for alarm in settings["alarms"]:
@@ -65,18 +59,20 @@ class DoorSensor():
                 outputPins.append(alarm["pin"])
         return outputPins
 
-    def alert(self):
+    def alert(self, outputPins):
         ''' 5V & GPIO(8) '''
         GPIO.setwarnings(False)
 
-        while self.setAlert == True and self.kill_now == False:
-            for outputPin in self.outputPins:
-                GPIO.setmode(GPIO.BCM)
-                GPIO.setup(outputPin, GPIO.OUT)
-                GPIO.output(outputPin, 0)
-                time.sleep(.0001)
-                GPIO.output(outputPin, 1)
-                time.sleep(.0001)
+        while self.kill_now == False:
+            if self.setAlert == True:
+                for outputPin in outputPins:
+                    GPIO.setmode(GPIO.BCM)
+                    GPIO.setup(outputPin, GPIO.OUT)
+                    GPIO.output(outputPin, 0)
+                    time.sleep(.00001)
+                    GPIO.output(outputPin, 1)
+                    time.sleep(.00001)
 
 
 door = DoorSensor("settings.json")
+
