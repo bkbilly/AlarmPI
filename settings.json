@@ -4,7 +4,7 @@
         {
             "name": "Livingroom",
             "pin": 22,
-            "active": false,
+            "active": true,
             "group": ["area1"]
         },
         {
@@ -16,7 +16,7 @@
         {
             "name": "Window",
             "pin": 24,
-            "active": false,
+            "active": true,
             "group": ["area2"]
         }
     ],
