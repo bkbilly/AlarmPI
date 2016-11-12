@@ -2,19 +2,25 @@
     "settings": {},
     "sensors": [
         {
-            "name": "Livingroom",
+            "name": "Window",
             "pin": 22,
             "active": true,
             "group": ["area1"]
         },
         {
-            "name": "Bedroom",
+            "name": "Livingroom",
             "pin": 23,
             "active": true,
             "group": ["area2"]
         },
         {
-            "name": "Window",
+            "name": "Bedroom",
+            "pin": 27,
+            "active": true,
+            "group": ["area2"]
+        },
+        {
+            "name": "Grandma",
             "pin": 24,
             "active": true,
             "group": ["area2"]
