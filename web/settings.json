@@ -1,20 +1,22 @@
 {
-    "settings": {},
+    "settings": {
+        "activateAlarm": false
+    },
     "sensors": [
         {
-            "name": "Window",
+            "name": "Livingroom",
             "pin": 22,
             "active": true,
             "group": ["area1"]
         },
         {
-            "name": "Livingroom",
+            "name": "Bedroom",
             "pin": 23,
             "active": true,
             "group": ["area2"]
         },
         {
-            "name": "Bedroom",
+            "name": "Window",
             "pin": 27,
             "active": true,
             "group": ["area2"]

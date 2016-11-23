@@ -9,12 +9,13 @@ class DoorSensor():
 
     """docstring for DoorSensor"""
 
-    def __init__(self, jsonfile):
+    def __init__(self, jsonfile, alertpins):
         # GPIO Setup
         GPIO.setmode(GPIO.BCM)
         GPIO.setwarnings(False)
         # Global Variables
         self.jsonfile = jsonfile
+        self.alertpins = alertpins
         self.enabledPins = []
         self.settings = self.readSettings(self.jsonfile)
 
@@ -24,10 +25,13 @@ class DoorSensor():
         signal.signal(signal.SIGINT, self.exit_gracefully)
         signal.signal(signal.SIGTERM, self.exit_gracefully)
 
+        # Init Alarm
+        self.clearAlarmsFile()
         self.checkForAlarm(0)
 
         # Start checking for setting changes in a thread
-        thr = threading.Thread(target=self.checkSettingsChanges, args=(self.checkForAlarm,))
+        thr = threading.Thread(
+            target=self.checkSettingsChanges, args=(self.checkForAlarm,))
         thr.start()
 
         # Start PC Speaker thread for Alert
@@ -43,30 +47,49 @@ class DoorSensor():
         pinActive = False
         alertSensors = []
         self.setAlert = False
+        pinsStatus = {'sensors': []}
         for sensor in self.settings["sensors"]:
             if sensor["active"] is True:
                 pinActive = True
                 if sensor["pin"] not in self.enabledPins:
                     self.enabledPins.append(sensor["pin"])
-                    GPIO.setup(sensor["pin"], GPIO.IN, pull_up_down=GPIO.PUD_UP)
+                    GPIO.setup(sensor["pin"], GPIO.IN,
+                               pull_up_down=GPIO.PUD_UP)
                     GPIO.remove_event_detect(sensor["pin"])
-                    GPIO.add_event_detect(sensor["pin"], GPIO.BOTH, callback=self.checkForAlarm)
+                    GPIO.add_event_detect(
+                        sensor["pin"], GPIO.BOTH, callback=self.checkForAlarm)
+
                 if GPIO.input(sensor["pin"]) == 1:
                     self.setAlert = True
+                    pinAlert = True
                     alertSensors.append(sensor)
+                else:
+                    pinAlert = False
+                pinsStatus["sensors"].append({
+                    "pin": sensor["pin"],
+                    "active": sensor["active"],
+                    "alert": pinAlert
+                })
         if pinActive is False and inputPin in self.enabledPins:
             GPIO.remove_event_detect(inputPin)
             self.enabledPins.remove(inputPin)
 
         print "------------"
+        with open(self.alertpins, 'w') as f:
+            f.write(json.dumps(pinsStatus))
         if self.setAlert is False:
             print "No alarm!"
         else:
             for alertSensor in alertSensors:
-                print alertSensor["name"]
+                print alertSensor  # ["name"]
+
+    def clearAlarmsFile(self):
+        with open(self.alertpins, 'w'):
+            pass
 
     def exit_gracefully(self, signum, frame):
         self.kill_now = True
+        self.clearAlarmsFile()
 
     def readSettings(self, jsonfile):
         with open(jsonfile) as data_file:
@@ -112,7 +135,7 @@ class DoorSensor():
             time.sleep(1)
 
 
-door = DoorSensor("settings.json")
+door = DoorSensor("web/settings.json", "web/alertpins.json")
 
 # GPIO.setmode(GPIO.BCM)
 # GPIO.setup(4, GPIO.OUT)

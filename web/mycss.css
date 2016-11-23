@@ -1,0 +1,112 @@
+.container{
+	width: 100%;
+	padding-bottom: 2em;
+}
+
+.footer{
+	position: fixed;
+	bottom: 0;
+	width: 12em;
+	height: 2em;
+	right: 0em;
+	background-color: rgba(0, 0, 20, 0.7);
+	box-shadow: inset 0px 14px 20px -10px #223355;
+	border-radius: 30px 0 0 0;
+}
+
+.footer-description{
+	text-align: center;
+	margin: 0.5em 0.2em;
+	text-shadow: 0px 0px 0px green;
+}
+
+.bg_stars{
+	background-color: rgb(10,10,10);
+	background-image:
+		radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 40px),
+		radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 30px),
+		radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 40px),
+		radial-gradient(rgba(255,255,255,.4), rgba(255,255,255,.1) 2px, transparent 30px);
+		background-size: 550px 550px, 350px 350px, 250px 250px, 150px 150px; 
+		background-position: 0 0, 40px 60px, 130px 270px, 70px 100px;	margin: 0;
+}
+.bg_carbon{
+	background:
+linear-gradient(27deg, #151515 5px, transparent 5px) 0 5px,
+linear-gradient(207deg, #151515 5px, transparent 5px) 10px 0px,
+linear-gradient(27deg, #222 5px, transparent 5px) 0px 10px,
+linear-gradient(207deg, #222 5px, transparent 5px) 10px 5px,
+linear-gradient(90deg, #1b1b1b 10px, transparent 10px),
+linear-gradient(#1d1d1d 25%, #1a1a1a 25%, #1a1a1a 50%, transparent 50%, transparent 75%, #242424 75%, #242424);
+background-color: #131313;
+background-size: 20px 20px;
+}
+
+.bg_carbonFiber{
+	background:
+radial-gradient(black 15%, transparent 16%) 0 0,
+radial-gradient(black 15%, transparent 16%) 8px 8px,
+radial-gradient(rgba(255,255,255,.1) 15%, transparent 20%) 0 1px,
+radial-gradient(rgba(255,255,255,.1) 15%, transparent 20%) 8px 9px;
+background-color:#282828;
+background-size:16px 16px;
+}
+/* ----------------- */
+body{
+	/*background-image: url('dispatcher.php?action=getImage&id=16');*/
+	/*background-image: linear-gradient(to bottom,#3c3c3c 0,#222 100%);*/
+
+	padding: 0;
+	line-height: 1.125em;
+	color: white;
+	background-color: black;
+}
+
+
+a {
+	text-decoration: none;
+	color: white;
+}
+a:hover {
+	color: white;
+	opacity: 0.9;
+}
+a:visited {
+	color: white;
+}
+
+h1, h2, h3, h4, h5, h6 {
+	text-shadow: 2px 2px 0 rgba(0,0,0,1);
+	font-family: 'Lato', Georgia, Helvetica, Tahoma;
+	margin: 0.1em 0.2em;
+	font-weight: normal;
+}
+
+.sensordiv {
+	width: 100%;
+}
+.sensortext {
+	padding-left: 10px;
+	padding-top: 10px;
+	font-size: xx-large;
+	margin: 30px;
+}
+
+.sphere {
+	position: absolute;
+	background-color: white;
+	border-radius: 150px;
+	box-shadow: inset -1px -1px 10px #000, 5px 5px 10px black, inset 0px 0px 10px black;
+	margin: 0.2em;
+}
+.sphere::after {
+	background-color: rgba(255, 255, 255, 0.3);
+	content: '';
+	height: 45%;
+	width: 15%;
+	position: absolute;
+	top: 5%;
+	left: 16%;
+	border-radius: 50%;
+	transform: rotate(40deg);
+}
