@@ -1,153 +1,175 @@
 import RPi.GPIO as GPIO
 import time
 import json
-import signal
 import threading
+
+from flask import Flask, send_from_directory
+from flask_socketio import SocketIO
+
+import logging
+# log = logging.getLogger('werkzeug')
+# log.setLevel(logging.ERROR)
 
 
 class DoorSensor():
 
     """docstring for DoorSensor"""
 
-    def __init__(self, jsonfile, alertpins):
+    def __init__(self, jsonfile):
         # GPIO Setup
         GPIO.setmode(GPIO.BCM)
         GPIO.setwarnings(False)
         # Global Variables
         self.jsonfile = jsonfile
-        self.alertpins = alertpins
         self.enabledPins = []
-        self.settings = self.readSettings(self.jsonfile)
+        self.settings = self.ReadSettings(self.jsonfile)
+        self.sensorsStatus = {'sensors': []}
 
         # Stop execution on exit
         self.setAlert = False
         self.kill_now = False
-        signal.signal(signal.SIGINT, self.exit_gracefully)
-        signal.signal(signal.SIGTERM, self.exit_gracefully)
 
         # Init Alarm
-        self.clearAlarmsFile()
-        self.checkForAlarm(0)
+        self.RefreshAlarmData(None)
 
         # Start checking for setting changes in a thread
-        thr = threading.Thread(
-            target=self.checkSettingsChanges, args=(self.checkForAlarm,))
-        thr.start()
+        # thr = threading.Thread(
+        #     target=self.CheckSettingsChanges, args=(self.RefreshAlarmData,))
+        # thr.start()
 
-        # Start PC Speaker thread for Alert
-        # outputPins = self.getOutputPins(self.settings)
-        # download_thread = threading.Thread(target=self.alert, args=([outputPins]))
-        # download_thread.start()
-
-        # Run until killed
-        while True and self.kill_now is False:
-            time.sleep(1)
-
-    def checkForAlarm(self, inputPin):
-        pinActive = False
-        alertSensors = []
-        self.setAlert = False
-        pinsStatus = {'sensors': []}
+    def RefreshAlarmData(self, inputPin):
+        self.settings = self.ReadSettings(self.jsonfile)
+        pinActive = False  # DELETE????
+        self.sensorsStatus = {'sensors': []}
         for sensor in self.settings["sensors"]:
+            sensor["alert"] = False
             if sensor["active"] is True:
                 pinActive = True
+                # Enable the event change of the pin
                 if sensor["pin"] not in self.enabledPins:
                     self.enabledPins.append(sensor["pin"])
                     GPIO.setup(sensor["pin"], GPIO.IN,
                                pull_up_down=GPIO.PUD_UP)
                     GPIO.remove_event_detect(sensor["pin"])
                     GPIO.add_event_detect(
-                        sensor["pin"], GPIO.BOTH, callback=self.checkForAlarm)
-
+                        sensor["pin"], GPIO.BOTH, callback=self.RefreshAlarmData)
+                # Check for the pin status
                 if GPIO.input(sensor["pin"]) == 1:
-                    self.setAlert = True
-                    pinAlert = True
-                    alertSensors.append(sensor)
-                else:
-                    pinAlert = False
-                pinsStatus["sensors"].append({
-                    "pin": sensor["pin"],
-                    "active": sensor["active"],
-                    "alert": pinAlert
-                })
-        if pinActive is False and inputPin in self.enabledPins:
-            GPIO.remove_event_detect(inputPin)
-            self.enabledPins.remove(inputPin)
+                    sensor["alert"] = True
+            # Create the list of the pins status
+            self.sensorsStatus["sensors"].append(sensor)
+        # ??????
+        if inputPin is not None:
+            if pinActive is False and inputPin in self.enabledPins:
+                GPIO.remove_event_detect(inputPin)
+                self.enabledPins.remove(inputPin)
 
+        # TODO CHECK FOR ALERT BASED ON SETTINGS AND self.sensorsStatus
+
+        # Send to JS
+        socketio.emit('pinsChanged', self.getPinsStatus())
+
+        # Debug Print
         print "------------"
-        with open(self.alertpins, 'w') as f:
-            f.write(json.dumps(pinsStatus))
-        if self.setAlert is False:
-            print "No alarm!"
-        else:
-            for alertSensor in alertSensors:
-                print alertSensor  # ["name"]
+        for pinStatus in self.sensorsStatus['sensors']:
+            if pinStatus['alert'] is True:
+                print pinStatus['name']
 
-    def clearAlarmsFile(self):
-        with open(self.alertpins, 'w'):
-            pass
-
-    def exit_gracefully(self, signum, frame):
-        self.kill_now = True
-        self.clearAlarmsFile()
-
-    def readSettings(self, jsonfile):
+    def ReadSettings(self, jsonfile):
         with open(jsonfile) as data_file:
             settings = json.load(data_file)
         return settings
 
-    def getOutputPins(self, settings):
-        outputPins = []
-        for alarm in settings["alarms"]:
-            if alarm["active"] is True:
-                outputPins.append(alarm["pin"])
-        return outputPins
-
-    def alert(self, outputPins):
-        while self.kill_now is False:
-            if self.setAlert is True:
-                for outputPin in outputPins:
-                    GPIO.setup(outputPin, GPIO.OUT)
-
-                    p = GPIO.PWM(outputPin, 10000)
-                    p.start(0)
-                    for dc in range(0, 101, 50):
-                        p.ChangeDutyCycle(dc)
-                        time.sleep(0.1)
-                    # GPIO.output(outputPin, 0)
-                    # time.sleep(.00001)
-                    # GPIO.output(outputPin, 1)
-                    # time.sleep(.00001)
-            else:
-                time.sleep(1)
-                for outputPin in outputPins:
-                    GPIO.setup(outputPin, GPIO.OUT, initial=GPIO.LOW)
-                    GPIO.output(outputPin, GPIO.LOW)
-
-    def checkSettingsChanges(self, callback):
-        callback(0)
+    def CheckSettingsChanges(self, callback):
+        callback(None)
         while self.kill_now is False:
             prevSettings = self.settings
-            nowSettings = self.readSettings(self.jsonfile)
+            nowSettings = self.ReadSettings(self.jsonfile)
             if prevSettings != nowSettings:
                 self.settings = nowSettings
-                callback(0)
+                callback(None)
             time.sleep(1)
 
+    def getPinsStatus(self):
+        settings = {}
+        settings['sensors'] = self.sensorsStatus['sensors']
+        settings['settings'] = self.settings["settings"]
+        return settings
 
-door = DoorSensor("web/settings.json", "web/alertpins.json")
+    def activateAlarm(self):
+        pass
 
-# GPIO.setmode(GPIO.BCM)
-# GPIO.setup(4, GPIO.OUT)
+    def deactivateAlarm(self):
+        pass
 
-# p = GPIO.PWM(4, 10000)  # channel=12 frequency=50Hz
-# p.start(0)
-# try:
-#     while 1:
-#         for dc in range(0, 101, 20):
-#             p.ChangeDutyCycle(dc)
-#             time.sleep(0.1)
-# except KeyboardInterrupt:
-#     pass
-# p.stop()
-# GPIO.cleanup()
+    def getAlarmStatus(self):
+        pass
+
+    def getSerenePin(self):
+        pass
+
+    def getSensorsLog(self):
+        pass
+
+    def setSerenePin(self, pin):
+        pass
+
+    def setSensorName(self, pin, name):
+        pass
+
+    def setSensorState(self, pin, state):
+        for i, sensor in enumerate(self.settings["sensors"]):
+            if sensor['pin'] == pin:
+                self.settings['sensors'][i]['active'] = state
+
+        with open(self.jsonfile, 'w') as outfile:
+            json.dump(self.settings, outfile)
+
+    def setSensorPin(self, pin, newpin):
+        pass
+
+    def addSensor(self, pin, name, active):
+        pass
+
+    def delSensor(self, pin):
+        pass
+
+
+app = Flask(__name__, static_url_path='')
+socketio = SocketIO(app)
+alarmSensors = DoorSensor("web/settings.json")
+
+
+@app.route('/')
+def index():
+    return send_from_directory('web', 'index.html')
+
+
+@app.route('/mycss.css')
+def mycss():
+    return send_from_directory('web', 'mycss.css')
+
+
+@app.route('/myjs.js')
+def myjs():
+    return send_from_directory('web', 'myjs.js')
+
+
+@app.route('/settings.json')
+def settingsJson():
+    return send_from_directory('web', 'settings.json')
+
+
+@app.route('/alertpins.json')
+def alertpinsJson():
+    return json.dumps(alarmSensors.getPinsStatus())
+
+
+@socketio.on('setSensorState')
+def setSensorState(message):
+    print(message)
+    alarmSensors.setSensorState(message['pin'], message['active'])
+    socketio.emit('pinsChanged', alarmSensors.getPinsStatus())
+
+if __name__ == '__main__':
+    socketio.run(app, host="", port=5000, debug=True)

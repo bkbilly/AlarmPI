@@ -20,6 +20,7 @@
 	text-shadow: 0px 0px 0px green;
 }
 
+/* Backgrounds */
 .bg_stars{
 	background-color: rgb(10,10,10);
 	background-image:
@@ -55,8 +56,8 @@ background-size:16px 16px;
 body{
 	/*background-image: url('dispatcher.php?action=getImage&id=16');*/
 	/*background-image: linear-gradient(to bottom,#3c3c3c 0,#222 100%);*/
-
 	padding: 0;
+	margin: 0;
 	line-height: 1.125em;
 	color: white;
 	background-color: black;
@@ -82,22 +83,42 @@ h1, h2, h3, h4, h5, h6 {
 	font-weight: normal;
 }
 
+/* sensor */
 .sensordiv {
-	width: 100%;
+	width: 300px;
+	float:left;
+	border-radius: 20px;
+	background-color: rgba(0, 0, 0, 0.7);
+	margin: 10px;
+	height: 130px;
+	box-shadow: inset 0px 30px 40px -20px blue;
+	position: relative;
 }
 .sensortext {
-	padding-left: 10px;
-	padding-top: 10px;
+	text-align: center;
+	padding: 10px;
 	font-size: xx-large;
-	margin: 30px;
+	/*margin-left: 30px;*/
+}
+.setSensorState {
+	position: absolute;
+	bottom: 0;
+	padding: 20px;
+}
+.setSensorPin {
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	padding: 20px;
 }
 
+/* Sphere */
 .sphere {
 	position: absolute;
 	background-color: white;
 	border-radius: 150px;
 	box-shadow: inset -1px -1px 10px #000, 5px 5px 10px black, inset 0px 0px 10px black;
-	margin: 0.2em;
+	margin: 0.3em;
 }
 .sphere::after {
 	background-color: rgba(255, 255, 255, 0.3);
@@ -109,4 +130,76 @@ h1, h2, h3, h4, h5, h6 {
 	left: 16%;
 	border-radius: 50%;
 	transform: rotate(40deg);
+}
+
+/*  */
+.onoffswitch {
+    position: relative; width: 79px;
+    -webkit-user-select:none; -moz-user-select:none; -ms-user-select: none;
+}
+.onoffswitch-checkbox {
+    display: none;
+}
+.onoffswitch-label {
+    display: block; overflow: hidden; cursor: pointer;
+    border: 2px solid #999999; border-radius: 50px;
+}
+.onoffswitch-inner {
+    display: block; width: 200%; margin-left: -100%;
+    transition: margin 0.3s ease-in 0s;
+}
+.onoffswitch-inner:before, .onoffswitch-inner:after {
+    display: block; float: left; width: 50%; height: 19px; padding: 0; line-height: 19px;
+    font-size: 12px; color: white; font-family: Trebuchet, Arial, sans-serif; font-weight: bold;
+    box-sizing: border-box;
+}
+.onoffswitch-inner:before {
+    content: "Active";
+    padding-left: 5px;
+    background-color: #3EAB1D; color: #FFFFFF;
+}
+.onoffswitch-inner:after {
+    content: "Inactive";
+    padding-right: 5px;
+    background-color: #C9C9C9; color: #575757;
+    text-align: right;
+}
+.onoffswitch-switch {
+    display: block; width: 24px; margin: -2.5px;
+    background: #000000;
+    position: absolute; top: 0; bottom: 0;
+    right: 56px;
+    border: 2px solid #999999; border-radius: 50px;
+    transition: all 0.3s ease-in 0s; 
+}
+.onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-inner {
+    margin-left: 0;
+}
+.onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-switch {
+    right: 0px; 
+}
+
+/* Serien */
+
+#sensors {
+	/*position: absolute;*/
+	width: 100%;
+	height: 100%;
+	-webkit-animation: background 2s infinite;
+	animation: background 2s infinite;  
+}
+
+
+@-webkit-keyframes background {
+  0% { box-shadow: inset 0px 0px 170px red; }
+  33% { box-shadow: inset 0px 0px 170px green; }  
+  67% { box-shadow: inset 0px 0px 170px blue; }
+  100% { box-shadow: inset 0px 0px 170px red; }
+}
+
+@keyframes background {
+  0% { box-shadow: inset 0px 0px 170px red; }
+  33% { box-shadow: inset 0px 0px 170px green; }  
+  67% { box-shadow: inset 0px 0px 170px blue; }
+  100% { box-shadow: inset 0px 0px 170px red; }
 }
