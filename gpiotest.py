@@ -2,6 +2,7 @@ import RPi.GPIO as GPIO
 import time
 import json
 import threading
+import time
 
 from flask import Flask, send_from_directory
 from flask_socketio import SocketIO
@@ -15,12 +16,13 @@ class DoorSensor():
 
     """docstring for DoorSensor"""
 
-    def __init__(self, jsonfile):
+    def __init__(self, jsonfile, logfile):
         # GPIO Setup
         GPIO.setmode(GPIO.BCM)
         GPIO.setwarnings(False)
         # Global Variables
         self.jsonfile = jsonfile
+        self.logfile = logfile
         self.enabledPins = []
         self.settings = self.ReadSettings(self.jsonfile)
         self.sensorsStatus = {'sensors': []}
@@ -56,7 +58,7 @@ class DoorSensor():
                 # Check for the pin status
                 if GPIO.input(sensor["pin"]) == 1:
                     sensor["alert"] = True
-                    if self.settings['settings']['alarmArmed'] is True:
+                    if self.settings['settings']['alarmArmed'] is True and self.setAlert is False:
                         self.startSerene()
             # Create the list of the pins status
             self.sensorsStatus["sensors"].append(sensor)
@@ -69,11 +71,10 @@ class DoorSensor():
         # Send to JS
         socketio.emit('pinsChanged', self.getPinsStatus())
 
-        # Debug Print
-        print "------------"
+        # Write Log
         for pinStatus in self.sensorsStatus['sensors']:
             if pinStatus['alert'] is True:
-                print pinStatus['name']
+                self.writeLog(pinStatus['name'])
 
     def ReadSettings(self, jsonfile):
         with open(jsonfile) as data_file:
@@ -90,8 +91,15 @@ class DoorSensor():
                 callback(None)
             time.sleep(1)
 
+    def writeLog(self, message):
+        myTimeLog = time.strftime("[%Y-%m-%d %H:%M:%S] ")
+        with open(self.logfile, "a") as myfile:
+            myfile.write(myTimeLog + message + "\n")
+        socketio.emit('sensorsLog', self.getSensorsLog(1))
+
     def startSerene(self):
         self.setAlert = True
+        self.writeLog("Serene started")
         serenePin = self.settings['settings']['serenePin']
         GPIO.setup(serenePin, GPIO.OUT)
         GPIO.output(serenePin, GPIO.HIGH)
@@ -111,6 +119,7 @@ class DoorSensor():
         return settings
 
     def activateAlarm(self):
+        self.writeLog("Alarm activated")
         self.settings['settings']['alarmArmed'] = True
 
         with open(self.jsonfile, 'w') as outfile:
@@ -118,6 +127,7 @@ class DoorSensor():
         self.RefreshAlarmData(None)
 
     def deactivateAlarm(self):
+        self.writeLog("Alarm deactivated")
         self.settings['settings']['alarmArmed'] = False
         self.stopSerene()
 
@@ -130,8 +140,10 @@ class DoorSensor():
     def getSerenePin(self):
         pass
 
-    def getSensorsLog(self):
-        pass
+    def getSensorsLog(self, limit):
+        with open(self.logfile, "r") as f:
+            lines = f.readlines()
+        return {"log": lines[-limit:]}
 
     def setSerenePin(self, pin):
         pass
@@ -169,7 +181,7 @@ class DoorSensor():
 
 app = Flask(__name__, static_url_path='')
 socketio = SocketIO(app)
-alarmSensors = DoorSensor("web/settings.json")
+alarmSensors = DoorSensor("settings.json", "alert.log")
 
 
 @app.route('/')
@@ -202,11 +214,6 @@ def myjs():
     return send_from_directory('web', 'myjs.js')
 
 
-@app.route('/settings.json')
-def settingsJson():
-    return send_from_directory('web', 'settings.json')
-
-
 @app.route('/alertpins.json')
 def alertpinsJson():
     return json.dumps(alarmSensors.getPinsStatus())
@@ -215,6 +222,11 @@ def alertpinsJson():
 @app.route('/alarmStatus.json')
 def alarmStatus():
     return json.dumps(alarmSensors.getAlarmStatus())
+
+
+@app.route('/sensorsLog.json')
+def sensorsLog():
+    return json.dumps(alarmSensors.getSensorsLog(10))
 
 
 @socketio.on('setSensorState')

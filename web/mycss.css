@@ -2,16 +2,22 @@
 #sereneSettings {
 	position: relative;
 	width: 300px;
-	height: 300px;
+	height: 200px;
 	background-color: #222;
 	border-radius: 1px 30px 30px 1px;
 	box-shadow: inset -10px 0px 40px 1px #777;
 	float: left;
 }
+/* List */
+#sensorLog{
+	position: absolute;
+	width: 300px;
+	top: 210px;
+}
 
 #armButton {
 	position: relative;
-	top: 30px;
+	top: 10px;
 	left: 20px;
 	width: 200px;
 	height: 70px;
@@ -20,7 +26,7 @@
 .sphere {
 	margin: 5px 50px 0 40px;
 	left: 50px;
-	top: 140px;
+	top: 100px;
 }
 
 .smallSensors {
@@ -93,4 +99,3 @@
 .disarmedAlarm:hover {background-color: #700}
 .disarmedAlarm:active {background-color: #400}
 .disarmedAlarm:after {content: "Activate Alarm";}
-

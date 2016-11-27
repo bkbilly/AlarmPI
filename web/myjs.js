@@ -50,12 +50,18 @@ $( document ).ready(function() {
 	$.getJSON("alarmStatus.json").done(function(data){
 		setAlarmStatus(data);
 	});
+	$.getJSON("sensorsLog.json").done(function(data){
+		addSensorLog(data);
+	});
 
 	socket.on('pinsChanged', function(msg){
 		refreshStatus(msg);
 	});
 	socket.on('alarmStatus', function(msg){
 		setAlarmStatus(msg);
+	});
+	socket.on('sensorsLog', function(msg){
+		addSensorLog(msg);
 	});
 });
 
@@ -89,6 +95,13 @@ function setAlarmStatus(msg){
 	} else if (msg.alert === false && hasActiveClass === true){
 		$("#alertStatus").removeClass("activeAlarm");
 	}
+}
+
+function addSensorLog(msg){
+	$.each(msg.log, function(i, tmplog){
+		console.log(tmplog);
+		$("#sensorListLog").prepend("<li>"+tmplog+"</li>");
+	});
 }
 
 

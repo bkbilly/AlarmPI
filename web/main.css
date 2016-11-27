@@ -216,3 +216,35 @@ select {
 	box-shadow: 0 2px #666;
 	transform: translateY(3px);
 }
+
+
+/* list */
+ul {
+	margin: 0;
+	padding: 0;
+}
+
+ul li {
+	cursor: pointer;
+	position: relative;
+	padding: 12px 8px 12px 40px;
+	background: #333;
+	font-size: 18px;
+	transition: 0.2s;
+
+	/* make the list items unselectable */
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+
+/* Set all odd list items to a different color (zebra-stripes) */
+ul li:nth-child(odd) {
+	background: #222;
+}
+
+/* Darker background-color on hover */
+ul li:hover {
+	background: #111;
+}
