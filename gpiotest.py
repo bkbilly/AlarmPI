@@ -182,6 +182,11 @@ def main():
     return send_from_directory('web', 'main.css')
 
 
+@app.route('/icon.png')
+def icon():
+    return send_from_directory('web', 'icon.png')
+
+
 @app.route('/mycss.css')
 def mycss():
     return send_from_directory('web', 'mycss.css')
