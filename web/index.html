@@ -15,13 +15,59 @@
 	<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
 
 
-	<link rel="stylesheet" href="mycss.css">
+	<link rel="stylesheet" href="main.css">
 	<script type="text/javascript" src="myjs.js"></script>
 	
 </head>
 
 <body class="bg_carbon">
-	<div id="sensors"></div>
-	<!-- <div class="sphere" id="{sv_status_id}" style="height: 100px; width: 100px;"></div> -->
+	<div id="myModal" class="modal">
+		<div class="modal-content">
+			<span class="close">x</span><br>
+			<input type="text" id="inputName" placeholder="Select new name">
+			<select id="inputPin">
+				<option value="" disabled selected>Pin:</option>
+				<option value="1">1</option>
+				<option value="2">2</option>
+				<option value="3">3</option>
+				<option value="4">4</option>
+				<option value="5">5</option>
+				<option value="6">6</option>
+				<option value="7">7</option>
+				<option value="8">8</option>
+				<option value="9">9</option>
+				<option value="10">10</option>
+				<option value="11">11</option>
+				<option value="12">12</option>
+				<option value="13">13</option>
+				<option value="14">14</option>
+				<option value="15">15</option>
+				<option value="16">16</option>
+				<option value="17">17</option>
+				<option value="18">18</option>
+				<option value="19">19</option>
+				<option value="20">20</option>
+				<option value="21">21</option>
+				<option value="22">22</option>
+				<option value="23">23</option>
+				<option value="24">24</option>
+				<option value="25">25</option>
+				<option value="26">26</option>
+				<option value="27">27</option>
+				<option value="28">28</option>
+			</select>
+			<br>
+
+			<button class="button" onclick="saveConfigSettings()">OK</button>
+			<button class="button" onclick="closeConfigWindow()">Cancel</button>
+		</div>
+	</div>
+	<div class="container">
+		<div id="sereneSettings">
+			<div class="sphere" id="alertStatus"></div>
+			<button class="button" id="armButton" onclick="ArmDisarmAlarm()"></button>
+		</div>
+		<div id="sensors" class="smallSensors"></div>
+	</div>
 </body>
 </html>

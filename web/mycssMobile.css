@@ -1,30 +1,27 @@
 /* topBar */
 #sereneSettings {
 	position: relative;
-	width: 300px;
-	height: 300px;
+	width: 100%;
+	height: 100px;
 	background-color: #222;
-	border-radius: 1px 30px 30px 1px;
-	box-shadow: inset -10px 0px 40px 1px #777;
-	float: left;
+	border-radius: 1px 1px 30px 30px;
+	box-shadow: inset 0px -5px 40px 1px #777;
+	margin-bottom: 20px;
+	text-align: center;
 }
 
 #armButton {
-	position: relative;
-	top: 30px;
-	left: 20px;
-	width: 200px;
+	width: 300px;
 	height: 70px;
+	margin: 15px auto;
 }
 
 .sphere {
-	margin: 5px 50px 0 40px;
-	left: 50px;
-	top: 140px;
+	margin: 5px 0 0 40px;
 }
 
 .smallSensors {
-	margin-left: 300px;
+	margin-left: 0;
 }
 
 /* sensor */
@@ -94,3 +91,23 @@
 .disarmedAlarm:active {background-color: #400}
 .disarmedAlarm:after {content: "Activate Alarm";}
 
+
+/* onoffswitch */
+.onoffswitch {
+	width: 130px;
+}
+.onoffswitch-inner:before, .onoffswitch-inner:after {
+	height: 44px; 
+	line-height: 44px;
+	font-size: 22px;
+}
+.onoffswitch-inner:before {
+	padding-left: 5px;
+}
+.onoffswitch-inner:after {
+	padding-right: 5px;
+}
+.onoffswitch-switch {
+	width: 50px;
+	right: 90px;
+}

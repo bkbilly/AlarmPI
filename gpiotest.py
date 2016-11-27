@@ -56,6 +56,8 @@ class DoorSensor():
                 # Check for the pin status
                 if GPIO.input(sensor["pin"]) == 1:
                     sensor["alert"] = True
+                    if self.settings['settings']['alarmArmed'] is True:
+                        self.startSerene()
             # Create the list of the pins status
             self.sensorsStatus["sensors"].append(sensor)
         # ??????
@@ -63,8 +65,6 @@ class DoorSensor():
             if pinActive is False and inputPin in self.enabledPins:
                 GPIO.remove_event_detect(inputPin)
                 self.enabledPins.remove(inputPin)
-
-        # TODO CHECK FOR ALERT BASED ON SETTINGS AND self.sensorsStatus
 
         # Send to JS
         socketio.emit('pinsChanged', self.getPinsStatus())
@@ -90,6 +90,20 @@ class DoorSensor():
                 callback(None)
             time.sleep(1)
 
+    def startSerene(self):
+        self.setAlert = True
+        serenePin = self.settings['settings']['serenePin']
+        GPIO.setup(serenePin, GPIO.OUT)
+        GPIO.output(serenePin, GPIO.HIGH)
+        socketio.emit('alarmStatus', self.getAlarmStatus())
+
+    def stopSerene(self):
+        self.setAlert = False
+        serenePin = self.settings['settings']['serenePin']
+        GPIO.setup(serenePin, GPIO.OUT)
+        GPIO.output(serenePin, GPIO.LOW)
+        socketio.emit('alarmStatus', self.getAlarmStatus())
+
     def getPinsStatus(self):
         settings = {}
         settings['sensors'] = self.sensorsStatus['sensors']
@@ -97,13 +111,21 @@ class DoorSensor():
         return settings
 
     def activateAlarm(self):
-        pass
+        self.settings['settings']['alarmArmed'] = True
+
+        with open(self.jsonfile, 'w') as outfile:
+            json.dump(self.settings, outfile)
+        self.RefreshAlarmData(None)
 
     def deactivateAlarm(self):
-        pass
+        self.settings['settings']['alarmArmed'] = False
+        self.stopSerene()
+
+        with open(self.jsonfile, 'w') as outfile:
+            json.dump(self.settings, outfile)
 
     def getAlarmStatus(self):
-        pass
+        return {"alert": self.setAlert}
 
     def getSerenePin(self):
         pass
@@ -115,7 +137,12 @@ class DoorSensor():
         pass
 
     def setSensorName(self, pin, name):
-        pass
+        for i, sensor in enumerate(self.settings["sensors"]):
+            if sensor['pin'] == pin:
+                self.settings['sensors'][i]['name'] = name
+
+        with open(self.jsonfile, 'w') as outfile:
+            json.dump(self.settings, outfile)
 
     def setSensorState(self, pin, state):
         for i, sensor in enumerate(self.settings["sensors"]):
@@ -126,7 +153,12 @@ class DoorSensor():
             json.dump(self.settings, outfile)
 
     def setSensorPin(self, pin, newpin):
-        pass
+        for i, sensor in enumerate(self.settings["sensors"]):
+            if sensor['pin'] == pin:
+                self.settings['sensors'][i]['pin'] = newpin
+
+        with open(self.jsonfile, 'w') as outfile:
+            json.dump(self.settings, outfile)
 
     def addSensor(self, pin, name, active):
         pass
@@ -145,9 +177,19 @@ def index():
     return send_from_directory('web', 'index.html')
 
 
+@app.route('/main.css')
+def main():
+    return send_from_directory('web', 'main.css')
+
+
 @app.route('/mycss.css')
 def mycss():
     return send_from_directory('web', 'mycss.css')
+
+
+@app.route('/mycssMobile.css')
+def mycssMobile():
+    return send_from_directory('web', 'mycssMobile.css')
 
 
 @app.route('/myjs.js')
@@ -165,11 +207,29 @@ def alertpinsJson():
     return json.dumps(alarmSensors.getPinsStatus())
 
 
+@app.route('/alarmStatus.json')
+def alarmStatus():
+    return json.dumps(alarmSensors.getAlarmStatus())
+
+
 @socketio.on('setSensorState')
 def setSensorState(message):
     print(message)
     alarmSensors.setSensorState(message['pin'], message['active'])
     socketio.emit('pinsChanged', alarmSensors.getPinsStatus())
+
+
+@socketio.on('activateAlarm')
+def activateAlarm():
+    alarmSensors.activateAlarm()
+    socketio.emit('pinsChanged', alarmSensors.getPinsStatus())
+
+
+@socketio.on('deactivateAlarm')
+def deactivateAlarm():
+    alarmSensors.deactivateAlarm()
+    socketio.emit('pinsChanged', alarmSensors.getPinsStatus())
+
 
 if __name__ == '__main__':
     socketio.run(app, host="", port=5000, debug=True)
