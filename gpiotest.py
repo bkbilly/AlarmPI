@@ -41,7 +41,7 @@ class DoorSensor():
 
     def RefreshAlarmData(self, inputPin):
         self.settings = self.ReadSettings(self.jsonfile)
-        pinActive = False  # DELETE????
+        pinActive = False
         self.sensorsStatus = {'sensors': []}
         for sensor in self.settings["sensors"]:
             sensor["alert"] = False
@@ -62,19 +62,22 @@ class DoorSensor():
                         self.startSerene()
             # Create the list of the pins status
             self.sensorsStatus["sensors"].append(sensor)
-        # ??????
-        if inputPin is not None:
-            if pinActive is False and inputPin in self.enabledPins:
-                GPIO.remove_event_detect(inputPin)
-                self.enabledPins.remove(inputPin)
+        # Clean pin when it becomes inactive
+        if inputPin is not None and pinActive is False:
+            self.clearUnusedPin(inputPin)
 
         # Send to JS
-        socketio.emit('pinsChanged', self.getPinsStatus())
+        socketio.emit('settingsChanged', self.getPinsStatus())
 
         # Write Log
         for pinStatus in self.sensorsStatus['sensors']:
             if pinStatus['alert'] is True:
                 self.writeLog(pinStatus['name'])
+
+    def clearUnusedPin(self, pin):
+        if pin in self.enabledPins:
+            GPIO.remove_event_detect(pin)
+            self.enabledPins.remove(pin)
 
     def ReadSettings(self, jsonfile):
         with open(jsonfile) as data_file:
@@ -138,7 +141,7 @@ class DoorSensor():
         return {"alert": self.setAlert}
 
     def getSerenePin(self):
-        pass
+        return {'serenePin': self.settings['settings']['serenePin']}
 
     def getSensorsLog(self, limit):
         with open(self.logfile, "r") as f:
@@ -146,7 +149,11 @@ class DoorSensor():
         return {"log": lines[-limit:]}
 
     def setSerenePin(self, pin):
-        pass
+        self.clearUnusedPin(pin)
+        self.settings['settings']['serenePin'] = pin
+
+        with open(self.jsonfile, 'w') as outfile:
+            json.dump(self.settings, outfile)
 
     def setSensorName(self, pin, name):
         for i, sensor in enumerate(self.settings["sensors"]):
@@ -165,6 +172,7 @@ class DoorSensor():
             json.dump(self.settings, outfile)
 
     def setSensorPin(self, pin, newpin):
+        self.clearUnusedPin(pin)
         for i, sensor in enumerate(self.settings["sensors"]):
             if sensor['pin'] == pin:
                 self.settings['sensors'][i]['pin'] = newpin
@@ -173,10 +181,31 @@ class DoorSensor():
             json.dump(self.settings, outfile)
 
     def addSensor(self, pin, name, active):
-        pass
+        self.settings['sensors'].append({
+            "pin": pin,
+            "name": name,
+            "active": active
+        })
+        self.sensorsStatus['sensors'].append({
+            "pin": pin,
+            "name": name,
+            "active": active
+        })
+
+        with open(self.jsonfile, 'w') as outfile:
+            json.dump(self.settings, outfile)
 
     def delSensor(self, pin):
-        pass
+        tmpSensors = []
+        for sensor in self.settings["sensors"]:
+            if sensor['pin'] != pin:
+                tmpSensors.append(sensor)
+
+        self.settings['sensors'] = tmpSensors
+        self.sensorsStatus['sensors'] = tmpSensors
+
+        with open(self.jsonfile, 'w') as outfile:
+            json.dump(self.settings, outfile)
 
 
 app = Flask(__name__, static_url_path='')
@@ -229,24 +258,64 @@ def sensorsLog():
     return json.dumps(alarmSensors.getSensorsLog(10))
 
 
+@app.route('/serenePin.json')
+def serenePin():
+    return json.dumps(alarmSensors.getSerenePin())
+
+
+@socketio.on('setSerenePin')
+def setSerenePin(message):
+    print(message)
+    alarmSensors.setSerenePin(int(message['pin']))
+    socketio.emit('pinsChanged')
+
+
 @socketio.on('setSensorState')
 def setSensorState(message):
     print(message)
     alarmSensors.setSensorState(message['pin'], message['active'])
-    socketio.emit('pinsChanged', alarmSensors.getPinsStatus())
+    socketio.emit('settingsChanged', alarmSensors.getPinsStatus())
+
+
+@socketio.on('setSensorName')
+def setSensorName(message):
+    print(message)
+    alarmSensors.setSensorName(message['pin'], message['name'])
+    socketio.emit('settingsChanged', alarmSensors.getPinsStatus())
+
+
+@socketio.on('setSensorPin')
+def setSensorPin(message):
+    print(message)
+    alarmSensors.setSensorPin(int(message['pin']), int(message['newpin']))
+    socketio.emit('pinsChanged')
 
 
 @socketio.on('activateAlarm')
 def activateAlarm():
     alarmSensors.activateAlarm()
-    socketio.emit('pinsChanged', alarmSensors.getPinsStatus())
+    socketio.emit('settingsChanged', alarmSensors.getPinsStatus())
 
 
 @socketio.on('deactivateAlarm')
 def deactivateAlarm():
     alarmSensors.deactivateAlarm()
-    socketio.emit('pinsChanged', alarmSensors.getPinsStatus())
+    socketio.emit('settingsChanged', alarmSensors.getPinsStatus())
+
+
+@socketio.on('addSensor')
+def addSensor(message):
+    print(message)
+    alarmSensors.addSensor(int(message['pin']), message['name'], message['active'])
+    socketio.emit('pinsChanged')
+
+
+@socketio.on('delSensor')
+def delSensor(message):
+    print(message)
+    alarmSensors.delSensor(int(message['pin']))
+    socketio.emit('pinsChanged')
 
 
 if __name__ == '__main__':
-    socketio.run(app, host="", port=5000, debug=True)
+    socketio.run(app, host="", port=5000)

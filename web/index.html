@@ -61,13 +61,14 @@
 			</select>
 			<br>
 
-			<button class="button" onclick="saveConfigSettings()">OK</button>
+			<button class="button delbutton" id="delSensorBTN">Delete</button><br>
+			<button class="button" id="okButton">OK</button>
 			<button class="button" onclick="closeConfigWindow()">Cancel</button>
 		</div>
 	</div>
 	<div class="container">
 		<div id="sereneSettings">
-			<div class="sphere" id="alertStatus"></div>
+			<div class="sphere" id="alertStatus"><div id="serenePin"></div></div>
 			<button class="button" id="armButton" onclick="ArmDisarmAlarm()"></button>
 		</div>
 		<div id="sensors" class="smallSensors"></div>
@@ -77,5 +78,6 @@
 		</div>		
 		
 	</div>
+	<button class="kc_fab_main_btn" onclick="changeNamePin(this, undefined, 'newSensor')">+</button>
 </body>
 </html>

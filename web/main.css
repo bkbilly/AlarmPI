@@ -85,8 +85,18 @@ select {
 
 
 /* Sphere */
+#serenePin {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	top: 40%;
+	border-radius: 150px;
+}
+
 .sphere {
+	cursor: pointer;
 	position: absolute;
+	text-align: center;
 	background-color: white;
 	border-radius: 150px;
 	box-shadow: inset -1px -1px 10px #000, 5px 5px 10px black, inset 0px 0px 10px black;
@@ -217,6 +227,9 @@ select {
 	transform: translateY(3px);
 }
 
+.delbutton {background-color: #900;}
+.delbutton:hover {background-color: #700;}
+.delbutton:active {background-color: #300;}
 
 /* list */
 ul {
@@ -247,4 +260,30 @@ ul li:nth-child(odd) {
 /* Darker background-color on hover */
 ul li:hover {
 	background: #111;
+}
+
+
+/* Material Floating Button */
+
+.kc_fab_main_btn{
+	cursor: pointer;
+	position: fixed;
+	z-index: 100;
+	bottom: 20px;
+	right: 20px;
+	background-color:#F44336;
+	width:60px;
+	height:60px;
+	border-radius:100%;
+	background:#F44336;
+	border:none;
+	outline:none;
+	color:#FFF;
+	font-size:36px;
+	box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+	transition:.3s;  
+	-webkit-tap-highlight-color: rgba(0,0,0,0);
+}
+.kc_fab_main_btn:hover {
+	transform:scale(1.1);
 }

@@ -1,6 +1,6 @@
 var socket = io();
 var sensor = '<div class="sensordiv" id="sensordiv{sensorpin}">\
-	<div class="sensortext" id="sensorname{sensorpin}" onclick="changeSensorName(this, {sensorpin})"></div>\
+	<div class="sensortext" id="sensorname{sensorpin}" onclick="changeNamePin(this, {sensorpin}, \'sensor\')"></div>\
 	<div class="setSensorState">\
 		<div class="onoffswitch">\
 			<input type="checkbox" name="onoffswitch{sensorpin}" class="onoffswitch-checkbox" \
@@ -38,6 +38,24 @@ $( document ).ready(function() {
 		}
 	}
 
+	startAgain();
+
+	socket.on('pinsChanged', function(msg){
+		startAgain();
+	});
+	socket.on('settingsChanged', function(msg){
+		refreshStatus(msg);
+	});
+	socket.on('alarmStatus', function(msg){
+		setAlarmStatus(msg);
+	});
+	socket.on('sensorsLog', function(msg){
+		addSensorLog(msg);
+	});
+});
+
+function startAgain(){
+	$("#sensors").empty();
 	$.getJSON("alertpins.json").done(function(data){
 		$.each(data.sensors, function(i, item){
 			var tmpsensor = sensor
@@ -53,17 +71,10 @@ $( document ).ready(function() {
 	$.getJSON("sensorsLog.json").done(function(data){
 		addSensorLog(data);
 	});
-
-	socket.on('pinsChanged', function(msg){
-		refreshStatus(msg);
+	$.getJSON("serenePin.json").done(function(data){
+		addSerenePin(data);
 	});
-	socket.on('alarmStatus', function(msg){
-		setAlarmStatus(msg);
-	});
-	socket.on('sensorsLog', function(msg){
-		addSensorLog(msg);
-	});
-});
+}
 
 function refreshStatus(data){
 	console.log(data);
@@ -97,9 +108,14 @@ function setAlarmStatus(msg){
 	}
 }
 
+function addSerenePin(msg){
+	console.log(msg);
+	$("#alertStatus").attr("onclick","changeNamePin(this, "+ msg.serenePin +", 'serene')");
+	$("#serenePin").text(msg.serenePin);
+}
+
 function addSensorLog(msg){
 	$.each(msg.log, function(i, tmplog){
-		console.log(tmplog);
 		$("#sensorListLog").prepend("<li>"+tmplog+"</li>");
 	});
 }
@@ -114,23 +130,53 @@ function changeSensorState(checkbox, pin){
 
 var currentName;
 var currentPin;
-function changeSensorName(div, pin){
+function changeNamePin(div, pin, type){
+	$("#okButton").attr("onclick","saveConfigSettings('"+ type +"')");
 	currentName = div.innerHTML;
 	currentPin = pin;
 	$("#inputName").val(currentName);
 	$("#inputPin").val(currentPin);
+
+	if (type === 'serene'){
+		$("#inputName").hide();
+		$("#delSensorBTN").hide();
+	} else if (type === 'newSensor') {
+		$("#inputName").show();
+		$("#delSensorBTN").hide();
+		$("#inputName").val('');
+	} else {
+		$("#delSensorBTN").attr("onclick","deleteSensor('"+ pin +"')");
+		$("#delSensorBTN").show();
+		$("#inputName").show();
+	}
 	$("#myModal").show();
 }
 
-function saveConfigSettings(){
+function saveConfigSettings(type){
 	var newname = $("#inputName").val();
 	var newpin = $("#inputPin").val();
-	if (currentName !== newname){
-		socket.emit('setSensorName', {"pin": currentPin, "name": newname});
+	console.log(type);
+	if (type === 'serene') {
+		if (currentPin != newpin){
+			socket.emit('setSerenePin', {"pin": newpin});
+		}
+	} else if (type === 'newSensor') {
+		if (newpin !== null && newname !== ""){
+			socket.emit('addSensor', {"pin": newpin, "name": newname, "active": false});
+		}
+	} else {
+		if (currentName !== newname){
+			socket.emit('setSensorName', {"pin": currentPin, "name": newname});
+		}
+		if (currentPin != newpin){
+			socket.emit('setSensorPin', {"pin": currentPin, "newpin": newpin});
+		}
 	}
-	if (currentPin != newpin){
-		console.log("changed pin");
-	}
+	closeConfigWindow();
+}
+
+function deleteSensor(pin){
+	socket.emit('delSensor', {"pin": pin});
 	closeConfigWindow();
 }
 
