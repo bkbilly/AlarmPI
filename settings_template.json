@@ -1,39 +1,31 @@
 {
     "mail": {
-        "messageBody": "There is an intruder at your place.\n\nAnastaseos 44 Papagou",
-        "messageSubject": "Home Security",
-        "password": "bvspewynkoiiviul",
-        "recipients": [
-            "bkbillybk@gmail.com",
-            "kloupou@gmail.com",
-            "pbravakos@gmail.com"
-        ],
-        "smtpPort": 587,
         "smtpServer": "smtp.gmail.com",
-        "username": "bkbillybk@gmail.com"
+        "smtpPort": 587,
+        "username": "",
+        "password": "",
+        "recipients": [],
+        "messageSubject": "Home Security",
+        "messageBody": "Alert"
     },
     "sensors": [
         {
             "active": true,
-            "alert": false,
             "name": "Window",
             "pin": 22
         },
         {
             "active": true,
-            "alert": false,
             "name": "Bedroom",
             "pin": 23
         },
         {
             "active": true,
-            "alert": false,
             "name": "Grandma",
             "pin": 27
         },
         {
             "active": true,
-            "alert": false,
             "name": "Livingroom",
             "pin": 24
         }
