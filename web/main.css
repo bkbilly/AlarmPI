@@ -216,7 +216,6 @@ select {
 	border-radius: 15px;
 	box-shadow: 0 5px #999;
 	-webkit-user-select:none; -moz-user-select:none; -ms-user-select: none;
-
 }
 
 .button:hover {background-color: #3e8e41}

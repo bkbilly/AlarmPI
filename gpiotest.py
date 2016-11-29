@@ -6,6 +6,8 @@ import time
 
 from flask import Flask, send_from_directory
 from flask_socketio import SocketIO
+import smtplib
+from email.mime.text import MIMEText
 
 import logging
 # log = logging.getLogger('werkzeug')
@@ -84,6 +86,10 @@ class DoorSensor():
             settings = json.load(data_file)
         return settings
 
+    def writeNewSettingsToFile(self):
+        with open(self.jsonfile, 'w') as outfile:
+            json.dump(self.settings, outfile, sort_keys=True, indent=4, separators=(',', ': '))
+
     def CheckSettingsChanges(self, callback):
         callback(None)
         while self.kill_now is False:
@@ -100,6 +106,26 @@ class DoorSensor():
             myfile.write(myTimeLog + message + "\n")
         socketio.emit('sensorsLog', self.getSensorsLog(1))
 
+    def sendMail(self):
+        mail_user = self.settings['mail']['username']
+        mail_pwd = self.settings['mail']['password']
+        smtp_server = self.settings['mail']['smtpServer']
+        smtp_port = self.settings['mail']['smtpPort']
+
+        msg = MIMEText(self.settings['mail']['messageBody'])
+        sender = mail_user
+        recipients = self.settings['mail']['recipients']
+        msg['Subject'] = self.settings['mail']['messageSubject']
+        msg['From'] = sender
+        msg['To'] = ", ".join(recipients)
+
+        smtpserver = smtplib.SMTP(smtp_server, smtp_port)
+        smtpserver.ehlo()
+        smtpserver.starttls()
+        smtpserver.login(mail_user, mail_pwd)
+        smtpserver.sendmail(sender, recipients, msg.as_string())
+        smtpserver.close()
+
     def startSerene(self):
         self.setAlert = True
         self.writeLog("Serene started")
@@ -107,6 +133,7 @@ class DoorSensor():
         GPIO.setup(serenePin, GPIO.OUT)
         GPIO.output(serenePin, GPIO.HIGH)
         socketio.emit('alarmStatus', self.getAlarmStatus())
+        self.sendMail()
 
     def stopSerene(self):
         self.setAlert = False
@@ -124,18 +151,14 @@ class DoorSensor():
     def activateAlarm(self):
         self.writeLog("Alarm activated")
         self.settings['settings']['alarmArmed'] = True
-
-        with open(self.jsonfile, 'w') as outfile:
-            json.dump(self.settings, outfile)
+        self.writeNewSettingsToFile()
         self.RefreshAlarmData(None)
 
     def deactivateAlarm(self):
         self.writeLog("Alarm deactivated")
         self.settings['settings']['alarmArmed'] = False
         self.stopSerene()
-
-        with open(self.jsonfile, 'w') as outfile:
-            json.dump(self.settings, outfile)
+        self.writeNewSettingsToFile()
 
     def getAlarmStatus(self):
         return {"alert": self.setAlert}
@@ -151,34 +174,26 @@ class DoorSensor():
     def setSerenePin(self, pin):
         self.clearUnusedPin(pin)
         self.settings['settings']['serenePin'] = pin
-
-        with open(self.jsonfile, 'w') as outfile:
-            json.dump(self.settings, outfile)
+        self.writeNewSettingsToFile()
 
     def setSensorName(self, pin, name):
         for i, sensor in enumerate(self.settings["sensors"]):
             if sensor['pin'] == pin:
                 self.settings['sensors'][i]['name'] = name
-
-        with open(self.jsonfile, 'w') as outfile:
-            json.dump(self.settings, outfile)
+        self.writeNewSettingsToFile()
 
     def setSensorState(self, pin, state):
         for i, sensor in enumerate(self.settings["sensors"]):
             if sensor['pin'] == pin:
                 self.settings['sensors'][i]['active'] = state
-
-        with open(self.jsonfile, 'w') as outfile:
-            json.dump(self.settings, outfile)
+        self.writeNewSettingsToFile()
 
     def setSensorPin(self, pin, newpin):
         self.clearUnusedPin(pin)
         for i, sensor in enumerate(self.settings["sensors"]):
             if sensor['pin'] == pin:
                 self.settings['sensors'][i]['pin'] = newpin
-
-        with open(self.jsonfile, 'w') as outfile:
-            json.dump(self.settings, outfile)
+        self.writeNewSettingsToFile()
 
     def addSensor(self, pin, name, active):
         self.settings['sensors'].append({
@@ -191,9 +206,7 @@ class DoorSensor():
             "name": name,
             "active": active
         })
-
-        with open(self.jsonfile, 'w') as outfile:
-            json.dump(self.settings, outfile)
+        self.writeNewSettingsToFile()
 
     def delSensor(self, pin):
         tmpSensors = []
@@ -204,8 +217,7 @@ class DoorSensor():
         self.settings['sensors'] = tmpSensors
         self.sensorsStatus['sensors'] = tmpSensors
 
-        with open(self.jsonfile, 'w') as outfile:
-            json.dump(self.settings, outfile)
+        self.writeNewSettingsToFile()
 
 
 app = Flask(__name__, static_url_path='')
