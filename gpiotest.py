@@ -25,8 +25,8 @@ class DoorSensor():
         GPIO.setwarnings(False)
         # Global Variables
         wd = os.path.dirname(os.path.realpath(__file__))
-        self.jsonfile = os.path.join(wd, jsonfile)
-        self.logfile = os.path.join(wd, logfile)
+        self.jsonfile = jsonfile
+        self.logfile = logfile
         self.enabledPins = []
         self.settings = self.ReadSettings(self.jsonfile)
         self.sensorsStatus = {'sensors': []}
@@ -224,37 +224,41 @@ class DoorSensor():
 
 app = Flask(__name__, static_url_path='')
 socketio = SocketIO(app)
-alarmSensors = DoorSensor("settings.json", "alert.log")
+wd = os.path.dirname(os.path.realpath(__file__))
+webDirectory = os.path.join(wd, 'web')
+jsonfile = os.path.join(wd, "settings.json")
+logfile = os.path.join(wd, "alert.log")
+alarmSensors = DoorSensor(jsonfile, logfile)
 
 
 @app.route('/')
 def index():
-    return send_from_directory('web', 'index.html')
+    return send_from_directory(webDirectory, 'index.html')
 
 
 @app.route('/main.css')
 def main():
-    return send_from_directory('web', 'main.css')
+    return send_from_directory(webDirectory, 'main.css')
 
 
 @app.route('/icon.png')
 def icon():
-    return send_from_directory('web', 'icon.png')
+    return send_from_directory(webDirectory, 'icon.png')
 
 
 @app.route('/mycss.css')
 def mycss():
-    return send_from_directory('web', 'mycss.css')
+    return send_from_directory(webDirectory, 'mycss.css')
 
 
 @app.route('/mycssMobile.css')
 def mycssMobile():
-    return send_from_directory('web', 'mycssMobile.css')
+    return send_from_directory(webDirectory, 'mycssMobile.css')
 
 
 @app.route('/myjs.js')
 def myjs():
-    return send_from_directory('web', 'myjs.js')
+    return send_from_directory(webDirectory, 'myjs.js')
 
 
 @app.route('/alertpins.json')
