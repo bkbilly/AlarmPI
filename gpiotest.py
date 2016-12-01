@@ -3,6 +3,7 @@ import time
 import json
 import threading
 import time
+import os
 
 from flask import Flask, send_from_directory
 from flask_socketio import SocketIO
@@ -23,8 +24,9 @@ class DoorSensor():
         GPIO.setmode(GPIO.BCM)
         GPIO.setwarnings(False)
         # Global Variables
-        self.jsonfile = jsonfile
-        self.logfile = logfile
+        wd = os.path.dirname(os.path.realpath(__file__))
+        self.jsonfile = os.path.join(wd, jsonfile)
+        self.logfile = os.path.join(wd, logfile)
         self.enabledPins = []
         self.settings = self.ReadSettings(self.jsonfile)
         self.sensorsStatus = {'sensors': []}
