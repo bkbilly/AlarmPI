@@ -1,5 +1,6 @@
 {
     "mail": {
+        "enable": true,
         "smtpServer": "smtp.gmail.com",
         "smtpPort": 587,
         "username": "",
@@ -7,6 +8,14 @@
         "recipients": [],
         "messageSubject": "Home Security",
         "messageBody": "Alert"
+    },
+    "voip": {
+        "enable": true,
+        "domain": "",
+        "username": "",
+        "password": "",
+        "numbersToCall": [],
+        "timesOfRepeat": ""
     },
     "sensors": [
         {
