@@ -4,6 +4,8 @@ import json
 import threading
 import time
 import os
+import subprocess
+import sys
 
 from flask import Flask, send_from_directory
 from flask_socketio import SocketIO
@@ -19,16 +21,16 @@ class DoorSensor():
 
     """docstring for DoorSensor"""
 
-    def __init__(self, jsonfile, logfile):
+    def __init__(self, jsonfile, logfile, sipcallfile):
         # GPIO Setup
         GPIO.setmode(GPIO.BCM)
         GPIO.setwarnings(False)
         # Global Variables
-        wd = os.path.dirname(os.path.realpath(__file__))
         self.jsonfile = jsonfile
         self.logfile = logfile
+        self.sipcallfile = sipcallfile
         self.enabledPins = []
-        self.settings = self.ReadSettings(self.jsonfile)
+        self.settings = self.ReadSettings()
         self.sensorsStatus = {'sensors': []}
 
         # Stop execution on exit
@@ -36,6 +38,7 @@ class DoorSensor():
         self.kill_now = False
 
         # Init Alarm
+        self.writeLog("Alarm Booted")
         self.RefreshAlarmData(None)
 
         # Start checking for setting changes in a thread
@@ -44,7 +47,7 @@ class DoorSensor():
         # thr.start()
 
     def RefreshAlarmData(self, inputPin):
-        self.settings = self.ReadSettings(self.jsonfile)
+        self.settings = self.ReadSettings()
         pinActive = False
         self.sensorsStatus = {'sensors': []}
         for sensor in self.settings["sensors"]:
@@ -63,7 +66,7 @@ class DoorSensor():
                 if GPIO.input(sensor["pin"]) == 1:
                     sensor["alert"] = True
                     if self.settings['settings']['alarmArmed'] is True and self.setAlert is False:
-                        self.startSerene()
+                        self.intruderAlert()
             # Create the list of the pins status
             self.sensorsStatus["sensors"].append(sensor)
         # Clean pin when it becomes inactive
@@ -83,8 +86,8 @@ class DoorSensor():
             GPIO.remove_event_detect(pin)
             self.enabledPins.remove(pin)
 
-    def ReadSettings(self, jsonfile):
-        with open(jsonfile) as data_file:
+    def ReadSettings(self):
+        with open(self.jsonfile) as data_file:
             settings = json.load(data_file)
         return settings
 
@@ -96,7 +99,7 @@ class DoorSensor():
         callback(None)
         while self.kill_now is False:
             prevSettings = self.settings
-            nowSettings = self.ReadSettings(self.jsonfile)
+            nowSettings = self.ReadSettings()
             if prevSettings != nowSettings:
                 self.settings = nowSettings
                 callback(None)
@@ -108,34 +111,56 @@ class DoorSensor():
             myfile.write(myTimeLog + message + "\n")
         socketio.emit('sensorsLog', self.getSensorsLog(1))
 
+    def callVoip(self):
+        sip_domain = str(self.settings['voip']['domain'])
+        sip_user = str(self.settings['voip']['username'])
+        sip_password = str(self.settings['voip']['password'])
+        sip_repeat = str(self.settings['voip']['timesOfRepeat'])
+        if self.settings['voip']['enable'] is True:
+            for phone_number in self.settings['voip']['numbersToCall']:
+                phone_number = str(phone_number)
+                if self.setAlert is True:
+                    cmd = self.sipcallfile, '-sd', sip_domain, '-su', sip_user, '-sp', sip_password, '-pn', phone_number, '-s', '1', '-mr', sip_repeat
+                    print cmd
+                    proc = subprocess.Popen(cmd, stderr=subprocess.PIPE)
+                    for line in proc.stderr:
+                        sys.stderr.write(line)
+                    proc.wait()
+                    print "ended"
+
     def sendMail(self):
-        mail_user = self.settings['mail']['username']
-        mail_pwd = self.settings['mail']['password']
-        smtp_server = self.settings['mail']['smtpServer']
-        smtp_port = self.settings['mail']['smtpPort']
+        if self.settings['mail']['enable'] is True:
+            mail_user = self.settings['mail']['username']
+            mail_pwd = self.settings['mail']['password']
+            smtp_server = self.settings['mail']['smtpServer']
+            smtp_port = self.settings['mail']['smtpPort']
 
-        msg = MIMEText(self.settings['mail']['messageBody'])
-        sender = mail_user
-        recipients = self.settings['mail']['recipients']
-        msg['Subject'] = self.settings['mail']['messageSubject']
-        msg['From'] = sender
-        msg['To'] = ", ".join(recipients)
+            msg = MIMEText(self.settings['mail']['messageBody'])
+            sender = mail_user
+            recipients = self.settings['mail']['recipients']
+            msg['Subject'] = self.settings['mail']['messageSubject']
+            msg['From'] = sender
+            msg['To'] = ", ".join(recipients)
 
-        smtpserver = smtplib.SMTP(smtp_server, smtp_port)
-        smtpserver.ehlo()
-        smtpserver.starttls()
-        smtpserver.login(mail_user, mail_pwd)
-        smtpserver.sendmail(sender, recipients, msg.as_string())
-        smtpserver.close()
+            smtpserver = smtplib.SMTP(smtp_server, smtp_port)
+            smtpserver.ehlo()
+            smtpserver.starttls()
+            smtpserver.login(mail_user, mail_pwd)
+            smtpserver.sendmail(sender, recipients, msg.as_string())
+            smtpserver.close()
 
-    def startSerene(self):
-        self.setAlert = True
-        self.writeLog("Serene started")
+    def enableSerene(self):
         serenePin = self.settings['settings']['serenePin']
         GPIO.setup(serenePin, GPIO.OUT)
         GPIO.output(serenePin, GPIO.HIGH)
+
+    def intruderAlert(self):
+        self.setAlert = True
+        self.writeLog("Serene started")
+        self.enableSerene()
         socketio.emit('alarmStatus', self.getAlarmStatus())
         self.sendMail()
+        self.callVoip()
 
     def stopSerene(self):
         self.setAlert = False
@@ -152,6 +177,7 @@ class DoorSensor():
 
     def activateAlarm(self):
         self.writeLog("Alarm activated")
+        self.settings = self.ReadSettings()
         self.settings['settings']['alarmArmed'] = True
         self.writeNewSettingsToFile()
         self.RefreshAlarmData(None)
@@ -228,7 +254,10 @@ wd = os.path.dirname(os.path.realpath(__file__))
 webDirectory = os.path.join(wd, 'web')
 jsonfile = os.path.join(wd, "settings.json")
 logfile = os.path.join(wd, "alert.log")
-alarmSensors = DoorSensor(jsonfile, logfile)
+logfile = os.path.join(wd, "alert.log")
+sipcallfile = os.path.join(wd, "voip")
+sipcallfile = os.path.join(sipcallfile, "sipcall")
+alarmSensors = DoorSensor(jsonfile, logfile, sipcallfile)
 
 
 @app.route('/')
