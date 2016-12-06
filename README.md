@@ -11,6 +11,11 @@ sudo cp play_template.wavplay.wav
 sudo pip install -r requirements.txt
 ```
 
+## Run on Boot
+Edit the `/etc/rc.local` and before exit 0 add this line: `python /home/pi/AlarmPI/gpiotest.py &`
+
+
+
 ## Settings.json
 
 * `mail.enable` (bool) Enable mail alerts
