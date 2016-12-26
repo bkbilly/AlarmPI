@@ -2,7 +2,6 @@ import RPi.GPIO as GPIO
 import time
 import json
 import threading
-import time
 import os
 import subprocess
 import sys
@@ -13,8 +12,8 @@ import smtplib
 from email.mime.text import MIMEText
 
 import logging
-# log = logging.getLogger('werkzeug')
-# log.setLevel(logging.ERROR)
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
 
 
 class DoorSensor():
@@ -25,6 +24,7 @@ class DoorSensor():
         # GPIO Setup
         GPIO.setmode(GPIO.BCM)
         GPIO.setwarnings(False)
+
         # Global Variables
         self.jsonfile = jsonfile
         self.logfile = logfile
@@ -40,11 +40,6 @@ class DoorSensor():
         # Init Alarm
         self.writeLog("Alarm Booted")
         self.RefreshAlarmData(None)
-
-        # Start checking for setting changes in a thread
-        # thr = threading.Thread(
-        #     target=self.CheckSettingsChanges, args=(self.RefreshAlarmData,))
-        # thr.start()
 
     def RefreshAlarmData(self, inputPin):
         self.settings = self.ReadSettings()
@@ -65,8 +60,6 @@ class DoorSensor():
                 # Check for the pin status
                 if GPIO.input(sensor["pin"]) == 1:
                     sensor["alert"] = True
-                    if self.settings['settings']['alarmArmed'] is True and self.setAlert is False:
-                        self.intruderAlert()
             # Create the list of the pins status
             self.sensorsStatus["sensors"].append(sensor)
         # Clean pin when it becomes inactive
@@ -76,10 +69,17 @@ class DoorSensor():
         # Send to JS
         socketio.emit('settingsChanged', self.getPinsStatus())
 
-        # Write Log
-        for pinStatus in self.sensorsStatus['sensors']:
-            if pinStatus['alert'] is True:
-                self.writeLog(pinStatus['name'])
+        # Write Alerted Sensors Log
+        for sensor in self.sensorsStatus['sensors']:
+            if sensor['alert'] is True:
+                self.writeLog(sensor['name'])
+
+        # Call IntruderAlert
+        for sensor in self.sensorsStatus['sensors']:
+            if sensor['alert'] is True:
+                if self.settings['settings']['alarmArmed'] is True and self.setAlert is False:
+                    threading.Thread(target=self.intruderAlert).start()
+                    # self.intruderAlert()
 
     def clearUnusedPin(self, pin):
         if pin in self.enabledPins:
@@ -120,13 +120,14 @@ class DoorSensor():
             for phone_number in self.settings['voip']['numbersToCall']:
                 phone_number = str(phone_number)
                 if self.setAlert is True:
+                    self.writeLog("Calling " + phone_number)
                     cmd = self.sipcallfile, '-sd', sip_domain, '-su', sip_user, '-sp', sip_password, '-pn', phone_number, '-s', '1', '-mr', sip_repeat
                     print cmd
                     proc = subprocess.Popen(cmd, stderr=subprocess.PIPE)
                     for line in proc.stderr:
                         sys.stderr.write(line)
                     proc.wait()
-                    print "ended"
+                    print "Call Ended"
 
     def sendMail(self):
         if self.settings['mail']['enable'] is True:
@@ -149,14 +150,17 @@ class DoorSensor():
             smtpserver.sendmail(sender, recipients, msg.as_string())
             smtpserver.close()
 
+            json.dumps(alarmSensors.getPinsStatus())
+            self.writeLog("Mail sent to: " + ", ".join(recipients))
+
     def enableSerene(self):
+        self.writeLog("Serene started")
         serenePin = self.settings['settings']['serenePin']
         GPIO.setup(serenePin, GPIO.OUT)
         GPIO.output(serenePin, GPIO.HIGH)
 
     def intruderAlert(self):
         self.setAlert = True
-        self.writeLog("Serene started")
         self.enableSerene()
         socketio.emit('alarmStatus', self.getAlarmStatus())
         self.sendMail()
@@ -312,28 +316,24 @@ def serenePin():
 
 @socketio.on('setSerenePin')
 def setSerenePin(message):
-    print(message)
     alarmSensors.setSerenePin(int(message['pin']))
     socketio.emit('pinsChanged')
 
 
 @socketio.on('setSensorState')
 def setSensorState(message):
-    print(message)
     alarmSensors.setSensorState(message['pin'], message['active'])
     socketio.emit('settingsChanged', alarmSensors.getPinsStatus())
 
 
 @socketio.on('setSensorName')
 def setSensorName(message):
-    print(message)
     alarmSensors.setSensorName(message['pin'], message['name'])
     socketio.emit('settingsChanged', alarmSensors.getPinsStatus())
 
 
 @socketio.on('setSensorPin')
 def setSensorPin(message):
-    print(message)
     alarmSensors.setSensorPin(int(message['pin']), int(message['newpin']))
     socketio.emit('pinsChanged')
 
@@ -352,14 +352,12 @@ def deactivateAlarm():
 
 @socketio.on('addSensor')
 def addSensor(message):
-    print(message)
     alarmSensors.addSensor(int(message['pin']), message['name'], message['active'])
     socketio.emit('pinsChanged')
 
 
 @socketio.on('delSensor')
 def delSensor(message):
-    print(message)
     alarmSensors.delSensor(int(message['pin']))
     socketio.emit('pinsChanged')
 
