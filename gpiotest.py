@@ -127,6 +127,7 @@ class DoorSensor():
                     for line in proc.stderr:
                         sys.stderr.write(line)
                     proc.wait()
+                    self.writeLog("Call to " + phone_number + " endend")
                     print "Call Ended"
 
     def sendMail(self):
