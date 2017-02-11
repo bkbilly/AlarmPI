@@ -1,4 +1,8 @@
 {
+    "serene": {
+        "enable": false,
+        "pin": 14
+    },
     "mail": {
         "enable": true,
         "smtpServer": "smtp.gmail.com",
@@ -41,6 +45,6 @@
     ],
     "settings": {
         "alarmArmed": false,
-        "serenePin": 14
+        "timezone": "Europe/Athens"
     }
 }

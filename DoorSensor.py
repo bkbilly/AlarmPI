@@ -1,19 +1,34 @@
+#!/usr/bin/env python
+
 import RPi.GPIO as GPIO
 import time
+from datetime import datetime
+import pytz
 import json
 import threading
-import os
 import subprocess
 import sys
-
-from flask import Flask, send_from_directory
-from flask_socketio import SocketIO
 import smtplib
 from email.mime.text import MIMEText
 
-import logging
-log = logging.getLogger('werkzeug')
-log.setLevel(logging.ERROR)
+
+class ReadSettings():
+    def __init__(self, jsonfile):
+        self.jsonfile = jsonfile
+        self.settings = None
+
+    def getNewSettings(self):
+        with open(self.jsonfile) as data_file:
+            settings = json.load(data_file)
+        self.settings = settings
+        return self.settings
+
+    def getSettings(self):
+        return self.settings
+
+    def updateSettingsFile(self, settings):
+        with open(self.jsonfile, 'w') as outfile:
+            json.dump(settings, outfile, sort_keys=True, indent=4, separators=(',', ': '))
 
 
 class DoorSensor():
@@ -45,29 +60,29 @@ class DoorSensor():
         self.settings = self.ReadSettings()
         pinActive = False
         self.sensorsStatus = {'sensors': []}
-        for sensor in self.settings["sensors"]:
-            sensor["alert"] = False
-            if sensor["active"] is True:
+        for sensor in self.settings['sensors']:
+            sensor['alert'] = False
+            if sensor['active'] is True:
                 pinActive = True
                 # Enable the event change of the pin
-                if sensor["pin"] not in self.enabledPins:
-                    self.enabledPins.append(sensor["pin"])
-                    GPIO.setup(sensor["pin"], GPIO.IN,
+                if sensor['pin'] not in self.enabledPins:
+                    self.enabledPins.append(sensor['pin'])
+                    GPIO.setup(sensor['pin'], GPIO.IN,
                                pull_up_down=GPIO.PUD_UP)
-                    GPIO.remove_event_detect(sensor["pin"])
+                    GPIO.remove_event_detect(sensor['pin'])
                     GPIO.add_event_detect(
-                        sensor["pin"], GPIO.BOTH, callback=self.RefreshAlarmData)
+                        sensor['pin'], GPIO.BOTH, callback=self.RefreshAlarmData)
                 # Check for the pin status
-                if GPIO.input(sensor["pin"]) == 1:
-                    sensor["alert"] = True
+                if GPIO.input(sensor['pin']) == 1:
+                    sensor['alert'] = True
             # Create the list of the pins status
-            self.sensorsStatus["sensors"].append(sensor)
+            self.sensorsStatus['sensors'].append(sensor)
         # Clean pin when it becomes inactive
         if inputPin is not None and pinActive is False:
             self.clearUnusedPin(inputPin)
 
         # Send to JS
-        socketio.emit('settingsChanged', self.getPinsStatus())
+        self.sendUpdatesToUI('settingsChanged', self.getPinsStatus())
 
         # Write Alerted Sensors Log
         for sensor in self.sensorsStatus['sensors']:
@@ -105,11 +120,23 @@ class DoorSensor():
                 callback(None)
             time.sleep(1)
 
+    def sendUpdatesToUI(self, event, data):
+        try:
+            # socketio.emit(event, data)
+            pass
+        except Exception as e:
+            raise e
+
     def writeLog(self, message):
-        myTimeLog = time.strftime("[%Y-%m-%d %H:%M:%S] ")
+        try:
+            mytimezone = pytz.timezone(self.settings['settings']['timezone'])
+        except:
+            mytimezone = pytz.utc
+
+        myTimeLog = datetime.now(tz=mytimezone).strftime("[%Y-%m-%d %H:%M:%S] ")
         with open(self.logfile, "a") as myfile:
             myfile.write(myTimeLog + message + "\n")
-        socketio.emit('sensorsLog', self.getSensorsLog(1))
+        self.sendUpdatesToUI('sensorsLog', self.getSensorsLog(1))
 
     def callVoip(self):
         sip_domain = str(self.settings['voip']['domain'])
@@ -155,29 +182,31 @@ class DoorSensor():
             self.writeLog("Mail sent to: " + ", ".join(recipients))
 
     def enableSerene(self):
-        self.writeLog("Serene started")
-        serenePin = self.settings['settings']['serenePin']
-        GPIO.setup(serenePin, GPIO.OUT)
-        GPIO.output(serenePin, GPIO.HIGH)
+        if self.settings['serene']['enable'] is True:
+            self.writeLog("Serene started")
+            serenePin = self.settings['serene']['pin']
+            GPIO.setup(serenePin, GPIO.OUT)
+            GPIO.output(serenePin, GPIO.HIGH)
 
     def intruderAlert(self):
         self.setAlert = True
         self.enableSerene()
-        socketio.emit('alarmStatus', self.getAlarmStatus())
+        self.sendUpdatesToUI('alarmStatus', self.getAlarmStatus())
+
         self.sendMail()
         self.callVoip()
 
     def stopSerene(self):
         self.setAlert = False
-        serenePin = self.settings['settings']['serenePin']
+        serenePin = self.settings['serene']['pin']
         GPIO.setup(serenePin, GPIO.OUT)
         GPIO.output(serenePin, GPIO.LOW)
-        socketio.emit('alarmStatus', self.getAlarmStatus())
+        self.sendUpdatesToUI('alarmStatus', self.getAlarmStatus())
 
     def getPinsStatus(self):
         settings = {}
         settings['sensors'] = self.sensorsStatus['sensors']
-        settings['settings'] = self.settings["settings"]
+        settings['settings'] = self.settings['settings']
         return settings
 
     def activateAlarm(self):
@@ -197,7 +226,7 @@ class DoorSensor():
         return {"alert": self.setAlert}
 
     def getSerenePin(self):
-        return {'serenePin': self.settings['settings']['serenePin']}
+        return {'serenePin': self.settings['serene']['pin']}
 
     def getSensorsLog(self, limit):
         with open(self.logfile, "r") as f:
@@ -206,24 +235,24 @@ class DoorSensor():
 
     def setSerenePin(self, pin):
         self.clearUnusedPin(pin)
-        self.settings['settings']['serenePin'] = pin
+        self.settings['serene']['pin'] = pin
         self.writeNewSettingsToFile()
 
     def setSensorName(self, pin, name):
-        for i, sensor in enumerate(self.settings["sensors"]):
+        for i, sensor in enumerate(self.settings['sensors']):
             if sensor['pin'] == pin:
                 self.settings['sensors'][i]['name'] = name
         self.writeNewSettingsToFile()
 
     def setSensorState(self, pin, state):
-        for i, sensor in enumerate(self.settings["sensors"]):
+        for i, sensor in enumerate(self.settings['sensors']):
             if sensor['pin'] == pin:
                 self.settings['sensors'][i]['active'] = state
         self.writeNewSettingsToFile()
 
     def setSensorPin(self, pin, newpin):
         self.clearUnusedPin(pin)
-        for i, sensor in enumerate(self.settings["sensors"]):
+        for i, sensor in enumerate(self.settings['sensors']):
             if sensor['pin'] == pin:
                 self.settings['sensors'][i]['pin'] = newpin
         self.writeNewSettingsToFile()
@@ -243,7 +272,7 @@ class DoorSensor():
 
     def delSensor(self, pin):
         tmpSensors = []
-        for sensor in self.settings["sensors"]:
+        for sensor in self.settings['sensors']:
             if sensor['pin'] != pin:
                 tmpSensors.append(sensor)
 
@@ -251,117 +280,3 @@ class DoorSensor():
         self.sensorsStatus['sensors'] = tmpSensors
 
         self.writeNewSettingsToFile()
-
-
-app = Flask(__name__, static_url_path='')
-socketio = SocketIO(app)
-wd = os.path.dirname(os.path.realpath(__file__))
-webDirectory = os.path.join(wd, 'web')
-jsonfile = os.path.join(wd, "settings.json")
-logfile = os.path.join(wd, "alert.log")
-logfile = os.path.join(wd, "alert.log")
-sipcallfile = os.path.join(wd, "voip")
-sipcallfile = os.path.join(sipcallfile, "sipcall")
-alarmSensors = DoorSensor(jsonfile, logfile, sipcallfile)
-
-
-@app.route('/')
-def index():
-    return send_from_directory(webDirectory, 'index.html')
-
-
-@app.route('/main.css')
-def main():
-    return send_from_directory(webDirectory, 'main.css')
-
-
-@app.route('/icon.png')
-def icon():
-    return send_from_directory(webDirectory, 'icon.png')
-
-
-@app.route('/mycss.css')
-def mycss():
-    return send_from_directory(webDirectory, 'mycss.css')
-
-
-@app.route('/mycssMobile.css')
-def mycssMobile():
-    return send_from_directory(webDirectory, 'mycssMobile.css')
-
-
-@app.route('/myjs.js')
-def myjs():
-    return send_from_directory(webDirectory, 'myjs.js')
-
-
-@app.route('/alertpins.json')
-def alertpinsJson():
-    return json.dumps(alarmSensors.getPinsStatus())
-
-
-@app.route('/alarmStatus.json')
-def alarmStatus():
-    return json.dumps(alarmSensors.getAlarmStatus())
-
-
-@app.route('/sensorsLog.json')
-def sensorsLog():
-    return json.dumps(alarmSensors.getSensorsLog(10))
-
-
-@app.route('/serenePin.json')
-def serenePin():
-    return json.dumps(alarmSensors.getSerenePin())
-
-
-@socketio.on('setSerenePin')
-def setSerenePin(message):
-    alarmSensors.setSerenePin(int(message['pin']))
-    socketio.emit('pinsChanged')
-
-
-@socketio.on('setSensorState')
-def setSensorState(message):
-    alarmSensors.setSensorState(message['pin'], message['active'])
-    socketio.emit('settingsChanged', alarmSensors.getPinsStatus())
-
-
-@socketio.on('setSensorName')
-def setSensorName(message):
-    alarmSensors.setSensorName(message['pin'], message['name'])
-    socketio.emit('settingsChanged', alarmSensors.getPinsStatus())
-
-
-@socketio.on('setSensorPin')
-def setSensorPin(message):
-    alarmSensors.setSensorPin(int(message['pin']), int(message['newpin']))
-    socketio.emit('pinsChanged')
-
-
-@socketio.on('activateAlarm')
-def activateAlarm():
-    alarmSensors.activateAlarm()
-    socketio.emit('settingsChanged', alarmSensors.getPinsStatus())
-
-
-@socketio.on('deactivateAlarm')
-def deactivateAlarm():
-    alarmSensors.deactivateAlarm()
-    socketio.emit('settingsChanged', alarmSensors.getPinsStatus())
-
-
-@socketio.on('addSensor')
-def addSensor(message):
-    alarmSensors.addSensor(int(message['pin']), message['name'], message['active'])
-    socketio.emit('pinsChanged')
-
-
-@socketio.on('delSensor')
-def delSensor(message):
-    alarmSensors.delSensor(int(message['pin']))
-    socketio.emit('pinsChanged')
-
-
-if __name__ == '__main__':
-    socketio.run(app, host="", port=5000)
