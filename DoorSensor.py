@@ -76,7 +76,7 @@ class DoorSensor():
             self.sensorsStatus['sensors'].append(sensor)
 
         # Send to JS
-        self.updateUI('settingsChanged', self.getPinsStatus())
+        self.updateUI('settingsChanged', self.getSensorsArmed())
 
         # Write Alerted Sensors Log and call IntruderAlert when alarm is activated
         for sensor in self.sensorsStatus['sensors']:
@@ -218,12 +218,12 @@ class DoorSensor():
         self.updateUI('alarmStatus', self.getAlarmStatus())
         self.writeNewSettingsToFile()
 
-    def getPinsStatus(self):
+    def getSensorsArmed(self):
         ''' Returns the sensors and alarm status as a json to use it to the UI '''
-        settings = {}
-        settings['sensors'] = self.sensorsStatus['sensors']
-        settings['settings'] = self.settings['settings']
-        return settings
+        sensorsArmed = {}
+        sensorsArmed['sensors'] = self.sensorsStatus['sensors']
+        sensorsArmed['alarmArmed'] = self.settings['settings']['alarmArmed']
+        return sensorsArmed
 
     def getAlarmStatus(self):
         ''' Returns the status of the alert for the UI '''
@@ -238,6 +238,14 @@ class DoorSensor():
         with open(self.logfile, "r") as f:
             lines = f.readlines()
         return {"log": lines[-limit:]}
+
+    def check_auth(self, username, password):
+        """This function is called to check if a
+        username / password combination is valid.
+        """
+        myuser = self.settings['ui']['username']
+        mypass = self.settings['ui']['password']
+        return username == myuser and password == mypass
 
     def setSerenePin(self, pin):
         ''' Changes the input serene pin '''
