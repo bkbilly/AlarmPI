@@ -91,7 +91,7 @@ function refreshStatus(data){
 		$("#sensorname"+alertsensor.pin).text(alertsensor.name);
 		$("#sensorgpio"+alertsensor.pin).text(alertsensor.pin);
 	});
-	if(data.settings.alarmArmed == true) {
+	if(data.alarmArmed == true) {
 		$("#armButton").removeClass("disarmedAlarm").addClass("armedAlarm");
 	} else {
 		$("#armButton").removeClass("armedAlarm").addClass("disarmedAlarm");

@@ -46,5 +46,9 @@
     "settings": {
         "alarmArmed": false,
         "timezone": "Europe/Athens"
+    },
+    "ui": {
+        "username": "admin",
+        "password": "secret"
     }
 }

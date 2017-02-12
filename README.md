@@ -41,6 +41,8 @@ Edit the `/etc/rc.local` and before exit 0 add this line: `python /home/pi/Alarm
 * `sensors.pin` (int) Input pin of the specific sensor
 * `settings.alarmArmed` (bool) If true, activate the alarm
 * `settings.timezone` (str) The timezone for the log file based on pytz
+* `ui.username` (str) Username for the Web UI
+* `ui.password` (str) Password for the Web UI
 
 ## SipCall (VoIP)
 
