@@ -1,6 +1,8 @@
 # AlarmPI
 
-AlarmPI is a home alarm system that works with Raspberry PI. It has been tasted with PIR sensors and door sensors.
+AlarmPI is a home alarm system based on Raspberry PI controlling PIR and Door sensors. It uses a web interface which is able to activate or deactivate the alarm and also disable or enable sensors. You can also change some settings like changing name of sensor, adding sensors and changing pins of both the serene and sensors.
+
+When the alarm is active and it detects change in the sensors, the application enables the Serene, sends Mail and calls through VoIP provider. All those events can be activated/deactivated through settings.json
 
 ## Installation
 ```
@@ -11,13 +13,15 @@ sudo cp play_template.wavplay.wav
 sudo pip install -r requirements.txt
 ```
 
-## Run on Boot
-Edit the `/etc/rc.local` and before exit 0 add this line: `python /home/pi/AlarmPI/gpiotest.py &`
+## Run on Raspberry Pi Boot
+Edit the `/etc/rc.local` and before exit 0 add this line: `python /home/pi/AlarmPI/alarmpi.py &`
 
 
 
-## Settings.json
+## settings.json
 
+* `serene.enable` (bool) Enable serene activation
+* `serene.pin` (int) Output pin of the serene
 * `mail.enable` (bool) Enable mail alerts
 * `mail.smtpServer` (str) SMTP of your mail
 * `mail.smtpPort` (int) SMTP Port of your mail
@@ -36,7 +40,7 @@ Edit the `/etc/rc.local` and before exit 0 add this line: `python /home/pi/Alarm
 * `sensors.name` (str) Name of the specific sensor
 * `sensors.pin` (int) Input pin of the specific sensor
 * `settings.alarmArmed` (bool) If true, activate the alarm
-* `settings.serenePin` (int) The output pin of the serene
+* `settings.timezone` (str) The timezone for the log file based on pytz
 
 ## SipCall (VoIP)
 

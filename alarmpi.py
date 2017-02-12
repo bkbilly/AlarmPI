@@ -6,16 +6,16 @@ import os
 from flask import Flask, send_from_directory
 from flask_socketio import SocketIO
 
-import logging
-
 from DoorSensor import DoorSensor
 
-# log = logging.getLogger('werkzeug')
-# log.setLevel(logging.ERROR)
+import logging
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
 
 
 class myDoorSensor(DoorSensor):
-    def sendUpdatesToUI(self, event, data):
+    def updateUI(self, event, data):
+        ''' Send changes to the UI '''
         socketio.emit(event, data)
 
 
