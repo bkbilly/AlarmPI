@@ -49,6 +49,7 @@
     },
     "ui": {
         "username": "admin",
-        "password": "secret"
+        "password": "secret",
+        "port": 5000
     }
 }

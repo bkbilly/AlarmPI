@@ -27,7 +27,7 @@ Edit the `/etc/rc.local` and before exit 0 add this line: `python /home/pi/Alarm
 * `mail.smtpPort` (int) SMTP Port of your mail
 * `mail.username` (str) Username of your mail
 * `mail.password` (str) Password of your mail
-* `mail.recipients` (list str) List of recipents. eg. ["mail1@example.com", "mail2@example.com"]
+* `mail.recipients` (list str) List of recipents. eg. `["mail1@example.com", "mail2@example.com"]`
 * `mail.messageSubject` (str) Subject of the sent mail
 * `mail.messageBody` (str) Body message of the sent mail
 * `voip.enable` (bool) Enable VoIP alerts
@@ -43,6 +43,7 @@ Edit the `/etc/rc.local` and before exit 0 add this line: `python /home/pi/Alarm
 * `settings.timezone` (str) The timezone for the log file based on pytz
 * `ui.username` (str) Username for the Web UI
 * `ui.password` (str) Password for the Web UI
+* `ui.port` (int) TCP port for the Web UI
 
 ## SipCall (VoIP)
 
@@ -50,6 +51,14 @@ I have built the sipcall for the Raspberry Pi, so hopefully you will not have to
 To test it, execute this replacing the (myserver, myusername, mypassword, mynumbertocall):
 
 `./sipcall -sd myserver -su myusername -sp mypassword -pn mynumbertocall -s 1 -mr 2 -ttsf ../play.wav`
+
+## Usage Tip
+
+You can use the IFTTT with the Maker module like this:
+`http://admin:secret@example.com:5000/activateAlarmOnline`
+`http://admin:secret@example.com:5000/deactivateAlarmOnline`
+
+My personal favourite is to control it with Google Assistant.
 
 ## Contributing
 
