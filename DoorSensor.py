@@ -239,14 +239,6 @@ class DoorSensor():
             lines = f.readlines()
         return {"log": lines[-limit:]}
 
-    def check_auth(self, username, password):
-        """This function is called to check if a
-        username / password combination is valid.
-        """
-        myuser = self.settings['ui']['username']
-        mypass = self.settings['ui']['password']
-        return username == myuser and password == mypass
-
     def setSerenePin(self, pin):
         ''' Changes the input serene pin '''
         self.settings['serene']['pin'] = pin
@@ -303,3 +295,15 @@ class DoorSensor():
 
         self.writeNewSettingsToFile()
         self.RefreshAlarmData(pin)
+
+    def check_auth(self, username, password):
+        """This function is called to check if a
+        username / password combination is valid.
+        """
+        myuser = self.settings['ui']['username']
+        mypass = self.settings['ui']['password']
+        return username == myuser and password == mypass
+
+    def getPortUI(self):
+        ''' Returns the port for the UI '''
+        return self.settings['ui']['port']

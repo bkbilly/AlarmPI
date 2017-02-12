@@ -108,6 +108,20 @@ def serenePin():
     return json.dumps(alarmSensors.getSerenePin())
 
 
+@app.route('/activateAlarmOnline')
+@requires_auth
+def activateAlarmOnline():
+    alarmSensors.activateAlarm()
+    socketio.emit('settingsChanged', alarmSensors.getSensorsArmed())
+
+
+@app.route('/deactivateAlarmOnline')
+@requires_auth
+def deactivateAlarmOnline():
+    alarmSensors.deactivateAlarm()
+    socketio.emit('settingsChanged', alarmSensors.getSensorsArmed())
+
+
 @socketio.on('setSerenePin')
 @requires_auth
 def setSerenePin(message):
@@ -165,4 +179,4 @@ def delSensor(message):
 
 
 if __name__ == '__main__':
-    socketio.run(app, host="", port=5000)
+    socketio.run(app, host="", port=alarmSensors.getPortUI())
