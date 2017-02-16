@@ -94,7 +94,6 @@ select {
 }
 
 .sphere {
-	cursor: pointer;
 	position: absolute;
 	text-align: center;
 	background-color: white;
@@ -285,4 +284,87 @@ ul li:hover {
 }
 .kc_fab_main_btn:hover {
 	transform:scale(1.1);
+}
+
+/* Accordion */
+button.accordion {
+    background-color: #222;
+    color: #FFF;
+    cursor: pointer;
+    padding: 18px;
+    width: 100%;
+    border: none;
+    text-align: left;
+    outline: none;
+    font-size: 15px;
+    transition: 0.4s;
+}
+
+button.accordion.active, button.accordion:hover {
+    background-color: #111;
+}
+
+button.accordion:after {
+    content: '\002B';
+    color: #777;
+    font-weight: bold;
+    float: right;
+    margin-left: 5px;
+}
+
+button.accordion.active:after {
+    content: "\2212";
+}
+
+div.panel {
+    padding: 0 18px;
+    background-color: #333;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.2s ease-out;
+}
+
+
+/* My OWN CSS*/
+
+.settingsTitle {
+    background-color: #222;
+    color: #FFF;
+    padding: 18px;
+    width: 92%;
+    border: none;
+    text-align: left;
+    outline: none;
+    font-size: 15px;
+    transition: 0.4s;
+}
+
+.settingsContent {
+    color: #FFF;
+    font-weight: bold;
+    margin-left: 5px;
+}
+
+.settingsModalContent {
+	width: 600px;
+	margin: 3% auto; 
+}
+
+.settingsOnOffSwitch {
+	top: -40px;
+	float: right;
+	right: 30px;
+}
+
+.settingsContent input {
+	padding: 6px 4px;
+	border: 2px solid #ccc; 
+	border-radius: 9px;
+	font-size: 16px;
+	width: 200px;
+}
+
+table, th, td {
+	padding: 0 20px 10px 20px;
+	border-collapse: collapse;
 }

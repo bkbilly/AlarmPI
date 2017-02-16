@@ -33,6 +33,7 @@ class DoorSensor():
         self.enabledPins = []
         self.settings = self.ReadSettings()
         self.sensorsStatus = {'sensors': []}
+        self.hiddenUIPassword = "**************"
 
         # Stop execution on exit
         self.setAlert = False
@@ -122,7 +123,7 @@ class DoorSensor():
         It also uses the timezone from json file to get the local time.
         '''
         try:
-            mytimezone = pytz.timezone(self.settings['settings']['timezone'])
+            mytimezone = pytz.timezone(self.settings['ui']['timezone'])
         except:
             mytimezone = pytz.utc
 
@@ -169,7 +170,7 @@ class DoorSensor():
             mail_user = self.settings['mail']['username']
             mail_pwd = self.settings['mail']['password']
             smtp_server = self.settings['mail']['smtpServer']
-            smtp_port = self.settings['mail']['smtpPort']
+            smtp_port = int(self.settings['mail']['smtpPort'])
 
             msg = MIMEText(self.settings['mail']['messageBody'])
             sender = mail_user
@@ -191,7 +192,7 @@ class DoorSensor():
         ''' This method enables the output pin for the serene '''
         if self.settings['serene']['enable'] is True:
             self.writeLog("Serene started")
-            serenePin = self.settings['serene']['pin']
+            serenePin = int(self.settings['serene']['pin'])
             GPIO.setup(serenePin, GPIO.OUT)
             GPIO.output(serenePin, GPIO.HIGH)
 
@@ -229,15 +230,15 @@ class DoorSensor():
         ''' Returns the status of the alert for the UI '''
         return {"alert": self.setAlert}
 
-    def getSerenePin(self):
-        ''' Returns the output pin for the serene '''
-        return {'serenePin': self.settings['serene']['pin']}
-
     def getSensorsLog(self, limit):
         ''' Returns the last n lines if the log file '''
         with open(self.logfile, "r") as f:
             lines = f.readlines()
         return {"log": lines[-limit:]}
+
+    def getSerenePin(self):
+        ''' Returns the output pin for the serene '''
+        return {'serenePin': self.settings['serene']['pin']}
 
     def setSerenePin(self, pin):
         ''' Changes the input serene pin '''
@@ -307,3 +308,46 @@ class DoorSensor():
     def getPortUI(self):
         ''' Returns the port for the UI '''
         return self.settings['ui']['port']
+
+    def getSereneSettings(self):
+        return self.settings['serene']
+
+    def setSereneSettings(self, message):
+        self.settings['serene']['enable'] = message['enable']
+        self.settings['serene']['pin'] = message['pin']
+        self.writeNewSettingsToFile()
+
+    def getMailSettings(self):
+        return self.settings['mail']
+
+    def setMailSettings(self, message):
+        self.settings['mail']['enable'] = message['enable']
+        self.settings['mail']['smtpServer'] = message['smtpServer']
+        self.settings['mail']['smtpPort'] = message['smtpPort']
+        self.settings['mail']['recipients'] = message['recipients']
+        self.settings['mail']['messageSubject'] = message['messageSubject']
+        self.settings['mail']['messageBody'] = message['messageBody']
+        self.settings['mail']['username'] = message['username']
+        self.settings['mail']['password'] = message['password']
+        self.writeNewSettingsToFile()
+
+    def getVoipSettings(self):
+        return self.settings['voip']
+
+    def setVoipSettings(self, message):
+        self.settings['voip']['enable'] = message['enable']
+        self.settings['voip']['domain'] = message['domain']
+        self.settings['voip']['numbersToCall'] = message['numbersToCall']
+        self.settings['voip']['timesOfRepeat'] = message['timesOfRepeat']
+        self.settings['voip']['username'] = message['username']
+        self.settings['voip']['password'] = message['password']
+        self.writeNewSettingsToFile()
+
+    def getUISettings(self):
+        return self.settings['ui']
+
+    def setUISettings(self, message):
+        self.settings['ui']['timezone'] = message['timezone']
+        self.settings['ui']['username'] = message['username']
+        self.settings['ui']['password'] = message['password']
+        self.writeNewSettingsToFile()
