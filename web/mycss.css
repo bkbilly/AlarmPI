@@ -8,6 +8,20 @@
 	box-shadow: inset -10px 0px 40px 1px #777;
 	float: left;
 }
+
+#settingsSphere {
+	cursor: pointer;
+	background-color: #666;
+	width: 40px;
+	height: 40px;
+	top: 140px;
+	left: 190px;
+}
+#settingsSphereText {
+	font-size: xx-large;
+	margin-top: 10px;
+}
+
 /* List */
 #sensorLog{
 	position: absolute;
@@ -24,6 +38,7 @@
 }
 
 .sphere {
+	/*cursor: pointer;*/
 	margin: 5px 50px 0 40px;
 	left: 50px;
 	top: 100px;

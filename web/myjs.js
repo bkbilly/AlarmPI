@@ -1,4 +1,5 @@
 var socket = io();
+var enabledPins = {'in': [], 'out': []}
 var sensor = '<div class="sensordiv" id="sensordiv{sensorpin}">\
 	<div class="sensortext" id="sensorname{sensorpin}" onclick="changeNamePin(this, {sensorpin}, \'sensor\')"></div>\
 	<div class="setSensorState">\
@@ -28,13 +29,22 @@ document.getElementsByTagName("head")[0].appendChild(fileref)
 
 $( document ).ready(function() {
 	var modal = document.getElementById('myModal');
-	var span = document.getElementsByClassName("close")[0];
-	span.onclick = function() {
-		closeConfigWindow();
-	}
+	var modal2 = document.getElementById('settingsModal');
 	window.onclick = function(event) {
-		if (event.target == modal) {
+		if (event.target == modal || event.target == modal2) {
 			closeConfigWindow();
+		}
+	}
+	var acc = document.getElementsByClassName("accordion");
+	for (i = 0; i < acc.length; i++) {
+		acc[i].onclick = function() {
+			this.classList.toggle("active");
+			var panel = this.nextElementSibling;
+			if (panel.style.maxHeight){
+				panel.style.maxHeight = null;
+			} else {
+				panel.style.maxHeight = panel.scrollHeight + "px";
+			}
 		}
 	}
 
@@ -77,8 +87,10 @@ function startAgain(){
 }
 
 function refreshStatus(data){
+	enabledPins['in'] = []
 	console.log(data);
 	$.each(data.sensors, function(i, alertsensor){
+		enabledPins['in'].push(alertsensor.pin)
 		btnColour = "";
 		if (alertsensor.active === false)
 			btnColour = "white";
@@ -109,6 +121,7 @@ function setAlarmStatus(msg){
 }
 
 function addSerenePin(msg){
+	enabledPins['out'] = [msg.serenePin]
 	console.log(msg);
 	$("#alertStatus").attr("onclick","changeNamePin(this, "+ msg.serenePin +", 'serene')");
 	$("#serenePin").text(msg.serenePin);
@@ -135,7 +148,7 @@ function changeNamePin(div, pin, type){
 	currentName = div.innerHTML;
 	currentPin = pin;
 	$("#inputName").val(currentName);
-	$("#inputPin").val(currentPin);
+	addPinsToSelect('#inputPin', currentPin);
 
 	if (type === 'serene'){
 		$("#inputName").hide();
@@ -195,4 +208,93 @@ function openConfigWindow(){
 
 function closeConfigWindow(){
 	$("#myModal").hide();
+	$("#settingsModal").hide();
+}
+
+function settingsMenu(){
+	$("#settingsModal").show();
+	$.getJSON("getSereneSettings.json").done(function(data){
+		$("#myonoffswitchSerene").prop('checked', data.enable);
+		addPinsToSelect('#inputSerenePin', data.pin);
+	});
+	$.getJSON("getMailSettings.json").done(function(data){
+		$("#myonoffswitchMail").prop('checked', data.enable);
+		$("#usernameMailInput").val(data.username);
+		$("#passwordMailInput").val(data.password);
+		$("#smtpServerMailInput").val(data.smtpServer);
+		$("#smtpPortMailInput").val(data.smtpPort);
+		$("#recipientsMailInput").val(data.recipients);
+		$("#messageSubjectMailInput").val(data.messageSubject);
+		$("#messageBodyMailInput").val(data.messageBody);
+	});
+	$.getJSON("getVoipSettings.json").done(function(data){
+		$("#myonoffswitchVoip").prop('checked', data.enable);
+		$("#usernameVoipInput").val(data.username);
+		$("#passwordVoipInput").val(data.password);
+		$("#domainVoipInput").val(data.domain);
+		$("#numbersToCallVoipInput").val(data.numbersToCall);
+		$("#timesOfRepeatVoipInput").val(data.timesOfRepeat);
+	});
+	$.getJSON("getUISettings.json").done(function(data){
+		$("#usernameUIInput").val(data.username);
+		$("#passwordUIInput").val(data.password);
+		$("#timezoneUIInput").val(data.timezone);
+	});
+}
+
+function saveSettings(){
+	console.log("endend");
+	var messageSerene = {}
+	var messageMail = {}
+	var messageVoip = {}
+	var messageUI = {}
+
+	messageSerene.enable = $("#myonoffswitchSerene").prop('checked');
+	messageSerene.pin = parseInt($("#inputSerenePin").val());
+
+	messageMail.enable = $("#myonoffswitchMail").prop('checked');
+	messageMail.username = $("#usernameMailInput").val();
+	messageMail.password = $("#passwordMailInput").val();
+	messageMail.smtpServer = $("#smtpServerMailInput").val();
+	messageMail.smtpPort = parseInt($("#smtpPortMailInput").val());
+	messageMail.recipients = $("#recipientsMailInput").val().split(/[\s,]+/);
+	messageMail.messageSubject = $("#messageSubjectMailInput").val();
+	messageMail.messageBody = $("#messageBodyMailInput").val();
+
+	messageVoip.enable = $("#myonoffswitchVoip").prop('checked');
+	messageVoip.username = $("#usernameVoipInput").val();
+	messageVoip.password = $("#passwordVoipInput").val();
+	messageVoip.domain = $("#domainVoipInput").val();
+	messageVoip.numbersToCall = $("#numbersToCallVoipInput").val().split(/[\s,]+/);
+	messageVoip.timesOfRepeat = $("#timesOfRepeatVoipInput").val();
+
+	messageUI.username = $("#usernameUIInput").val();
+	messageUI.password = $("#passwordUIInput").val();
+	messageUI.timezone = $("#timezoneUIInput").val();
+
+	console.log(messageSerene);
+	console.log(messageMail);
+	console.log(messageVoip);
+	console.log(messageUI);
+	socket.emit('setSereneSettings', messageSerene);
+	socket.emit('setMailSettings', messageMail);
+	socket.emit('setVoipSettings', messageVoip);
+	socket.emit('setUISettings', messageUI);
+	closeConfigWindow();
+}
+
+
+function addPinsToSelect(selectDiv, selectPin){
+	$(selectDiv).empty();
+	enabledPinsList = enabledPins['in'].concat(enabledPins['out'])
+	for (var i = 1; i <= 27; i++) {
+		disabled = ''
+		selected = ''
+		if ($.inArray(i, enabledPinsList) != -1 && i != selectPin)
+			disabled = 'disabled'
+		if (i == selectPin)
+			selected = 'selected'
+		$(selectDiv).append(`<option value="${i}" ${disabled} ${selected}>${i}</option>`)
+	}
+	// $(selectDiv).val(currentPin);
 }
