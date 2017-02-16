@@ -52,37 +52,37 @@ def requires_auth(f):
 
 
 @app.route('/')
-# @requires_auth
+@requires_auth
 def index():
     return send_from_directory(webDirectory, 'index.html')
 
 
 @app.route('/main.css')
-# @requires_auth
+@requires_auth
 def main():
     return send_from_directory(webDirectory, 'main.css')
 
 
 @app.route('/icon.png')
-# @requires_auth
+@requires_auth
 def icon():
     return send_from_directory(webDirectory, 'icon.png')
 
 
 @app.route('/mycss.css')
-# @requires_auth
+@requires_auth
 def mycss():
     return send_from_directory(webDirectory, 'mycss.css')
 
 
 @app.route('/mycssMobile.css')
-# @requires_auth
+@requires_auth
 def mycssMobile():
     return send_from_directory(webDirectory, 'mycssMobile.css')
 
 
 @app.route('/myjs.js')
-# @requires_auth
+@requires_auth
 def myjs():
     return send_from_directory(webDirectory, 'myjs.js')
 
@@ -90,49 +90,49 @@ def myjs():
 # Get the required data from the AlarmPI
 
 @app.route('/alertpins.json')
-# @requires_auth
+@requires_auth
 def alertpinsJson():
     return json.dumps(alarmSensors.getSensorsArmed())
 
 
 @app.route('/alarmStatus.json')
-# @requires_auth
+@requires_auth
 def alarmStatus():
     return json.dumps(alarmSensors.getAlarmStatus())
 
 
 @app.route('/sensorsLog.json')
-# @requires_auth
+@requires_auth
 def sensorsLog():
     return json.dumps(alarmSensors.getSensorsLog(10))
 
 
 @app.route('/serenePin.json')
-# @requires_auth
+@requires_auth
 def serenePin():
     return json.dumps(alarmSensors.getSerenePin())
 
 
 @app.route('/getSereneSettings.json')
-# @requires_auth
+@requires_auth
 def getSereneSettings():
     return json.dumps(alarmSensors.getSereneSettings())
 
 
 @app.route('/getMailSettings.json')
-# @requires_auth
+@requires_auth
 def getMailSettings():
     return json.dumps(alarmSensors.getMailSettings())
 
 
 @app.route('/getVoipSettings.json')
-# @requires_auth
+@requires_auth
 def getVoipSettings():
     return json.dumps(alarmSensors.getVoipSettings())
 
 
 @app.route('/getUISettings.json')
-# @requires_auth
+@requires_auth
 def getUISettings():
     return json.dumps(alarmSensors.getUISettings())
 
@@ -140,98 +140,98 @@ def getUISettings():
 # Change settings to the AlarmPI
 
 @app.route('/activateAlarmOnline')
-# @requires_auth
+@requires_auth
 def activateAlarmOnline():
     alarmSensors.activateAlarm()
     socketio.emit('settingsChanged', alarmSensors.getSensorsArmed())
 
 
 @app.route('/deactivateAlarmOnline')
-# @requires_auth
+@requires_auth
 def deactivateAlarmOnline():
     alarmSensors.deactivateAlarm()
     socketio.emit('settingsChanged', alarmSensors.getSensorsArmed())
 
 
 @socketio.on('setSerenePin')
-# @requires_auth
+@requires_auth
 def setSerenePin(message):
     alarmSensors.setSerenePin(int(message['pin']))
     socketio.emit('pinsChanged')
 
 
 @socketio.on('setSensorState')
-# @requires_auth
+@requires_auth
 def setSensorState(message):
     alarmSensors.setSensorState(message['pin'], message['active'])
     socketio.emit('settingsChanged', alarmSensors.getSensorsArmed())
 
 
 @socketio.on('setSensorName')
-# @requires_auth
+@requires_auth
 def setSensorName(message):
     alarmSensors.setSensorName(message['pin'], message['name'])
     socketio.emit('settingsChanged', alarmSensors.getSensorsArmed())
 
 
 @socketio.on('setSensorPin')
-# @requires_auth
+@requires_auth
 def setSensorPin(message):
     alarmSensors.setSensorPin(int(message['pin']), int(message['newpin']))
     socketio.emit('pinsChanged')
 
 
 @socketio.on('activateAlarm')
-# @requires_auth
+@requires_auth
 def activateAlarm():
     alarmSensors.activateAlarm()
     socketio.emit('settingsChanged', alarmSensors.getSensorsArmed())
 
 
 @socketio.on('deactivateAlarm')
-# @requires_auth
+@requires_auth
 def deactivateAlarm():
     alarmSensors.deactivateAlarm()
     socketio.emit('settingsChanged', alarmSensors.getSensorsArmed())
 
 
 @socketio.on('addSensor')
-# @requires_auth
+@requires_auth
 def addSensor(message):
     alarmSensors.addSensor(int(message['pin']), message['name'], message['active'])
     socketio.emit('pinsChanged')
 
 
 @socketio.on('delSensor')
-# @requires_auth
+@requires_auth
 def delSensor(message):
     alarmSensors.delSensor(int(message['pin']))
     socketio.emit('pinsChanged')
 
 
 @socketio.on('setSereneSettings')
-# @requires_auth
+@requires_auth
 def setSereneSettings(message):
     alarmSensors.setSereneSettings(message)
     socketio.emit('settingsChanged', alarmSensors.getSensorsArmed())
 
 
 @socketio.on('setMailSettings')
-# @requires_auth
+@requires_auth
 def setMailSettings(message):
     alarmSensors.setMailSettings(message)
     socketio.emit('settingsChanged', alarmSensors.getSensorsArmed())
 
 
 @socketio.on('setVoipSettings')
-# @requires_auth
+@requires_auth
 def setVoipSettings(message):
     alarmSensors.setVoipSettings(message)
     socketio.emit('settingsChanged', alarmSensors.getSensorsArmed())
 
 
 @socketio.on('setUISettings')
-# @requires_auth
+@requires_auth
 def setUISettings(message):
     alarmSensors.setUISettings(message)
     socketio.emit('settingsChanged', alarmSensors.getSensorsArmed())
