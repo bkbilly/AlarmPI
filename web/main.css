@@ -164,6 +164,7 @@ select {
 }
 
 
+
 /* Modal */
 .modal {
 	display: none;
@@ -346,12 +347,12 @@ div.panel {
 }
 
 .settingsModalContent {
-	width: 600px;
+	width: 500px;
 	margin: 3% auto; 
 }
 
 .settingsOnOffSwitch {
-	top: -40px;
+	top: 15px;
 	float: right;
 	right: 30px;
 }
@@ -367,4 +368,14 @@ div.panel {
 table, th, td {
 	padding: 0 20px 10px 20px;
 	border-collapse: collapse;
+}
+
+
+.onoffswitch-innerHttps:before {
+	content: "HTTPs";
+	padding-left: 5px;
+}
+.onoffswitch-innerHttps:after {
+	content: "HTTP";
+	padding-right: 15px;
 }

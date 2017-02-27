@@ -81,9 +81,6 @@ function startAgain(){
 	$.getJSON("sensorsLog.json").done(function(data){
 		addSensorLog(data);
 	});
-	$.getJSON("serenePin.json").done(function(data){
-		addSerenePin(data);
-	});
 }
 
 function refreshStatus(data){
@@ -120,12 +117,6 @@ function setAlarmStatus(msg){
 	}
 }
 
-function addSerenePin(msg){
-	enabledPins['out'] = [msg.serenePin]
-	console.log(msg);
-	$("#alertStatus").attr("onclick","changeNamePin(this, "+ msg.serenePin +", 'serene')");
-	$("#serenePin").text(msg.serenePin);
-}
 
 function addSensorLog(msg){
 	$.each(msg.log, function(i, tmplog){
@@ -236,9 +227,11 @@ function settingsMenu(){
 		$("#timesOfRepeatVoipInput").val(data.timesOfRepeat);
 	});
 	$.getJSON("getUISettings.json").done(function(data){
+		$("#myonoffswitchHTTPs").prop('checked', data.https);
 		$("#usernameUIInput").val(data.username);
 		$("#passwordUIInput").val(data.password);
 		$("#timezoneUIInput").val(data.timezone);
+		$("#portUIInput").val(data.port);
 	});
 }
 
@@ -268,9 +261,11 @@ function saveSettings(){
 	messageVoip.numbersToCall = $("#numbersToCallVoipInput").val().split(/[\s,]+/);
 	messageVoip.timesOfRepeat = $("#timesOfRepeatVoipInput").val();
 
+	messageUI.https = $("#myonoffswitchHTTPs").prop('checked');
 	messageUI.username = $("#usernameUIInput").val();
 	messageUI.password = $("#passwordUIInput").val();
 	messageUI.timezone = $("#timezoneUIInput").val();
+	messageUI.port = parseInt($("#portUIInput").val());
 
 	console.log(messageSerene);
 	console.log(messageMail);

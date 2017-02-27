@@ -33,7 +33,6 @@ class DoorSensor():
         self.enabledPins = []
         self.settings = self.ReadSettings()
         self.sensorsStatus = {'sensors': []}
-        self.hiddenUIPassword = "**************"
 
         # Stop execution on exit
         self.setAlert = False
@@ -61,7 +60,9 @@ class DoorSensor():
                            pull_up_down=GPIO.PUD_UP)
                 GPIO.remove_event_detect(sensor['pin'])
                 GPIO.add_event_detect(
-                    sensor['pin'], GPIO.BOTH, callback=self.RefreshAlarmData)
+                    sensor['pin'], GPIO.BOTH,
+                    callback=self.RefreshAlarmData,
+                    bouncetime=500)
             sensor['alert'] = False
             if GPIO.input(sensor['pin']) == 1:
                 sensor['alert'] = True
@@ -82,13 +83,18 @@ class DoorSensor():
         # Write Alerted Sensors Log and call IntruderAlert when alarm is activated
         for sensor in self.sensorsStatus['sensors']:
             if sensor['alert'] is True:
-                self.writeLog(sensor['name'])
+                if sensor['pin'] == inputPin:
+                    self.writeLog(sensor['name'])
                 if self.settings['settings']['alarmArmed'] is True and self.setAlert is False:
                     threading.Thread(target=self.intruderAlert).start()
 
         # TODO REMOVE PRINT
         print "\n\n\ncalled RefreshAlarmData"
         print inputPin
+        try:
+            print GPIO.input(int(inputPin))
+        except:
+            print "no input..."
         print self.enabledPins
 
     def getEnabledDisabledSensors(self):
@@ -240,11 +246,45 @@ class DoorSensor():
         ''' Returns the output pin for the serene '''
         return {'serenePin': self.settings['serene']['pin']}
 
-    def setSerenePin(self, pin):
-        ''' Changes the input serene pin '''
-        self.settings['serene']['pin'] = pin
-        self.writeNewSettingsToFile()
-        self.RefreshAlarmData(pin)
+    def getPortUI(self):
+        ''' Returns the port for the UI '''
+        return self.settings['ui']['port']
+
+    def getSereneSettings(self):
+        return self.settings['serene']
+
+    def getMailSettings(self):
+        return self.settings['mail']
+
+    def getVoipSettings(self):
+        return self.settings['voip']
+
+    def getUISettings(self):
+        return self.settings['ui']
+
+    def setSereneSettings(self, message):
+        if self.settings['serene'] != message:
+            self.settings['serene'] = message
+            self.writeLog("Settings for Serene changed")
+            self.writeNewSettingsToFile()
+
+    def setMailSettings(self, message):
+        if self.settings['mail'] != message:
+            self.settings['mail'] = message
+            self.writeLog("Settings for Mail changed")
+            self.writeNewSettingsToFile()
+
+    def setVoipSettings(self, message):
+        if self.settings['voip'] != message:
+            self.settings['voip'] = message
+            self.writeLog("Settings for VoIP changed")
+            self.writeNewSettingsToFile()
+
+    def setUISettings(self, message):
+        if self.settings['ui'] != message:
+            self.settings['ui'] = message
+            self.writeLog("Settings for UI changed")
+            self.writeNewSettingsToFile()
 
     def setSensorName(self, pin, name):
         ''' Changes the Sensor Name '''
@@ -258,6 +298,12 @@ class DoorSensor():
         for i, sensor in enumerate(self.settings['sensors']):
             if sensor['pin'] == pin:
                 self.settings['sensors'][i]['active'] = state
+                if state is True:
+                    logState = "Activated"
+                else:
+                    logState = "Deactivated"
+                logSensorName = self.settings['sensors'][i]['name']
+                self.writeLog("{0} sensor: {1}".format(logState, logSensorName))
         self.writeNewSettingsToFile()
         self.RefreshAlarmData(pin)
 
@@ -304,50 +350,3 @@ class DoorSensor():
         myuser = self.settings['ui']['username']
         mypass = self.settings['ui']['password']
         return username == myuser and password == mypass
-
-    def getPortUI(self):
-        ''' Returns the port for the UI '''
-        return self.settings['ui']['port']
-
-    def getSereneSettings(self):
-        return self.settings['serene']
-
-    def setSereneSettings(self, message):
-        self.settings['serene']['enable'] = message['enable']
-        self.settings['serene']['pin'] = message['pin']
-        self.writeNewSettingsToFile()
-
-    def getMailSettings(self):
-        return self.settings['mail']
-
-    def setMailSettings(self, message):
-        self.settings['mail']['enable'] = message['enable']
-        self.settings['mail']['smtpServer'] = message['smtpServer']
-        self.settings['mail']['smtpPort'] = message['smtpPort']
-        self.settings['mail']['recipients'] = message['recipients']
-        self.settings['mail']['messageSubject'] = message['messageSubject']
-        self.settings['mail']['messageBody'] = message['messageBody']
-        self.settings['mail']['username'] = message['username']
-        self.settings['mail']['password'] = message['password']
-        self.writeNewSettingsToFile()
-
-    def getVoipSettings(self):
-        return self.settings['voip']
-
-    def setVoipSettings(self, message):
-        self.settings['voip']['enable'] = message['enable']
-        self.settings['voip']['domain'] = message['domain']
-        self.settings['voip']['numbersToCall'] = message['numbersToCall']
-        self.settings['voip']['timesOfRepeat'] = message['timesOfRepeat']
-        self.settings['voip']['username'] = message['username']
-        self.settings['voip']['password'] = message['password']
-        self.writeNewSettingsToFile()
-
-    def getUISettings(self):
-        return self.settings['ui']
-
-    def setUISettings(self, message):
-        self.settings['ui']['timezone'] = message['timezone']
-        self.settings['ui']['username'] = message['username']
-        self.settings['ui']['password'] = message['password']
-        self.writeNewSettingsToFile()
