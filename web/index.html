@@ -15,8 +15,8 @@
 	<!--script src="Packages/jquery/jquery.min.js"></script>
 	<script src="Packages/jquery/jquery-ui.min.js"></script-->
 	<!--script src="/socket.io/socket.io.js"></script-->
-	<script src="http://code.jquery.com/jquery-1.11.1.js"></script>
-	<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+	<script src="jquery.js"></script>
+	<script src="socket.io.js"></script>
 
 	<link rel="stylesheet" href="main.css">
 	<script type="text/javascript" src="myjs.js"></script>
@@ -42,16 +42,15 @@
 			
 			<span class="close" onclick="closeConfigWindow()">x</span><br><br>
 
+			<div class="onoffswitch settingsOnOffSwitch">
+				<input type="checkbox" name="onoffswitchSerene" class="onoffswitch-checkbox" id="myonoffswitchSerene">
+				<label class="onoffswitch-label" for="myonoffswitchSerene">
+					<span class="onoffswitch-inner"></span>
+					<span class="onoffswitch-switch"></span>
+				</label>
+			</div>
 			<h1 class="settingsTitle">Serene Settings</h1>
 			<div class="settingsContent">
-				<div class="onoffswitch settingsOnOffSwitch">
-					<input type="checkbox" name="onoffswitchSerene" class="onoffswitch-checkbox" id="myonoffswitchSerene">
-					<label class="onoffswitch-label" for="myonoffswitchSerene">
-						<span class="onoffswitch-inner"></span>
-						<span class="onoffswitch-switch"></span>
-					</label>
-				</div>
-
 				<table>
 					<tr>
 						<td>
@@ -62,15 +61,16 @@
 					</tr>
 				</table>
 			</div>
+
+			<div class="onoffswitch settingsOnOffSwitch">
+				<input type="checkbox" name="onoffswitchMail" class="onoffswitch-checkbox" id="myonoffswitchMail">
+				<label class="onoffswitch-label" for="myonoffswitchMail">
+					<span class="onoffswitch-inner"></span>
+					<span class="onoffswitch-switch"></span>
+				</label>
+			</div>
 			<h1 class="settingsTitle">Mail Settings </h1>
 			<div class="settingsContent">
-				<div class="onoffswitch settingsOnOffSwitch">
-					<input type="checkbox" name="onoffswitchMail" class="onoffswitch-checkbox" id="myonoffswitchMail">
-					<label class="onoffswitch-label" for="myonoffswitchMail">
-						<span class="onoffswitch-inner"></span>
-						<span class="onoffswitch-switch"></span>
-					</label>
-				</div>
 				<table>
 					<tr>
 						<td>
@@ -94,16 +94,16 @@
 					</tr>
 				</table>
 			</div>
+
+			<div class="onoffswitch settingsOnOffSwitch">
+				<input type="checkbox" name="onoffswitchVoip" class="onoffswitch-checkbox" id="myonoffswitchVoip">
+				<label class="onoffswitch-label" for="myonoffswitchVoip">
+					<span class="onoffswitch-inner"></span>
+					<span class="onoffswitch-switch"></span>
+				</label>
+			</div>
 			<h1 class="settingsTitle">Voip Settings</h1>
 			<div class="settingsContent">
-				<div class="onoffswitch settingsOnOffSwitch">
-					<input type="checkbox" name="onoffswitchVoip" class="onoffswitch-checkbox" id="myonoffswitchVoip">
-					<label class="onoffswitch-label" for="myonoffswitchVoip">
-						<span class="onoffswitch-inner"></span>
-						<span class="onoffswitch-switch"></span>
-					</label>
-				</div>
-
 				<table>
 					<tr>
 						<td>
@@ -123,9 +123,17 @@
 					</tr>
 				</table>
 			</div>
+
+
+			<div class="onoffswitch settingsOnOffSwitch">
+				<input type="checkbox" name="onoffswitchMail" class="onoffswitch-checkbox" id="myonoffswitchHTTPs">
+				<label class="onoffswitch-label" for="myonoffswitchHTTPs">
+					<span class="onoffswitch-inner onoffswitch-innerHttps"></span>
+					<span class="onoffswitch-switch"></span>
+				</label>
+			</div>
 			<h1 class="settingsTitle">UI Settings</h1>
 			<div class="settingsContent">
-
 				<table>
 					<tr>
 						<td>
@@ -137,6 +145,8 @@
 						<td>
 							<label for="timezoneUIInput">timezone</label><br>
 							<input type="text" id="timezoneUIInput" placeholder="timezone"><br>
+							<label for="portUIInput">port</label><br>
+							<input type="text" id="portUIInput" placeholder="port"><br>
 						</td>
 					</tr>
 				</table>

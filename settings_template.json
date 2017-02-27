@@ -44,12 +44,13 @@
         }
     ],
     "settings": {
-        "alarmArmed": false,
-        "timezone": "Europe/Athens"
+        "alarmArmed": false
     },
     "ui": {
-        "username": "admin",
+        "port": 5000,
+        "https": true,
         "password": "secret",
-        "port": 5000
+        "username": "admin",
+        "timezone": "Europe/Athens"
     }
 }

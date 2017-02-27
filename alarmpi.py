@@ -2,6 +2,7 @@
 
 import json
 import os
+from OpenSSL import SSL
 
 from flask import Flask, send_from_directory, request, Response
 from flask_socketio import SocketIO
@@ -48,43 +49,76 @@ def requires_auth(f):
     return decorated
 
 
+# Start/Stop Application
+def shutdownServer():
+    func = request.environ.get('werkzeug.server.shutdown')
+    if func is None:
+        raise RuntimeError('Not running with the Werkzeug Server')
+    func()
+
+
+def startServer():
+    if alarmSensors.getUISettings()['https'] is True:
+        context = SSL.Context(SSL.SSLv23_METHOD)
+        context.use_privatekey_file('my.cert.key')
+        context.use_certificate_file('my.cert.crt')
+    else:
+        context = None
+    socketio.run(app, host="", port=alarmSensors.getPortUI(), ssl_context=context)
+    alarmSensors.RefreshAlarmData(None)
+
+
+@app.route('/restart')
+@requires_auth
+def restart():
+    shutdownServer()
+    startServer()
+    # python = sys.executable
+    # os.execl(python, python, *sys.argv)
+    # import subprocess
+    # subprocess.Popen(['bash startalarmpi.sh'], shell=True)
+
+
 # Get the required files for the UI
 
-
 @app.route('/')
-@requires_auth
 def index():
     return send_from_directory(webDirectory, 'index.html')
 
 
 @app.route('/main.css')
-@requires_auth
 def main():
     return send_from_directory(webDirectory, 'main.css')
 
 
 @app.route('/icon.png')
-@requires_auth
 def icon():
     return send_from_directory(webDirectory, 'icon.png')
 
 
 @app.route('/mycss.css')
-@requires_auth
 def mycss():
     return send_from_directory(webDirectory, 'mycss.css')
 
 
 @app.route('/mycssMobile.css')
-@requires_auth
 def mycssMobile():
     return send_from_directory(webDirectory, 'mycssMobile.css')
 
 
 @app.route('/myjs.js')
-@requires_auth
 def myjs():
     return send_from_directory(webDirectory, 'myjs.js')
+
+
+@app.route('/jquery.js')
+def jqueryfile():
+    return send_from_directory(webDirectory, 'jquery.js')
+
+
+@app.route('/socket.io.js')
+def socketiofile():
+    return send_from_directory(webDirectory, 'socket.io.js')
 
 
 # Get the required data from the AlarmPI
@@ -239,4 +273,4 @@ def setUISettings(message):
 
 # Run
 if __name__ == '__main__':
-    socketio.run(app, host="", port=alarmSensors.getPortUI())
+    startServer()
