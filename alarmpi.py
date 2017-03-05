@@ -89,36 +89,43 @@ def index():
 
 
 @app.route('/main.css')
+@requires_auth
 def main():
     return send_from_directory(webDirectory, 'main.css')
 
 
 @app.route('/icon.png')
+@requires_auth
 def icon():
     return send_from_directory(webDirectory, 'icon.png')
 
 
 @app.route('/mycss.css')
+@requires_auth
 def mycss():
     return send_from_directory(webDirectory, 'mycss.css')
 
 
 @app.route('/mycssMobile.css')
+@requires_auth
 def mycssMobile():
     return send_from_directory(webDirectory, 'mycssMobile.css')
 
 
 @app.route('/myjs.js')
+@requires_auth
 def myjs():
     return send_from_directory(webDirectory, 'myjs.js')
 
 
 @app.route('/jquery.js')
+@requires_auth
 def jqueryfile():
     return send_from_directory(webDirectory, 'jquery.js')
 
 
 @app.route('/socket.io.js')
+@requires_auth
 def socketiofile():
     return send_from_directory(webDirectory, 'socket.io.js')
 
@@ -126,6 +133,7 @@ def socketiofile():
 # Get the required data from the AlarmPI
 
 @app.route('/alertpins.json')
+@requires_auth
 def alertpinsJson():
     return json.dumps(alarmSensors.getSensorsArmed())
 
