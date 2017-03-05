@@ -7,6 +7,7 @@ from OpenSSL import SSL
 from flask import Flask, send_from_directory, request, Response
 from flask_socketio import SocketIO
 from functools import wraps
+from distutils.util import strtobool
 
 from DoorSensor import DoorSensor
 
@@ -82,6 +83,7 @@ def restart():
 # Get the required files for the UI
 
 @app.route('/')
+@requires_auth
 def index():
     return send_from_directory(webDirectory, 'index.html')
 
@@ -124,7 +126,6 @@ def socketiofile():
 # Get the required data from the AlarmPI
 
 @app.route('/alertpins.json')
-@requires_auth
 def alertpinsJson():
     return json.dumps(alarmSensors.getSensorsArmed())
 
@@ -135,10 +136,13 @@ def alarmStatus():
     return json.dumps(alarmSensors.getAlarmStatus())
 
 
-@app.route('/sensorsLog.json')
+@app.route('/sensorsLog.json', methods=['Get', 'POST'])
 @requires_auth
 def sensorsLog():
-    return json.dumps(alarmSensors.getSensorsLog(10))
+    limit = 10
+    if request.args.get('limit').isdigit():
+        limit = int(request.args.get('limit'))
+    return json.dumps(alarmSensors.getSensorsLog(limit))
 
 
 @app.route('/serenePin.json')
@@ -184,6 +188,20 @@ def activateAlarmOnline():
 @requires_auth
 def deactivateAlarmOnline():
     alarmSensors.deactivateAlarm()
+    socketio.emit('settingsChanged', alarmSensors.getSensorsArmed())
+
+
+@app.route('/setSensorStateOnline', methods=['GET', 'POST'])
+@requires_auth
+def setSensorStateOnline():
+    message = request.args.get('hello')
+    message = {
+        "pin": int(request.args.get('pin')),
+        "active": strtobool(request.args.get('active').lower())
+    }
+    message['active'] = True if message['active'] else False
+    print message
+    alarmSensors.setSensorState(message['pin'], message['active'])
     socketio.emit('settingsChanged', alarmSensors.getSensorsArmed())
 
 
