@@ -140,8 +140,10 @@ def alarmStatus():
 @requires_auth
 def sensorsLog():
     limit = 10
-    if request.args.get('limit').isdigit():
-        limit = int(request.args.get('limit'))
+    requestLimit = request.args.get('limit')
+    if requestLimit != None:
+        if requestLimit.isdigit():
+            limit = int(request.args.get('limit'))
     return json.dumps(alarmSensors.getSensorsLog(limit))
 
 
