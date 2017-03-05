@@ -78,7 +78,7 @@ function startAgain(){
 	$.getJSON("alarmStatus.json").done(function(data){
 		setAlarmStatus(data);
 	});
-	$.getJSON("sensorsLog.json").done(function(data){
+	$.getJSON("sensorsLog.json?limit=11").done(function(data){
 		addSensorLog(data);
 	});
 }
