@@ -24,7 +24,7 @@ It can also be used with IFTTT using the Maker module like this:
 
 
 ## Installation
-```
+```bash
 sudo git clone https://github.com/bkbilly/AlarmPI.git
 cd AlarmPI/
 sudo cp settings_template.json settings.json
