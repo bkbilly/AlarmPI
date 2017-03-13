@@ -1,8 +1,27 @@
 # AlarmPI
 
-AlarmPI is a home alarm system based on Raspberry PI controlling PIR and Door sensors. It uses a web interface which is able to activate or deactivate the alarm and also disable or enable sensors. You can also change some settings like changing name of sensor, adding sensors and changing pins of both the serene and sensors.
+AlarmPI is a home alarm system based on Raspberry PI controlling PIR sensors, Door sensors or any other wired sensor. It is controlled with a Web UI, or a Android Application. When the alarm detects movement, it supports the following events:
+ * Enables the Serene
+ * Send Mail
+ * VoIP Calls
 
-When the alarm is active and it detects change in the sensors, the application enables the Serene, sends Mail and calls through VoIP provider. All those events can be activated/deactivated through settings.json
+## Usage
+
+### Web UI
+The Web Interface of the alarm has all the features that are needed to configure and use the home security. It supports real time events of the sensors, the logs and their status.
+It also works as an smartphone application from the browser: _Add to Home screen_
+
+### Mobile Application
+The android application is very light and fast and it is recomended for the phone, but it has no real time updates.
+The source code for the application is here:
+https://github.com/bkbilly/AlarmPI-Android
+
+### IFTTT
+It can also be used with IFTTT using the Maker module like this:
+`https://admin:secret@example.com:5000/activateAlarmOnline`
+`https://admin:secret@example.com:5000/deactivateAlarmOnline`
+>My personal favourite is to control it with Google Assistant.
+
 
 ## Installation
 ```
@@ -13,12 +32,11 @@ sudo cp play_template.wavplay.wav
 sudo pip install -r requirements.txt
 ```
 
-## Run on Raspberry Pi Boot
+### Run on Raspberry Pi Boot
 Edit the `/etc/rc.local` and before exit 0 add this line: `python /home/pi/AlarmPI/alarmpi.py &`
 
 
-
-## settings.json
+### Configuration Explained `settings.json`
 
 * `serene.enable` (bool) Enable serene activation
 * `serene.pin` (int) Output pin of the serene
@@ -27,7 +45,7 @@ Edit the `/etc/rc.local` and before exit 0 add this line: `python /home/pi/Alarm
 * `mail.smtpPort` (int) SMTP Port of your mail
 * `mail.username` (str) Username of your mail
 * `mail.password` (str) Password of your mail
-* `mail.recipients` (list str) List of recipents. eg. `["mail1@example.com", "mail2@example.com"]`
+* `mail.recipients` (list str) List of recipents. eg. ["mail1@example.com", "mail2@example.com"]
 * `mail.messageSubject` (str) Subject of the sent mail
 * `mail.messageBody` (str) Body message of the sent mail
 * `voip.enable` (bool) Enable VoIP alerts
@@ -39,26 +57,20 @@ Edit the `/etc/rc.local` and before exit 0 add this line: `python /home/pi/Alarm
 * `sensors.active` (bool) Activate the specific sensor
 * `sensors.name` (str) Name of the specific sensor
 * `sensors.pin` (int) Input pin of the specific sensor
+* `sensors.alert` (bool) Automatically created. Status of the sensor
 * `settings.alarmArmed` (bool) If true, activate the alarm
-* `settings.timezone` (str) The timezone for the log file based on pytz
 * `ui.username` (str) Username for the Web UI
 * `ui.password` (str) Password for the Web UI
+* `ui.https` (bool) Use TLS encryption for the Web UI
 * `ui.port` (int) TCP port for the Web UI
+* `ui.timezone` (str) The timezone for the log file based on pytz
 
-## SipCall (VoIP)
+### SipCall (VoIP)
 
 I have built the sipcall for the Raspberry Pi, so hopefully you will not have to build it yourself.
 To test it, execute this replacing the (myserver, myusername, mypassword, mynumbertocall):
 
 `./sipcall -sd myserver -su myusername -sp mypassword -pn mynumbertocall -s 1 -mr 2 -ttsf ../play.wav`
-
-## Usage Tip
-
-You can use the IFTTT with the Maker module like this:
-`http://admin:secret@example.com:5000/activateAlarmOnline`
-`http://admin:secret@example.com:5000/deactivateAlarmOnline`
-
-My personal favourite is to control it with Google Assistant.
 
 ## Contributing
 
