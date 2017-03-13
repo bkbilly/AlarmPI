@@ -1,6 +1,6 @@
 # AlarmPI
 
-AlarmPI is a home alarm system based on Raspberry PI controlling PIR sensors, Door sensors or any other wired sensor. It is controlled with a Web UI, or a Android Application. When the alarm detects movement, it supports the following events:
+AlarmPI is a home alarm system based on Raspberry PI controlling PIR sensors, Door sensors or any other wired sensor. It is controlled with a Web UI, or a Android Application using HTTPS. When the alarm detects movement, it supports the following events:
  * Enables the Serene
  * Send Mail
  * VoIP Calls
