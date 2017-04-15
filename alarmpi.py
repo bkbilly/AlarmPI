@@ -12,8 +12,8 @@ from distutils.util import strtobool
 from DoorSensor import DoorSensor
 
 import logging
-log = logging.getLogger('werkzeug')
-log.setLevel(logging.ERROR)
+# log = logging.getLogger('werkzeug')
+# log.setLevel(logging.ERROR)
 
 
 class myDoorSensor(DoorSensor):
@@ -29,6 +29,8 @@ webDirectory = os.path.join(wd, 'web')
 jsonfile = os.path.join(wd, "settings.json")
 logfile = os.path.join(wd, "alert.log")
 sipcallfile = os.path.join(os.path.join(wd, "voip"), "sipcall")
+certkeyfile = os.path.join(wd, 'my.cert.key')
+certcrtfile = os.path.join(wd, 'my.cert.crt')
 alarmSensors = myDoorSensor(jsonfile, logfile, sipcallfile)
 
 
@@ -61,12 +63,12 @@ def shutdownServer():
 def startServer():
     if alarmSensors.getUISettings()['https'] is True:
         context = SSL.Context(SSL.SSLv23_METHOD)
-        context.use_privatekey_file('my.cert.key')
-        context.use_certificate_file('my.cert.crt')
+        context.use_privatekey_file(certkeyfile)
+        context.use_certificate_file(certcrtfile)
     else:
         context = None
     socketio.run(app, host="", port=alarmSensors.getPortUI(), ssl_context=context)
-    alarmSensors.RefreshAlarmData(None)
+    alarmSensors.RefreshAlarmData()
 
 
 @app.route('/restart')
@@ -218,7 +220,7 @@ def setSensorStateOnline():
 @socketio.on('setSerenePin')
 @requires_auth
 def setSerenePin(message):
-    alarmSensors.setSerenePin(int(message['pin']))
+    alarmSensors.setSerenePin(str(message['pin']))
     socketio.emit('pinsChanged')
 
 
@@ -239,7 +241,7 @@ def setSensorName(message):
 @socketio.on('setSensorPin')
 @requires_auth
 def setSensorPin(message):
-    alarmSensors.setSensorPin(int(message['pin']), int(message['newpin']))
+    alarmSensors.setSensorPin(str(message['pin']), str(message['newpin']))
     socketio.emit('pinsChanged')
 
 
@@ -260,14 +262,14 @@ def deactivateAlarm():
 @socketio.on('addSensor')
 @requires_auth
 def addSensor(message):
-    alarmSensors.addSensor(int(message['pin']), message['name'], message['active'])
+    alarmSensors.addSensor(str(message['pin']), message['name'], message['active'])
     socketio.emit('pinsChanged')
 
 
 @socketio.on('delSensor')
 @requires_auth
 def delSensor(message):
-    alarmSensors.delSensor(int(message['pin']))
+    alarmSensors.delSensor(str(message['pin']))
     socketio.emit('pinsChanged')
 
 

@@ -21,28 +21,23 @@
         "numbersToCall": [],
         "timesOfRepeat": ""
     },
-    "sensors": [
-        {
+    "sensors": {
+        "22": {
             "active": true,
-            "name": "Window",
-            "pin": 22
+            "alert": false,
+            "name": "Bedroom"
         },
-        {
-            "active": true,
-            "name": "Bedroom",
-            "pin": 23
+        "23": {
+            "active": false,
+            "alert": false,
+            "name": "PIR Bedroom"
         },
-        {
-            "active": true,
-            "name": "Grandma",
-            "pin": 27
+        "24": {
+            "active": false,
+            "alert": false,
+            "name": "PIR Livingroom"
         },
-        {
-            "active": true,
-            "name": "Livingroom",
-            "pin": 24
-        }
-    ],
+    },
     "settings": {
         "alarmArmed": false
     },

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import RPi.GPIO as GPIO
+from sensors import sensorGPIO
 from datetime import datetime
 import pytz
 import json
@@ -11,7 +11,7 @@ import smtplib
 from email.mime.text import MIMEText
 
 
-class DoorSensor():
+class DoorSensor(sensorGPIO):
 
     ''' This class runs on the background using GPIO Events Changes.
     It uses a json file to store the settings and a log file to store the logs.
@@ -22,17 +22,13 @@ class DoorSensor():
     '''
 
     def __init__(self, jsonfile, logfile, sipcallfile):
-        # GPIO Setup
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setwarnings(False)
-
+        self.sensorsGPIO = sensorGPIO()
         # Global Variables
         self.jsonfile = jsonfile
         self.logfile = logfile
         self.sipcallfile = sipcallfile
-        self.enabledPins = []
         self.settings = self.ReadSettings()
-        self.sensorsStatus = {'sensors': []}
+        self.allSensors = {}
 
         # Stop execution on exit
         self.setAlert = False
@@ -40,74 +36,54 @@ class DoorSensor():
 
         # Init Alarm
         self.writeLog("Alarm Booted")
-        self.RefreshAlarmData(None)
+        self.RefreshAlarmData()
 
-    def RefreshAlarmData(self, inputPin):
+        # Event Listeners
+        self.sensorsGPIO.on_alert(self.sensorAlert)
+        self.sensorsGPIO.on_alert_stop(self.sensorStopAlert)
+
+    def sensorAlert(self, sensorName, sensorData):
+        self.settings['sensors'][str(sensorName)]['alert'] = True
+        self.RefreshAlarmData()
+        name = self.settings['sensors'][str(sensorName)]['name']
+        active = self.settings['sensors'][str(sensorName)]['active']
+        activeText = "Active sensor: "
+        if active is False:
+            activeText = "Inactive sensor: "
+        self.writeLog(activeText + name)
+        self.checkIntruderAlert()
+
+    def sensorStopAlert(self, sensorName, sensorData):
+        self.settings['sensors'][str(sensorName)]['alert'] = False
+        self.RefreshAlarmData()
+
+    def checkIntruderAlert(self):
+        # Write Alerted Sensors Log and call IntruderAlert when alarm is activated
+        if self.settings['settings']['alarmArmed'] is True and self.setAlert is False:
+            for sensor, sensorvalue in self.settings['sensors'].iteritems():
+                if sensorvalue['alert'] is True:
+                    threading.Thread(target=self.intruderAlert).start()
+
+    def RefreshAlarmData(self):
         ''' This method adds event listener on enabled sensors and removes them for
         the disabled sensors.
         After each call it checks for an alert and calls the method responsible
         for the alert.
         '''
-        enabledSensors, disabledSensors = self.getEnabledDisabledSensors()
-        self.sensorsStatus = {'sensors': []}
+        self.allSensors = {}
 
-        # Enable pin events, check for their status and append result to sensorsStatus
-        for sensor in enabledSensors:
-            if sensor['pin'] not in self.enabledPins:
-                print "enabling pin: ", sensor['pin']
-                self.enabledPins.append(sensor['pin'])
-                GPIO.setup(sensor['pin'], GPIO.IN,
-                           pull_up_down=GPIO.PUD_UP)
-                GPIO.remove_event_detect(sensor['pin'])
-                GPIO.add_event_detect(
-                    sensor['pin'], GPIO.BOTH,
-                    callback=self.RefreshAlarmData,
-                    bouncetime=500)
-            sensor['alert'] = False
-            if GPIO.input(sensor['pin']) == 1:
-                sensor['alert'] = True
-            self.sensorsStatus['sensors'].append(sensor)
-
-        # Remove pin events and append result to sensorsStatus
-        for sensor in disabledSensors:
-            if sensor['pin'] in self.enabledPins:
-                print "disabling pin: ", sensor['pin']
-                GPIO.remove_event_detect(sensor['pin'])
-                self.enabledPins.remove(sensor['pin'])
-            sensor['alert'] = False
-            self.sensorsStatus['sensors'].append(sensor)
+        # Get a list of the enabled and the disabled sensors
+        for sensor, sensorvalue in self.settings['sensors'].iteritems():
+            self.sensorsGPIO.enableInputPin(int(sensor))
+            self.allSensors[sensor] = sensorvalue
+            sensor_alert = False
+            if sensorvalue['active'] is True:
+                if self.sensorsGPIO.get_sensor_state(sensor) == 1:
+                    sensor_alert = True
+            self.allSensors[sensor]['alert'] = sensor_alert
 
         # Send to JS
         self.updateUI('settingsChanged', self.getSensorsArmed())
-
-        # Write Alerted Sensors Log and call IntruderAlert when alarm is activated
-        for sensor in self.sensorsStatus['sensors']:
-            if sensor['alert'] is True:
-                if sensor['pin'] == inputPin:
-                    self.writeLog(sensor['name'])
-                if self.settings['settings']['alarmArmed'] is True and self.setAlert is False:
-                    threading.Thread(target=self.intruderAlert).start()
-
-        # TODO REMOVE PRINT
-        print "\n\n\ncalled RefreshAlarmData"
-        print inputPin
-        try:
-            print GPIO.input(int(inputPin))
-        except:
-            print "no input..."
-        print self.enabledPins
-
-    def getEnabledDisabledSensors(self):
-        ''' Gets a list of the enabled and the disabled sensors '''
-        enabledSensors = []
-        disabledSensors = []
-        self.settings = self.ReadSettings()
-        for sensor in self.settings['sensors']:
-            if sensor['active'] is True:
-                enabledSensors.append(sensor)
-            else:
-                disabledSensors.append(sensor)
-        return enabledSensors, disabledSensors
 
     def ReadSettings(self):
         ''' Reads the json settings file and returns it '''
@@ -117,6 +93,7 @@ class DoorSensor():
 
     def writeNewSettingsToFile(self):
         ''' Write the new settings to the json file '''
+        self.RefreshAlarmData()
         with open(self.jsonfile, 'w') as outfile:
             json.dump(self.settings, outfile, sort_keys=True, indent=4, separators=(',', ': '))
 
@@ -145,8 +122,8 @@ class DoorSensor():
         self.setAlert = True
         self.enableSerene()
         self.updateUI('alarmStatus', self.getAlarmStatus())
-        self.sendMail()
-        self.callVoip()
+        threading.Thread(target=self.sendMail).start()
+        threading.Thread(target=self.callVoip).start()
 
     def callVoip(self):
         ''' This method uses a prebuild application in C to connect to the SIP provider
@@ -199,20 +176,17 @@ class DoorSensor():
         if self.settings['serene']['enable'] is True:
             self.writeLog("Serene started")
             serenePin = int(self.settings['serene']['pin'])
-            GPIO.setup(serenePin, GPIO.OUT)
-            GPIO.output(serenePin, GPIO.HIGH)
+            self.sensorsGPIO.enableOutputPin(serenePin)
 
     def stopSerene(self):
         ''' This method disables the output pin for the serene '''
         if self.settings['serene']['enable'] is True:
             serenePin = self.settings['serene']['pin']
-            GPIO.setup(serenePin, GPIO.OUT)
-            GPIO.output(serenePin, GPIO.LOW)
+            self.sensorsGPIO.disableOutputPin(serenePin)
 
     def activateAlarm(self):
         ''' Activates the alarm '''
         self.writeLog("Alarm activated")
-        self.settings = self.ReadSettings()
         self.settings['settings']['alarmArmed'] = True
         self.writeNewSettingsToFile()
 
@@ -228,7 +202,7 @@ class DoorSensor():
     def getSensorsArmed(self):
         ''' Returns the sensors and alarm status as a json to use it to the UI '''
         sensorsArmed = {}
-        sensorsArmed['sensors'] = self.sensorsStatus['sensors']
+        sensorsArmed['sensors'] = self.settings['sensors']
         sensorsArmed['alarmArmed'] = self.settings['settings']['alarmArmed']
         return sensorsArmed
 
@@ -288,60 +262,42 @@ class DoorSensor():
 
     def setSensorName(self, pin, name):
         ''' Changes the Sensor Name '''
-        for i, sensor in enumerate(self.settings['sensors']):
-            if sensor['pin'] == pin:
-                self.settings['sensors'][i]['name'] = name
+        self.settings['sensors'][str(pin)]['name'] = name
         self.writeNewSettingsToFile()
 
     def setSensorState(self, pin, state):
         ''' Activate or Deactivate a sensor '''
-        for i, sensor in enumerate(self.settings['sensors']):
-            if sensor['pin'] == pin:
-                self.settings['sensors'][i]['active'] = state
-                if state is True:
-                    logState = "Activated"
-                else:
-                    logState = "Deactivated"
-                logSensorName = self.settings['sensors'][i]['name']
-                self.writeLog("{0} sensor: {1}".format(logState, logSensorName))
+        self.settings['sensors'][str(pin)]['active'] = state
         self.writeNewSettingsToFile()
-        self.RefreshAlarmData(pin)
+
+        logState = "Deactivated"
+        if state is True:
+            logState = "Activated"
+        logSensorName = self.settings['sensors'][str(pin)]['name']
+        self.writeLog("{0} sensor: {1}".format(logState, logSensorName))
+        self.writeNewSettingsToFile()
 
     def setSensorPin(self, pin, newpin):
         ''' Changes the Sensor Pin '''
-        for i, sensor in enumerate(self.settings['sensors']):
-            if sensor['pin'] == pin:
-                self.settings['sensors'][i]['pin'] = newpin
+        self.settings['sensors'][str(newpin)] = self.settings['sensors'][str(pin)]
+        del self.settings['sensors'][str(pin)]
+        self.sensorsGPIO.disableInputPin(pin)
         self.writeNewSettingsToFile()
-        self.RefreshAlarmData(pin)
 
     def addSensor(self, pin, name, active):
         ''' Add a new sensor '''
-        self.settings['sensors'].append({
-            "pin": pin,
+        self.settings['sensors'][str(pin)] = {
             "name": name,
             "active": active
-        })
-        self.sensorsStatus['sensors'].append({
-            "pin": pin,
-            "name": name,
-            "active": active
-        })
+        }
         self.writeNewSettingsToFile()
-        self.RefreshAlarmData(pin)
 
     def delSensor(self, pin):
         ''' Delete a sensor '''
-        tmpSensors = []
-        for sensor in self.settings['sensors']:
-            if sensor['pin'] != pin:
-                tmpSensors.append(sensor)
-
-        self.settings['sensors'] = tmpSensors
-        self.sensorsStatus['sensors'] = tmpSensors
+        del self.settings['sensors'][str(pin)]
+        self.sensorsGPIO.disableInputPin(pin)
 
         self.writeNewSettingsToFile()
-        self.RefreshAlarmData(pin)
 
     def check_auth(self, username, password):
         """This function is called to check if a

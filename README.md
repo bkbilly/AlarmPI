@@ -54,10 +54,10 @@ Edit the `/etc/rc.local` and before exit 0 add this line: `python /home/pi/Alarm
 * `voip.password` (str) VoIP password
 * `voip.numbersToCall` (list str) List of numbers to call. eg. ["3849392849", "3582735872"]
 * `voip.timesOfRepeat` (str) How many times the recorded message is played
-* `sensors.active` (bool) Activate the specific sensor
-* `sensors.name` (str) Name of the specific sensor
-* `sensors.pin` (int) Input pin of the specific sensor
-* `sensors.alert` (bool) Automatically created. Status of the sensor
+* `sensors[pin]` (str) Input pin of the specific sensor
+* `sensors[pin].active` (bool) Activate the specific sensor
+* `sensors[pin].name` (str) Name of the specific sensor
+* `sensors[pin].alert` (bool) Automatically created. Status of the sensor
 * `settings.alarmArmed` (bool) If true, activate the alarm
 * `ui.username` (str) Username for the Web UI
 * `ui.password` (str) Password for the Web UI
