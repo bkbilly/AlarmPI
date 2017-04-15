@@ -67,9 +67,9 @@ $( document ).ready(function() {
 function startAgain(){
 	$("#sensors").empty();
 	$.getJSON("alertpins.json").done(function(data){
-		$.each(data.sensors, function(i, item){
+		$.each(data.sensors, function(pin, item){
 			var tmpsensor = sensor
-			tmpsensor = tmpsensor.replace(/\{sensorpin\}/g, item.pin)
+			tmpsensor = tmpsensor.replace(/\{sensorpin\}/g, pin)
 			tmpsensor = tmpsensor.replace(/\{sensorname\}/g, item.name)
 			$(tmpsensor).appendTo("#sensors");
 		});
@@ -86,19 +86,19 @@ function startAgain(){
 function refreshStatus(data){
 	enabledPins['in'] = []
 	console.log(data);
-	$.each(data.sensors, function(i, alertsensor){
-		enabledPins['in'].push(alertsensor.pin)
+	$.each(data.sensors, function(pin, alertsensor){
+		enabledPins['in'].push(pin)
 		btnColour = "";
 		if (alertsensor.active === false)
 			btnColour = "white";
 		else
 			btnColour = (alertsensor.alert === true ? "green" : "red");
 		shadowBtnColour = "inset 0px 30px 40px -20px " + btnColour
-		$("#sensorstatus"+alertsensor.pin).css("background-color", btnColour);
-		$("#sensordiv"+alertsensor.pin).css("box-shadow", shadowBtnColour);
-		$("#myonoffswitch"+alertsensor.pin).prop('checked', alertsensor.active);
-		$("#sensorname"+alertsensor.pin).text(alertsensor.name);
-		$("#sensorgpio"+alertsensor.pin).text(alertsensor.pin);
+		$("#sensorstatus"+pin).css("background-color", btnColour);
+		$("#sensordiv"+pin).css("box-shadow", shadowBtnColour);
+		$("#myonoffswitch"+pin).prop('checked', alertsensor.active);
+		$("#sensorname"+pin).text(alertsensor.name);
+		$("#sensorgpio"+pin).text(pin);
 	});
 	if(data.alarmArmed == true) {
 		$("#armButton").removeClass("disarmedAlarm").addClass("armedAlarm");
