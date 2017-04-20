@@ -13,8 +13,10 @@ It also works as an smartphone application from the browser: _Add to Home screen
 
 ### Mobile Application
 The android application is very light and fast and it is recomended for the phone, but it has no real time updates.
-The source code for the application is here:
-https://github.com/bkbilly/AlarmPI-Android
+You can download it from here: [AlarmPI.apk](mobile/AlarmPI.apk)
+
+The source code for the application is here: https://github.com/bkbilly/AlarmPI-Android
+
 
 ### IFTTT
 It can also be used with IFTTT using the Maker module like this:
