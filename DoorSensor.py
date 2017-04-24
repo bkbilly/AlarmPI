@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from sensors import sensorGPIO
+from sensors import sensorGPIO, sensorHikvision
 from datetime import datetime
 import pytz
 import json
@@ -22,7 +22,6 @@ class DoorSensor(sensorGPIO):
     '''
 
     def __init__(self, jsonfile, logfile, sipcallfile):
-        self.sensorsGPIO = sensorGPIO()
         # Global Variables
         self.jsonfile = jsonfile
         self.logfile = logfile
@@ -35,14 +34,19 @@ class DoorSensor(sensorGPIO):
         self.kill_now = False
 
         # Init Alarm
+        self.sensorsGPIO = sensorGPIO()
+        self.sensorsHikvision = sensorHikvision()
         self.writeLog("Alarm Booted")
         self.RefreshAlarmData()
 
         # Event Listeners
         self.sensorsGPIO.on_alert(self.sensorAlert)
         self.sensorsGPIO.on_alert_stop(self.sensorStopAlert)
+        # Event Listeners
+        self.sensorsHikvision.on_alert(self.sensorAlert)
+        self.sensorsHikvision.on_alert_stop(self.sensorStopAlert)
 
-    def sensorAlert(self, sensorName, sensorData):
+    def sensorAlert(self, sensorName):
         self.settings['sensors'][str(sensorName)]['alert'] = True
         self.RefreshAlarmData()
         name = self.settings['sensors'][str(sensorName)]['name']
@@ -53,7 +57,7 @@ class DoorSensor(sensorGPIO):
         self.writeLog(activeText + name)
         self.checkIntruderAlert()
 
-    def sensorStopAlert(self, sensorName, sensorData):
+    def sensorStopAlert(self, sensorName):
         self.settings['sensors'][str(sensorName)]['alert'] = False
         self.RefreshAlarmData()
 
@@ -74,13 +78,26 @@ class DoorSensor(sensorGPIO):
 
         # Get a list of the enabled and the disabled sensors
         for sensor, sensorvalue in self.settings['sensors'].iteritems():
-            self.sensorsGPIO.enableInputPin(int(sensor))
-            self.allSensors[sensor] = sensorvalue
-            sensor_alert = False
-            if sensorvalue['active'] is True:
-                if self.sensorsGPIO.get_sensor_state(sensor) == 1:
-                    sensor_alert = True
-            self.allSensors[sensor]['alert'] = sensor_alert
+            print sensorvalue
+            if sensorvalue['type'] == 'GPIO':
+                self.sensorsGPIO.add_sensor(sensor)
+                self.allSensors[sensor] = sensorvalue
+                sensor_alert = False
+                if sensorvalue['active'] is True:
+                    if self.sensorsGPIO.is_sensor_active(int(sensor)):
+                        sensor_alert = True
+                self.allSensors[sensor]['alert'] = sensor_alert
+            if sensorvalue['type'] == 'Hikvision':
+                ip = sensorvalue['ip']
+                password = sensorvalue['pass']
+                username = sensorvalue['user']
+                self.sensorsHikvision.add_sensor(sensor, ip, username, password)
+                self.allSensors[sensor] = sensorvalue
+                sensor_alert = False
+                if sensorvalue['active'] is True:
+                    if self.sensorsHikvision.is_sensor_active(sensor):
+                        sensor_alert = True
+                self.allSensors[sensor]['alert'] = sensor_alert
 
         # Send to JS
         self.updateUI('settingsChanged', self.getSensorsArmed())
@@ -281,21 +298,22 @@ class DoorSensor(sensorGPIO):
         ''' Changes the Sensor Pin '''
         self.settings['sensors'][str(newpin)] = self.settings['sensors'][str(pin)]
         del self.settings['sensors'][str(pin)]
-        self.sensorsGPIO.disableInputPin(pin)
+        self.sensorsGPIO.del_sensor(pin)
         self.writeNewSettingsToFile()
 
-    def addSensor(self, pin, name, active):
+    def addSensor(self, pin, name, sensorType, active):
         ''' Add a new sensor '''
         self.settings['sensors'][str(pin)] = {
             "name": name,
-            "active": active
+            "active": active,
+            "type": sensorType
         }
         self.writeNewSettingsToFile()
 
     def delSensor(self, pin):
         ''' Delete a sensor '''
         del self.settings['sensors'][str(pin)]
-        self.sensorsGPIO.disableInputPin(pin)
+        self.sensorsGPIO.del_sensor(pin)
 
         self.writeNewSettingsToFile()
 
