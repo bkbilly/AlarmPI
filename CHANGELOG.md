@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file.
 
 
+## [2.1] - Apr 16, 2017
+#### ADDED
+  - Add hikvision Sensor (from settings.json)
+#### FIXED
+  - Fixed the GPIO Sensors on the UI to select only the unused pins.
+
 ## [2.0] - Apr 16, 2017
 #### ADDED
   - Created API for the sensors.

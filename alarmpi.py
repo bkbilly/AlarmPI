@@ -12,8 +12,8 @@ from distutils.util import strtobool
 from DoorSensor import DoorSensor
 
 import logging
-# log = logging.getLogger('werkzeug')
-# log.setLevel(logging.ERROR)
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
 
 
 class myDoorSensor(DoorSensor):
@@ -262,7 +262,7 @@ def deactivateAlarm():
 @socketio.on('addSensor')
 @requires_auth
 def addSensor(message):
-    alarmSensors.addSensor(str(message['pin']), message['name'], message['active'])
+    alarmSensors.addSensor(str(message['pin']), message['name'], 'GPIO', message['active'])
     socketio.emit('pinsChanged')
 
 

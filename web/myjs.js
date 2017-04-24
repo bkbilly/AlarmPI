@@ -5,7 +5,7 @@ var sensor = '<div class="sensordiv" id="sensordiv{sensorpin}">\
 	<div class="setSensorState">\
 		<div class="onoffswitch">\
 			<input type="checkbox" name="onoffswitch{sensorpin}" class="onoffswitch-checkbox" \
-			id="myonoffswitch{sensorpin}" onchange="changeSensorState(this, {sensorpin})">\
+			id="myonoffswitch{sensorpin}" onchange="changeSensorState(this, \'{sensorpin}\')">\
 			<label class="onoffswitch-label" for="myonoffswitch{sensorpin}">\
 				<span class="onoffswitch-inner"></span>\
 				<span class="onoffswitch-switch"></span>\
@@ -285,7 +285,7 @@ function addPinsToSelect(selectDiv, selectPin){
 	for (var i = 1; i <= 27; i++) {
 		disabled = ''
 		selected = ''
-		if ($.inArray(i, enabledPinsList) != -1 && i != selectPin)
+		if ($.inArray(i.toString(), enabledPinsList) != -1 && i != selectPin)
 			disabled = 'disabled'
 		if (i == selectPin)
 			selected = 'selected'

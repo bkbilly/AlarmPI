@@ -4,61 +4,64 @@ import RPi.GPIO as GPIO
 import threading
 import time
 
+import requests
+import re
+
 
 class Sensor():
     """docstring for Sensor"""
 
-    def __init__(self, sensorType, autoStop):
+    def __init__(self, sensorType, autoStop, alertTime):
         self.sensorType = sensorType
         self.autoStop = autoStop
-        self.alertTime = 2  # seconds
+        self.alertTime = alertTime  # seconds
         self._event_alert = []
         self._event_alert_stop = []
         self.allSensors = {}
+        self.activeSensorText = "active"
+        self.inactiveSensorText = "inactive"
+
+    def add_sensor(self, *sensors):
+        pass
+
+    def del_sensor(self, *sensors):
+        pass
 
     def get_all_sensors(self):
         return self.allSensors
 
-    def get_sensor_state(self, sensor):
-        return self.allSensors[int(sensor)]['state']
-
-    def get_alert_sensors(self):
-        alertSensors = {}
-        for sensor, sensorvalue in self.allSensors.iteritems():
-            if sensorvalue['state'] == 1:
-                alertSensors[sensor] = sensorvalue
-        return alertSensors
+    def is_sensor_active(self, sensor):
+        if self.allSensors[sensor]['state'] == self.activeSensorText:
+            return True
+        else:
+            return False
 
     def on_alert(self, callback):
         self._event_alert.append(callback)
 
-    def clear_alert_events(self):
-        self._event_alert = []
-
-    def notify_alert(self, sensorName, sensorData):
+    def _notify_alert(self, sensorName):
+        self.allSensors[sensorName]['state'] = self.activeSensorText
         if self.autoStop is True:
-            threading.Thread(target=self.notify_alert_stop_later, args=[sensorName, sensorData]).start()
+            threading.Thread(target=self._notify_alert_stop_later, args=[sensorName]).start()
         for callback in self._event_alert:
-            callback(sensorName, sensorData)
+            callback(sensorName)
 
     def on_alert_stop(self, callback):
         self._event_alert_stop.append(callback)
 
-    def clear_alert_stop_events(self):
-        self._event_alert_stop = []
-
-    def notify_alert_stop(self, sensorName, sensorData):
+    def _notify_alert_stop(self, sensorName):
+        self.allSensors[sensorName]['state'] = self.inactiveSensorText
         for callback in self._event_alert_stop:
-            callback(sensorName, sensorData)
+            callback(sensorName)
 
-    def notify_alert_stop_later(self, sensorName, sensorData):
+    def _notify_alert_stop_later(self, sensorName):
         time.sleep(self.alertTime)
-        self.notify_alert_stop(sensorName, sensorData)
+        self._notify_alert_stop(sensorName)
 
 
 class sensorGPIO(Sensor):
     def __init__(self):
-        Sensor.__init__(self, 'GPIO', False)
+        Sensor.__init__(self, 'GPIO', False, 0)
         # GPIO Setup
         GPIO.setmode(GPIO.BCM)
         GPIO.setwarnings(False)
@@ -66,8 +69,9 @@ class sensorGPIO(Sensor):
         # Global Variables
         self.outputPins = {}
 
-    def enableInputPin(self, *pins):
-        for pin in pins:
+    def add_sensor(self, *sensors):
+        for sensor in sensors:
+            pin = int(sensor)
             if pin not in self.allSensors:
                 GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
                 GPIO.remove_event_detect(pin)
@@ -78,22 +82,22 @@ class sensorGPIO(Sensor):
                 state = GPIO.input(pin)
                 self.allSensors[pin] = {'state': state, 'type': self.sensorType}
 
-    def disableInputPin(self, *pins):
-        for pin in pins:
+    def del_sensor(self, *sensors):
+        for sensor in sensors:
+            pin = int(sensor)
             if pin in self.allSensors:
-                GPIO.remove_event_detect(pin)
                 del self.allSensors[pin]
+                GPIO.remove_event_detect(pin)
 
     def _checkInputPinState(self, inputPin):
         prevState = self.allSensors[inputPin]['state']
         nowState = GPIO.input(inputPin)
         if nowState != prevState:
             # print "Pin: {0} changed state to: {1}".format(inputPin, str(nowState))
-            self.allSensors[inputPin]['state'] = nowState
             if nowState == 1:
-                self.notify_alert(inputPin, self.allSensors[inputPin])
+                self._notify_alert(inputPin)
             else:
-                self.notify_alert_stop(inputPin, self.allSensors[inputPin])
+                self._notify_alert_stop(inputPin)
         else:
             print "Wrong state change. Ignoring!!!"
 
@@ -118,25 +122,34 @@ class sensorGPIO(Sensor):
         return self.outputPins
 
 
-# def observer(name, values):
-#     print name, values
+class sensorHikvision(Sensor):
+    def __init__(self):
+        Sensor.__init__(self, 'Hikvision', True, 8)
 
-# asdf = sensorGPIO()
-# pinsToEnable = [17, 4, 18, 22]
-# asdf.enableInputPin(*pinsToEnable)
-# asdf.disableInputPin(4, 18, 22)
-# asdf.enableInputPin(18, 22)
+    def add_sensor(self, sensor, ip, username, password):
+        if sensor not in self.allSensors:
+            self.allSensors[sensor] = {'state': True, 'type': self.sensorType}
+            threading.Thread(target=self.runInBackground, args=[sensor, ip, username, password]).start()
 
-# asdf.on_alert(observer)
-# asdf.on_alert_stop(observer)
+    def runInBackground(self, sensor, ip, username, password):
+        print "RUNNIN NEW HIKVISION!!!"
+        authorization = requests.auth.HTTPBasicAuth('admin', 'loco8Way')
+        while True:
+            response = requests.get('http://' + ip + '/ISAPI/Event/notification/alertStream',
+                                    auth=authorization,
+                                    stream=True)
+            for chunk in response.iter_lines():
+                if chunk:
+                    match = re.match(r'<eventType>(.*)</eventType>', chunk)
+                    if match:
+                        if match.group(1) == 'linedetection':
+                            if not self.is_sensor_active(sensor):
+                                self._notify_alert(sensor)
 
-# asdf.enableOutputPin(14)
-# print asdf.getOutputPinStates()
-# time.sleep(2)
-# asdf.disableOutputPin(14)
-# print asdf.getOutputPinStates()
-
-# print asdf.get_all_sensors()
-
-# while True:
-#     time.sleep(2)  # 2 second delay
+    def del_sensor(self, *sensors):
+        for sensor in sensors:
+            if sensor in self.allSensors:
+                del self.allSensors[sensor]
+                pin = int(sensor)
+                GPIO.remove_event_detect(pin)
+                del self.allSensors[pin]
