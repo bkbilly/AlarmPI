@@ -15,7 +15,7 @@ It also works as an smartphone application from the browser: _Add to Home screen
 The android application is very light and fast and it is recomended for the phone, but it has no real time updates.
 You can download it from here: [AlarmPI.apk](mobile/AlarmPI.apk)
 
-The source code for the application is here: https://play.google.com/store/apps/details?id=bkbilly.alarmpi
+The source code for the application is here: [Play Store](https://play.google.com/store/apps/details?id=bkbilly.alarmpi)
 
 
 ### IFTTT
