@@ -2,6 +2,7 @@
 
 import json
 import os
+import sys
 from OpenSSL import SSL
 
 from flask import Flask, send_from_directory, request, Response
@@ -69,6 +70,12 @@ def startServer():
         context = None
     socketio.run(app, host="", port=alarmSensors.getPortUI(), ssl_context=context)
     alarmSensors.RefreshAlarmData()
+
+# Save the PID to a file
+if len(sys.argv) > 1:
+    if ".pid" in sys.argv[1]:
+        with open(sys.argv[1], "w") as f:
+            f.write(str(os.getpid()))
 
 
 @app.route('/restart')
