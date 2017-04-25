@@ -27,21 +27,8 @@ It can also be used with IFTTT using the Maker module like this:
 
 ## Installation
 ```bash
-sudo git clone https://github.com/bkbilly/AlarmPI.git /opt/AlarmPI/
-cd /opt/AlarmPI/
-sudo cp settings_template.json settings.json
-sudo cp play_template.wavplay.wav
-sudo pip install -r requirements.txt
-sudo chmod +x /opt/AlarmPI/alarmpi
-sudo ln -s /opt/AlarmPI/alarmpi /etc/init.d/alarmpi
-sudo update-rc.d alarmpi defaults
-sudo service alarmpi start
-
+curl -s "https://raw.githubusercontent.com/bkbilly/AlarmPI/master/install.sh" | bash
 ```
-
-### Run on Raspberry Pi Boot
-Edit the `/etc/rc.local` and before exit 0 add this line: `python /opt/AlarmPI/alarmpi.py &`
-
 
 ### Configuration Explained `settings.json`
 
