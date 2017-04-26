@@ -22,21 +22,6 @@
         "timesOfRepeat": ""
     },
     "sensors": {
-        "22": {
-            "active": true,
-            "alert": false,
-            "name": "Bedroom"
-        },
-        "23": {
-            "active": false,
-            "alert": false,
-            "name": "PIR Bedroom"
-        },
-        "24": {
-            "active": false,
-            "alert": false,
-            "name": "PIR Livingroom"
-        },
     },
     "settings": {
         "alarmArmed": false
