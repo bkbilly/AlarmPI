@@ -7,25 +7,25 @@ basedir=/opt/AlarmPI
 echo -e "\e[35mLooking for GIT...\e[0m"
 if [ -z $(which git) ]; then
     echo -e "\e[31mGit not found, installing from apt-get:\e[0m"
-    sudo apt-get install git
+    sudo apt-get --yes --force-yes install git
 fi
 
 echo -e "\e[35mLooking for JSON processor...\e[0m"
 if [ -z $(which jq) ]; then
     echo -e "\e[31mJQ not found, installing from apt-get:\e[0m"
-    sudo apt-get install jq
+    sudo apt-get --yes --force-yes install jq
 fi
 
 echo -e "\e[35mLooking for Python...\e[0m"
 if [ -z $(which python) ]; then
     echo -e "\e[31mPython not found, installing from apt-get:\e[0m"
-    sudo apt-get install python
+    sudo apt-get --yes --force-yes install python
 fi
 
 echo -e "\e[35mLooking for PIP...\e[0m"
 if [ -z $(which pip) ]; then
     echo -e "\e[31mPIP not found, installing from apt-get:\e[0m"
-    sudo apt-get install python-pip
+    sudo apt-get --yes --force-yes install python-pip
 fi
 
 
