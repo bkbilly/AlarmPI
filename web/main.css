@@ -80,6 +80,8 @@ select {
 	border: 2px solid #ccc; 
 	border-radius: 9px;
 	font-size: 16px;
+}
+.pinSelect {
 	width: 70px;
 }
 

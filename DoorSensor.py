@@ -277,20 +277,20 @@ class DoorSensor(sensorGPIO):
             self.writeLog("Settings for UI changed")
             self.writeNewSettingsToFile()
 
-    def setSensorName(self, pin, name):
+    def setSensorName(self, sensor, name):
         ''' Changes the Sensor Name '''
-        self.settings['sensors'][str(pin)]['name'] = name
+        self.settings['sensors'][str(sensor)]['name'] = name
         self.writeNewSettingsToFile()
 
-    def setSensorState(self, pin, state):
+    def setSensorState(self, sensor, state):
         ''' Activate or Deactivate a sensor '''
-        self.settings['sensors'][str(pin)]['active'] = state
+        self.settings['sensors'][str(sensor)]['active'] = state
         self.writeNewSettingsToFile()
 
         logState = "Deactivated"
         if state is True:
             logState = "Activated"
-        logSensorName = self.settings['sensors'][str(pin)]['name']
+        logSensorName = self.settings['sensors'][str(sensor)]['name']
         self.writeLog("{0} sensor: {1}".format(logState, logSensorName))
         self.writeNewSettingsToFile()
 
@@ -301,19 +301,19 @@ class DoorSensor(sensorGPIO):
         self.sensorsGPIO.del_sensor(pin)
         self.writeNewSettingsToFile()
 
-    def addSensor(self, pin, name, sensorType, active):
+    def addSensor(self, sensor, name, sensorType, active):
         ''' Add a new sensor '''
-        self.settings['sensors'][str(pin)] = {
+        self.settings['sensors'][str(sensor)] = {
             "name": name,
             "active": active,
             "type": sensorType
         }
         self.writeNewSettingsToFile()
 
-    def delSensor(self, pin):
+    def delSensor(self, sensor):
         ''' Delete a sensor '''
-        del self.settings['sensors'][str(pin)]
-        self.sensorsGPIO.del_sensor(pin)
+        del self.settings['sensors'][str(sensor)]
+        self.sensorsGPIO.del_sensor(sensor)
 
         self.writeNewSettingsToFile()
 
