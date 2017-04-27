@@ -27,7 +27,7 @@ It can also be used with IFTTT using the Maker module like this:
 
 ## Installation
 ```bash
-curl -s "https://raw.githubusercontent.com/bkbilly/AlarmPI/master/install.sh" | sudo bash
+bash <(curl -s "https://raw.githubusercontent.com/bkbilly/AlarmPI/master/install.sh")
 ```
 
 ### Configuration Explained `settings.json`
