@@ -141,21 +141,21 @@ def socketiofile():
 
 # Get the required data from the AlarmPI
 
-@app.route('/alertpins.json')
+@app.route('/getSensors.json')
 @requires_auth
-def alertpinsJson():
+def getSensors():
     return json.dumps(alarmSensors.getSensorsArmed())
 
 
-@app.route('/alarmStatus.json')
+@app.route('/getAlarmStatus.json')
 @requires_auth
-def alarmStatus():
+def getAlarmStatus():
     return json.dumps(alarmSensors.getAlarmStatus())
 
 
-@app.route('/sensorsLog.json', methods=['Get', 'POST'])
+@app.route('/getSensorsLog.json', methods=['Get', 'POST'])
 @requires_auth
-def sensorsLog():
+def getSensorsLog():
     limit = 10
     requestLimit = request.args.get('limit')
     if requestLimit != None:
@@ -213,14 +213,13 @@ def deactivateAlarmOnline():
 @app.route('/setSensorStateOnline', methods=['GET', 'POST'])
 @requires_auth
 def setSensorStateOnline():
-    message = request.args.get('hello')
     message = {
-        "pin": int(request.args.get('pin')),
+        "sensor": request.args.get('sensor'),
         "active": strtobool(request.args.get('active').lower())
     }
     message['active'] = True if message['active'] else False
     print message
-    alarmSensors.setSensorState(message['pin'], message['active'])
+    alarmSensors.setSensorState(message['sensor'], message['active'])
     socketio.emit('settingsChanged', alarmSensors.getSensorsArmed())
 
 
@@ -228,28 +227,28 @@ def setSensorStateOnline():
 @requires_auth
 def setSerenePin(message):
     alarmSensors.setSerenePin(str(message['pin']))
-    socketio.emit('pinsChanged')
+    socketio.emit('sensorsChanged')
 
 
 @socketio.on('setSensorState')
 @requires_auth
 def setSensorState(message):
-    alarmSensors.setSensorState(message['pin'], message['active'])
+    alarmSensors.setSensorState(message['sensor'], message['active'])
     socketio.emit('settingsChanged', alarmSensors.getSensorsArmed())
 
 
 @socketio.on('setSensorName')
 @requires_auth
 def setSensorName(message):
-    alarmSensors.setSensorName(message['pin'], message['name'])
+    alarmSensors.setSensorName(message['sensor'], message['name'])
     socketio.emit('settingsChanged', alarmSensors.getSensorsArmed())
 
 
 @socketio.on('setSensorPin')
 @requires_auth
 def setSensorPin(message):
-    alarmSensors.setSensorPin(str(message['pin']), str(message['newpin']))
-    socketio.emit('pinsChanged')
+    alarmSensors.setSensorPin(str(message['sensor']), str(message['newpin']))
+    socketio.emit('sensorsChanged')
 
 
 @socketio.on('activateAlarm')
@@ -269,15 +268,15 @@ def deactivateAlarm():
 @socketio.on('addSensor')
 @requires_auth
 def addSensor(message):
-    alarmSensors.addSensor(str(message['pin']), message['name'], 'GPIO', message['active'])
-    socketio.emit('pinsChanged')
+    alarmSensors.addSensor(str(message['sensor']), message['name'], 'GPIO', message['active'])
+    socketio.emit('sensorsChanged')
 
 
 @socketio.on('delSensor')
 @requires_auth
 def delSensor(message):
-    alarmSensors.delSensor(str(message['pin']))
-    socketio.emit('pinsChanged')
+    alarmSensors.delSensor(str(message['sensor']))
+    socketio.emit('sensorsChanged')
 
 
 @socketio.on('setSereneSettings')

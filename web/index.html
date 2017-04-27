@@ -27,11 +27,16 @@
 	<div id="myModal" class="modal">
 		<div class="modal-content">
 			<span class="close" onclick="closeConfigWindow()">x</span><br>
-			<input type="text" id="inputName" placeholder="Select new name">
-			BCM Pin:<select id="inputPin">
-				<option value="" disabled selected></option></select>
-			<br>
-
+			<input type="text" id="inputName" placeholder="Select new name"><br>
+			<select id="sensorType" onchange="selectSensorType($(this));">
+				<option value="GPIO" selected>GPIO</option>
+				<option value="Hikvision">Hikvision</option>
+			</select><br>
+			<div id="inputPinDiv">
+				BCM Pin:<select id="inputPin" class="pinSelect">
+					<option value="" disabled selected></option></select>
+				<br>
+			</div>
 			<button class="button delbutton" id="delSensorBTN">Delete</button><br>
 			<button class="button" id="okButton">OK</button>
 			<button class="button" onclick="closeConfigWindow()">Cancel</button>
@@ -54,7 +59,7 @@
 				<table>
 					<tr>
 						<td>
-							BCM Pin:<select id="inputSerenePin">
+							BCM Pin:<select id="inputSerenePin" class="pinSelect">
 								<option value="" disabled selected></option>
 							</select><br>
 						</td>
@@ -170,6 +175,6 @@
 		</div>
 		
 	</div>
-	<button class="kc_fab_main_btn" onclick="changeNamePin(this, undefined, 'newSensor')">+</button>
+	<button class="kc_fab_main_btn" onclick="changeSensorSettings(undefined, 'newSensor')">+</button>
 </body>
 </html>

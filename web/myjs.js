@@ -1,12 +1,19 @@
 var socket = io();
 var enabledPins = {'in': [], 'out': []}
-var sensor = '<div class="sensordiv" id="sensordiv{sensorpin}">\
-	<div class="sensortext" id="sensorname{sensorpin}" onclick="changeNamePin(this, {sensorpin}, \'sensor\')"></div>\
+var allproperties = {
+	"sensors": [],
+	"serenePin": null,
+	"alarmArmed": null,
+	"alert": null
+}
+var sensorHTMLTemplate = '<div class="sensordiv" id="sensordiv{sensor}">\
+	<div class="sensortext" id="sensorname{sensor}" \
+		onclick="changeSensorSettings(\'{sensor}\', \'oldSensor\')"></div>\
 	<div class="setSensorState">\
 		<div class="onoffswitch">\
-			<input type="checkbox" name="onoffswitch{sensorpin}" class="onoffswitch-checkbox" \
-			id="myonoffswitch{sensorpin}" onchange="changeSensorState(this, \'{sensorpin}\')">\
-			<label class="onoffswitch-label" for="myonoffswitch{sensorpin}">\
+			<input type="checkbox" name="onoffswitch{sensor}" class="onoffswitch-checkbox" \
+			id="myonoffswitch{sensor}" onchange="changeSensorState(this, \'{sensor}\')">\
+			<label class="onoffswitch-label" for="myonoffswitch{sensor}">\
 				<span class="onoffswitch-inner"></span>\
 				<span class="onoffswitch-switch"></span>\
 			</label>\
@@ -14,7 +21,7 @@ var sensor = '<div class="sensordiv" id="sensordiv{sensorpin}">\
 	</div>\
 	<div class="setSensorPin">\
 		<label>Pin:</label>\
-		<div id="sensorgpio{sensorpin}">55</div>\
+		<div id="sensorgpio{sensor}">55</div>\
 	</div>\
 </div>'
 var fileref=document.createElement("link");
@@ -50,7 +57,7 @@ $( document ).ready(function() {
 
 	startAgain();
 
-	socket.on('pinsChanged', function(msg){
+	socket.on('sensorsChanged', function(msg){
 		startAgain();
 	});
 	socket.on('settingsChanged', function(msg){
@@ -66,39 +73,45 @@ $( document ).ready(function() {
 
 function startAgain(){
 	$("#sensors").empty();
-	$.getJSON("alertpins.json").done(function(data){
-		$.each(data.sensors, function(pin, item){
-			var tmpsensor = sensor
-			tmpsensor = tmpsensor.replace(/\{sensorpin\}/g, pin)
-			tmpsensor = tmpsensor.replace(/\{sensorname\}/g, item.name)
-			$(tmpsensor).appendTo("#sensors");
+	$.getJSON("getSensors.json").done(function(data){
+		$.each(data.sensors, function(sensor, item){
+			var sensorHTML = sensorHTMLTemplate
+			sensorHTML = sensorHTML.replace(/\{sensor\}/g, sensor)
+			sensorHTML = sensorHTML.replace(/\{sensorname\}/g, item.name)
+			$(sensorHTML).appendTo("#sensors");
 		});
 		refreshStatus(data);
 	});
-	$.getJSON("alarmStatus.json").done(function(data){
+	$.getJSON("getAlarmStatus.json").done(function(data){
 		setAlarmStatus(data);
 	});
-	$.getJSON("sensorsLog.json?limit=11").done(function(data){
+	$.getJSON("getSensorsLog.json?limit=11").done(function(data){
 		addSensorLog(data);
+	});
+	$.getJSON("getSereneSettings.json").done(function(data){
+		allproperties['serenePin'] = data.pin;
 	});
 }
 
 function refreshStatus(data){
+	console.log("refreshing status")
+	allproperties['sensors'] = data.sensors
+	allproperties['alarmArmed'] = data.alarmArmed
 	enabledPins['in'] = []
 	console.log(data);
-	$.each(data.sensors, function(pin, alertsensor){
-		enabledPins['in'].push(pin)
+	$.each(data.sensors, function(sensor, alertsensor){
+		enabledPins['in'].push(sensor)
 		btnColour = "";
 		if (alertsensor.active === false)
 			btnColour = "white";
 		else
 			btnColour = (alertsensor.alert === true ? "green" : "red");
 		shadowBtnColour = "inset 0px 30px 40px -20px " + btnColour
-		$("#sensorstatus"+pin).css("background-color", btnColour);
-		$("#sensordiv"+pin).css("box-shadow", shadowBtnColour);
-		$("#myonoffswitch"+pin).prop('checked', alertsensor.active);
-		$("#sensorname"+pin).text(alertsensor.name);
-		$("#sensorgpio"+pin).text(pin);
+		$("#sensorstatus"+sensor).css("background-color", btnColour);
+		$("#sensordiv"+sensor).css("box-shadow", shadowBtnColour);
+		$("#myonoffswitch"+sensor).prop('checked', alertsensor.active);
+		$("#sensorname"+sensor).text(alertsensor.name);
+		$("#sensorgpio"+sensor).text(sensor);
 	});
 	if(data.alarmArmed == true) {
 		$("#armButton").removeClass("disarmedAlarm").addClass("armedAlarm");
@@ -107,12 +120,13 @@ function refreshStatus(data){
 	}
 }
 
-function setAlarmStatus(msg){
-	console.log(msg);
+function setAlarmStatus(data){
+	allproperties['alert'] = data.alert
+	console.log(data);
 	hasActiveClass = $("#alertStatus").hasClass("activeAlarm")
-	if (msg.alert === true && hasActiveClass === false){
+	if (data.alert === true && hasActiveClass === false){
 		$("#alertStatus").addClass("activeAlarm");
-	} else if (msg.alert === false && hasActiveClass === true){
+	} else if (data.alert === false && hasActiveClass === true){
 		$("#alertStatus").removeClass("activeAlarm");
 	}
 }
@@ -125,62 +139,65 @@ function addSensorLog(msg){
 }
 
 
-function changeSensorState(checkbox, pin){
+function changeSensorState(checkbox, sensor){
 	console.log(checkbox);
 	console.log(checkbox.checked);
-	console.log(pin);
-	socket.emit('setSensorState', {"pin": pin, "active": checkbox.checked});
+	console.log(sensor);
+	allproperties['sensors'][sensor]['active'] = checkbox.checked
+	socket.emit('setSensorState', {"sensor": sensor, "active": checkbox.checked});
 }
 
-var currentName;
-var currentPin;
-function changeNamePin(div, pin, type){
-	$("#okButton").attr("onclick","saveConfigSettings('"+ type +"')");
-	currentName = div.innerHTML;
-	currentPin = pin;
-	$("#inputName").val(currentName);
-	addPinsToSelect('#inputPin', currentPin);
-
-	if (type === 'serene'){
-		$("#inputName").hide();
-		$("#delSensorBTN").hide();
-	} else if (type === 'newSensor') {
+function changeSensorSettings(sensor, type){
+	if (type === 'newSensor') {
+		var currentName = ""
 		$("#inputName").show();
 		$("#delSensorBTN").hide();
 		$("#inputName").val('');
-	} else {
-		$("#delSensorBTN").attr("onclick","deleteSensor('"+ pin +"')");
+	} else if (type === 'oldSensor') {
+		var currentName = allproperties['sensors'][sensor]['name'];
+		$("#delSensorBTN").attr("onclick","deleteSensor('"+ sensor +"')");
 		$("#delSensorBTN").show();
 		$("#inputName").show();
 	}
+	$("#sensorType").val(allproperties['sensors'][sensor]['type']).change();
+	selectSensorType($("#sensorType"));
+	addPinsToSelect('#inputPin', sensor);
+	$("#okButton").attr("onclick","saveConfigSettings('"+ type+"','"+sensor+"','"+currentName+"')");
+	$("#inputName").val(currentName);
 	$("#myModal").show();
 }
 
-function saveConfigSettings(type){
+selectSensorType = function(Dd) {
+	Dd.blur();
+	if (Dd.prop("value") === "GPIO")
+		$("#inputPinDiv").show();
+	else
+		$("#inputPinDiv").hide();
+};
+
+
+function saveConfigSettings(type, sensor, currentName){
 	var newname = $("#inputName").val();
 	var newpin = $("#inputPin").val();
 	console.log(type);
-	if (type === 'serene') {
-		if (currentPin != newpin){
-			socket.emit('setSerenePin', {"pin": newpin});
-		}
-	} else if (type === 'newSensor') {
+	if (type === 'newSensor') {
 		if (newpin !== null && newname !== ""){
-			socket.emit('addSensor', {"pin": newpin, "name": newname, "active": false});
+			socket.emit('addSensor', {"sensor": newpin, "name": newname, "active": false});
 		}
-	} else {
+	} else if (type === 'oldSensor') {
 		if (currentName !== newname){
-			socket.emit('setSensorName', {"pin": currentPin, "name": newname});
+			socket.emit('setSensorName', {"sensor": sensor, "name": newname});
 		}
-		if (currentPin != newpin){
-			socket.emit('setSensorPin', {"pin": currentPin, "newpin": newpin});
+		if (sensor != newpin){
+			socket.emit('setSensorPin', {"sensor": sensor, "newpin": newpin});
 		}
 	}
 	closeConfigWindow();
 }
 
-function deleteSensor(pin){
-	socket.emit('delSensor', {"pin": pin});
+function deleteSensor(sensor){
+	delete sensor
+	socket.emit('delSensor', {"sensor": sensor});
 	closeConfigWindow();
 }
 
@@ -194,7 +211,7 @@ function ArmDisarmAlarm(){
 }
 
 function openConfigWindow(){
-    $("#myModal").show();
+	$("#myModal").show();
 }
 
 function closeConfigWindow(){
@@ -282,6 +299,7 @@ function saveSettings(){
 function addPinsToSelect(selectDiv, selectPin){
 	$(selectDiv).empty();
 	enabledPinsList = enabledPins['in'].concat(enabledPins['out'])
+	enabledPinsList.push(allproperties['serenePin'].toString())
 	for (var i = 1; i <= 27; i++) {
 		disabled = ''
 		selected = ''
@@ -291,5 +309,4 @@ function addPinsToSelect(selectDiv, selectPin){
 			selected = 'selected'
 		$(selectDiv).append(`<option value="${i}" ${disabled} ${selected}>${i}</option>`)
 	}
-	// $(selectDiv).val(currentPin);
 }
