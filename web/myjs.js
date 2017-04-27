@@ -150,16 +150,18 @@ function changeSensorState(checkbox, sensor){
 function changeSensorSettings(sensor, type){
 	if (type === 'newSensor') {
 		var currentName = ""
+		$("#sensorType").val('GPIO');
 		$("#inputName").show();
 		$("#delSensorBTN").hide();
 		$("#inputName").val('');
 	} else if (type === 'oldSensor') {
 		var currentName = allproperties['sensors'][sensor]['name'];
+		$("#sensorType").val(allproperties['sensors'][sensor]['type']).change();
 		$("#delSensorBTN").attr("onclick","deleteSensor('"+ sensor +"')");
 		$("#delSensorBTN").show();
 		$("#inputName").show();
 	}
-	$("#sensorType").val(allproperties['sensors'][sensor]['type']).change();
+	
 	selectSensorType($("#sensorType"));
 	addPinsToSelect('#inputPin', sensor);
 	$("#okButton").attr("onclick","saveConfigSettings('"+ type+"','"+sensor+"','"+currentName+"')");
