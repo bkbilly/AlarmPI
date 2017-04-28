@@ -2,7 +2,21 @@
 All notable changes to this project will be documented in this file.
 
 
-## [2.1] - Apr 16, 2017
+## [2.4] - Apr 27, 2017
+#### CHANGED
+  - Refactor the services
+
+## [2.3] - Apr 26, 2017
+#### CHANGED
+  - Installation script, ask configuration questions.
+
+## [2.2] - Apr 25, 2017
+#### ADDED
+  - Startup Script.
+  - Python requirements.
+  - Install Script.
+
+## [2.1] - Apr 24, 2017
 #### ADDED
   - Add hikvision Sensor (from settings.json)
 #### FIXED
