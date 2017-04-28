@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 
 
-## [2.4] - Apr 27, 2017
+## [[2.4]](https://github.com/bkbilly/AlarmPI/tree/v2.4) - Apr 27, 2017
 #### CHANGED
   - Refactor the services
 
@@ -16,20 +16,20 @@ All notable changes to this project will be documented in this file.
   - Python requirements.
   - Install Script.
 
-## [2.1] - Apr 24, 2017
+## [[2.1]](https://github.com/bkbilly/AlarmPI/tree/v2.1) - Apr 24, 2017
 #### ADDED
   - Add hikvision Sensor (from settings.json)
 #### FIXED
   - Fixed the GPIO Sensors on the UI to select only the unused pins.
 
-## [2.0] - Apr 16, 2017
+## [[2.0]](https://github.com/bkbilly/AlarmPI/tree/v2.0) - Apr 16, 2017
 #### ADDED
   - Created API for the sensors.
 #### CHANGED
   - Write LOGs even if the sensor is inactive with the appropriate message.
   - Sensors converted from lists of dictionaries to dictionary of dictionary.
 
-## [1.9] - Mar 5, 2017
+## [[1.9]](https://github.com/bkbilly/AlarmPI/tree/v1.9) - Mar 5, 2017
 #### ADDED
   - More HTTP Requests for use in the Android Application.
   - HTTP Request for how many logs to get.
