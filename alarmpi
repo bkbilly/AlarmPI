@@ -15,8 +15,8 @@ NAME="alarmpi"
 PIDFILE='/var/run/alarmpi/alarmpi.pid'
 DAEMON='/usr/bin/python /opt/AlarmPI/alarmpi.py'
 CONFIG='$PIDFILE'
-DAEMON_UID='pi'
-DAEMON_GID='pi'
+DAEMON_UID='root'
+DAEMON_GID='root'
 
 case "$1" in
     start)
