@@ -8,6 +8,7 @@ import threading
 import subprocess
 import sys
 import smtplib
+import re
 from email.mime.text import MIMEText
 
 
@@ -36,7 +37,7 @@ class DoorSensor(sensorGPIO):
         # Init Alarm
         self.sensorsGPIO = sensorGPIO()
         self.sensorsHikvision = sensorHikvision()
-        self.writeLog("Alarm Booted")
+        self.writeLog("system", "Alarm Booted")
         self.RefreshAlarmData()
 
         # Event Listeners
@@ -52,9 +53,11 @@ class DoorSensor(sensorGPIO):
         name = self.settings['sensors'][str(sensorName)]['name']
         active = self.settings['sensors'][str(sensorName)]['active']
         activeText = "Active sensor: "
+        sensorLogType = "active_sensor"
         if active is False:
             activeText = "Inactive sensor: "
-        self.writeLog(activeText + name)
+            sensorLogType = "inactive_sensor"
+        self.writeLog(sensorLogType, activeText + name)
         self.checkIntruderAlert()
 
     def sensorStopAlert(self, sensorName):
@@ -118,7 +121,7 @@ class DoorSensor(sensorGPIO):
         ''' Override this method to send changes to the UI '''
         pass
 
-    def writeLog(self, message):
+    def writeLog(self, logType, message):
         ''' Write log events into a file and send the last to UI.
         It also uses the timezone from json file to get the local time.
         '''
@@ -127,9 +130,9 @@ class DoorSensor(sensorGPIO):
         except:
             mytimezone = pytz.utc
 
-        myTimeLog = datetime.now(tz=mytimezone).strftime("[%Y-%m-%d %H:%M:%S] ")
+        myTimeLog = datetime.now(tz=mytimezone).strftime("%Y-%m-%d %H:%M:%S")
         with open(self.logfile, "a") as myfile:
-            myfile.write(myTimeLog + message + "\n")
+            myfile.write('({0}) [{1}] {2}\n'.format(logType, myTimeLog, message))
         self.updateUI('sensorsLog', self.getSensorsLog(1))
 
     def intruderAlert(self):
@@ -137,6 +140,7 @@ class DoorSensor(sensorGPIO):
         all the methods whith the actions that we want to do.
         '''
         self.setAlert = True
+        self.writeLog("alarm", "Intruder Alert")
         self.enableSerene()
         self.updateUI('alarmStatus', self.getAlarmStatus())
         threading.Thread(target=self.sendMail).start()
@@ -154,14 +158,14 @@ class DoorSensor(sensorGPIO):
             for phone_number in self.settings['voip']['numbersToCall']:
                 phone_number = str(phone_number)
                 if self.setAlert is True:
-                    self.writeLog("Calling " + phone_number)
+                    self.writeLog("alarm", "Calling " + phone_number)
                     cmd = self.sipcallfile, '-sd', sip_domain, '-su', sip_user, '-sp', sip_password, '-pn', phone_number, '-s', '1', '-mr', sip_repeat
                     print cmd
                     proc = subprocess.Popen(cmd, stderr=subprocess.PIPE)
                     for line in proc.stderr:
                         sys.stderr.write(line)
                     proc.wait()
-                    self.writeLog("Call to " + phone_number + " endend")
+                    self.writeLog("alarm", "Call to " + phone_number + " endend")
                     print "Call Ended"
 
     def sendMail(self):
@@ -186,12 +190,12 @@ class DoorSensor(sensorGPIO):
             smtpserver.sendmail(sender, recipients, msg.as_string())
             smtpserver.close()
 
-            self.writeLog("Mail sent to: " + ", ".join(recipients))
+            self.writeLog("alarm", "Mail sent to: " + ", ".join(recipients))
 
     def enableSerene(self):
         ''' This method enables the output pin for the serene '''
         if self.settings['serene']['enable'] is True:
-            self.writeLog("Serene started")
+            self.writeLog("alarm", "Serene started")
             serenePin = int(self.settings['serene']['pin'])
             self.sensorsGPIO.enableOutputPin(serenePin)
 
@@ -203,14 +207,14 @@ class DoorSensor(sensorGPIO):
 
     def activateAlarm(self):
         ''' Activates the alarm '''
-        self.writeLog("Alarm activated")
+        self.writeLog("user_action", "Alarm activated")
         self.settings['settings']['alarmArmed'] = True
         self.writeNewSettingsToFile()
 
     def deactivateAlarm(self):
         ''' Deactivates the alarm '''
         self.setAlert = False
-        self.writeLog("Alarm deactivated")
+        self.writeLog("user_action", "Alarm deactivated")
         self.settings['settings']['alarmArmed'] = False
         self.stopSerene()
         self.updateUI('alarmStatus', self.getAlarmStatus())
@@ -227,11 +231,36 @@ class DoorSensor(sensorGPIO):
         ''' Returns the status of the alert for the UI '''
         return {"alert": self.setAlert}
 
-    def getSensorsLog(self, limit):
-        ''' Returns the last n lines if the log file '''
+    def getSensorsLog(self, limit=100, selectTypes='all', getFormat='text'):
+        ''' Returns the last n lines if the log file. 
+        If selectTypes is specified, then it returns only this type of logs.
+        Available types: user_action, inactive_sensor, active_sensor, system, alarm
+        If the getFormat is specified as json, then it returns it in a 
+        json format (programmer friendly) '''
         with open(self.logfile, "r") as f:
             lines = f.readlines()
-        return {"log": lines[-limit:]}
+        logTypes = []
+        for line in lines:
+            try:
+                mymatch = re.match(r'^\((.*)\) \[(.*)\] (.*)', line)
+                logType = mymatch.group(1)
+                logTime = mymatch.group(2)
+                logText = mymatch.group(3)
+            except:
+                mymatch = re.match(r'^\[(.*)\] (.*)', line)
+                logType = "unknown"
+                logTime = mymatch.group(1)
+                logText = mymatch.group(2)
+            if (logType in selectTypes or 'all' in selectTypes):
+                if getFormat == 'json':
+                    logTypes.append({
+                        'type': logType,
+                        'event': logText,
+                        'time': logTime
+                    })
+                else:
+                    logTypes.append('[{0}] {1}'.format(logTime, logText))
+        return {"log": logTypes[-limit:]}
 
     def getSerenePin(self):
         ''' Returns the output pin for the serene '''
@@ -256,25 +285,25 @@ class DoorSensor(sensorGPIO):
     def setSereneSettings(self, message):
         if self.settings['serene'] != message:
             self.settings['serene'] = message
-            self.writeLog("Settings for Serene changed")
+            self.writeLog("user_action", "Settings for Serene changed")
             self.writeNewSettingsToFile()
 
     def setMailSettings(self, message):
         if self.settings['mail'] != message:
             self.settings['mail'] = message
-            self.writeLog("Settings for Mail changed")
+            self.writeLog("user_action", "Settings for Mail changed")
             self.writeNewSettingsToFile()
 
     def setVoipSettings(self, message):
         if self.settings['voip'] != message:
             self.settings['voip'] = message
-            self.writeLog("Settings for VoIP changed")
+            self.writeLog("user_action", "Settings for VoIP changed")
             self.writeNewSettingsToFile()
 
     def setUISettings(self, message):
         if self.settings['ui'] != message:
             self.settings['ui'] = message
-            self.writeLog("Settings for UI changed")
+            self.writeLog("user_action", "Settings for UI changed")
             self.writeNewSettingsToFile()
 
     def setSensorName(self, sensor, name):
@@ -291,7 +320,7 @@ class DoorSensor(sensorGPIO):
         if state is True:
             logState = "Activated"
         logSensorName = self.settings['sensors'][str(sensor)]['name']
-        self.writeLog("{0} sensor: {1}".format(logState, logSensorName))
+        self.writeLog("user_action", "{0} sensor: {1}".format(logState, logSensorName))
         self.writeNewSettingsToFile()
 
     def setSensorPin(self, pin, newpin):
