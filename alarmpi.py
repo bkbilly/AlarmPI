@@ -157,11 +157,19 @@ def getAlarmStatus():
 @requires_auth
 def getSensorsLog():
     limit = 10
+    logtype = 'all'
+    logformat = 'text'
     requestLimit = request.args.get('limit')
-    if requestLimit != None:
+    requestType = request.args.get('type')
+    requestFormat = request.args.get('format')
+    if requestLimit is not None:
         if requestLimit.isdigit():
             limit = int(request.args.get('limit'))
-    return json.dumps(alarmSensors.getSensorsLog(limit))
+    if requestType is not None:
+        logtype = request.args.get('type').split(',')
+    if requestFormat is not None:
+        logformat = request.args.get('format')
+    return json.dumps(alarmSensors.getSensorsLog(limit, logtype, logformat))
 
 
 @app.route('/serenePin.json')
