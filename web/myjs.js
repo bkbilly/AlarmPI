@@ -24,15 +24,15 @@ var sensorHTMLTemplate = '<div class="sensordiv" id="sensordiv{sensor}">\
 		<div id="sensorgpio{sensor}">55</div>\
 	</div>\
 </div>'
-var fileref=document.createElement("link");
-fileref.setAttribute("rel", "stylesheet");
-fileref.setAttribute("type", "text/css");
-if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
-	fileref.setAttribute("href", "mycssMobile.css");
-} else {
-	fileref.setAttribute("href", "mycss.css");
-}
-document.getElementsByTagName("head")[0].appendChild(fileref)
+//var fileref=document.createElement("link");
+//fileref.setAttribute("rel", "stylesheet");
+//fileref.setAttribute("type", "text/css");
+//fileref.setAttribute("href", "mycss.css");
+////if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
+////} else {
+////	fileref.setAttribute("href", "mycss.css");
+////}
+//document.getElementsByTagName("head")[0].appendChild(fileref)
 
 $( document ).ready(function() {
 	var modal = document.getElementById('myModal');
