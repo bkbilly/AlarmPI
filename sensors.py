@@ -133,7 +133,7 @@ class sensorHikvision(Sensor):
 
     def runInBackground(self, sensor, ip, username, password):
         print "RUNNIN NEW HIKVISION!!!"
-        authorization = requests.auth.HTTPBasicAuth('admin', 'loco8Way')
+        authorization = requests.auth.HTTPBasicAuth(username, password)
         while True:
             response = requests.get('http://' + ip + '/ISAPI/Event/notification/alertStream',
                                     auth=authorization,
