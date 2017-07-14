@@ -19,7 +19,7 @@ The source code for the application is here: https://github.com/bkbilly/AlarmPI-
 
 
 ### IFTTT
-It can also be used with IFTTT using the Maker module like this:
+It can also be used with IFTTT using the Webhooks module like this:
 `https://admin:secret@example.com:5000/activateAlarmOnline`
 `https://admin:secret@example.com:5000/deactivateAlarmOnline`
 >My personal favourite is to control it with Google Assistant.
