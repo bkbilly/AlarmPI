@@ -10,6 +10,10 @@ from flask_socketio import SocketIO
 from functools import wraps
 from distutils.util import strtobool
 
+import time
+import subprocess
+from multiprocessing import Process, Queue
+
 from DoorSensor import DoorSensor
 
 import logging
@@ -23,6 +27,7 @@ class myDoorSensor(DoorSensor):
         socketio.emit(event, data)
 
 
+# some_queue = None
 app = Flask(__name__, static_url_path='')
 socketio = SocketIO(app)
 wd = os.path.dirname(os.path.realpath(__file__))
@@ -47,7 +52,12 @@ def requires_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         auth = request.authorization
+        ipaddr = request.remote_addr
         if not auth or not alarmSensors.check_auth(auth.username, auth.password):
+            if not auth:
+                print "Trying to login with IP:", ipaddr
+            else:
+                print "Unauthorized login:", ipaddr
             return authenticate()
         return f(*args, **kwargs)
     return decorated
@@ -61,7 +71,14 @@ def shutdownServer():
     func()
 
 
+#def startServer(queue):
 def startServer():
+    global some_queue
+    # Save the PID to a file
+    if len(sys.argv) > 1:
+        if ".pid" in sys.argv[1]:
+            with open(sys.argv[1], "w") as f:
+                f.write(str(os.getpid()))
     if alarmSensors.getUISettings()['https'] is True:
         context = SSL.Context(SSL.SSLv23_METHOD)
         context.use_privatekey_file(certkeyfile)
@@ -71,22 +88,18 @@ def startServer():
     socketio.run(app, host="", port=alarmSensors.getPortUI(), ssl_context=context)
     alarmSensors.RefreshAlarmData()
 
-# Save the PID to a file
-if len(sys.argv) > 1:
-    if ".pid" in sys.argv[1]:
-        with open(sys.argv[1], "w") as f:
-            f.write(str(os.getpid()))
 
 
 @app.route('/restart')
 @requires_auth
 def restart():
-    shutdownServer()
-    startServer()
-    # python = sys.executable
-    # os.execl(python, python, *sys.argv)
-    # import subprocess
-    # subprocess.Popen(['bash startalarmpi.sh'], shell=True)
+    try:
+        some_queue.put("something")
+        print "Restarted successfully"
+        return "Quit"
+    except:
+        print "Failed in restart"
+        return "Failed"
 
 
 # Get the required files for the UI
@@ -318,3 +331,16 @@ def setUISettings(message):
 # Run
 if __name__ == '__main__':
     startServer()
+    # q = Queue()
+    # p = Process(target=startServer, args=[q, ])
+    # p.start()
+    # while True:  # wathing queue, if there is no call than sleep, otherwise break
+    #     if q.empty():
+    #         time.sleep(1)
+    #     else:
+    #         break
+    # subprocess.call('service alarmpi stop', shell=True)
+    # #p.terminate()  # terminate flaskapp and then restart the app on subprocess
+    # #args = [sys.executable] + [sys.argv[0]]
+    # #subprocess.call(args)
+

@@ -135,16 +135,21 @@ class sensorHikvision(Sensor):
         print "RUNNIN NEW HIKVISION!!!"
         authorization = requests.auth.HTTPBasicAuth(username, password)
         while True:
-            response = requests.get('http://' + ip + '/ISAPI/Event/notification/alertStream',
-                                    auth=authorization,
-                                    stream=True)
-            for chunk in response.iter_lines():
-                if chunk:
-                    match = re.match(r'<eventType>(.*)</eventType>', chunk)
-                    if match:
-                        if match.group(1) == 'linedetection':
-                            if not self.is_sensor_active(sensor):
-                                self._notify_alert(sensor)
+            try:
+                response = requests.get('http://' + ip + '/ISAPI/Event/notification/alertStream',
+                                        auth=authorization,
+                                        timeout=5,
+                                        stream=True)
+                for chunk in response.iter_lines():
+                    if chunk:
+                        match = re.match(r'<eventType>(.*)</eventType>', chunk)
+                        if match:
+                            if match.group(1) == 'linedetection':
+                                if not self.is_sensor_active(sensor):
+                                    self._notify_alert(sensor)
+            except requests.exceptions.RequestException as e:
+                print e
+                time.sleep(5)
 
     def del_sensor(self, *sensors):
         for sensor in sensors:

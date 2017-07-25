@@ -1,0 +1,4 @@
+*.pyc
+*.log
+play.wav
+settings.json
