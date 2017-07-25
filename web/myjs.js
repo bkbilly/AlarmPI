@@ -19,10 +19,10 @@ var sensorHTMLTemplate = '<div class="sensordiv" id="sensordiv{sensor}">\
 			</label>\
 		</div>\
 	</div>\
-	<div class="setSensorPin">\
+	<!-- <div class="setSensorPin">\
 		<label>Pin:</label>\
 		<div id="sensorgpio{sensor}">55</div>\
-	</div>\
+	</div> -->\
 </div>'
 //var fileref=document.createElement("link");
 //fileref.setAttribute("rel", "stylesheet");
@@ -57,6 +57,14 @@ $( document ).ready(function() {
 
 	startAgain();
 
+	$('#logtype').change(function() {
+		refreshLogs();
+	});
+	$('#loglimit').change(function() {
+		refreshLogs();
+	});
+
+
 	socket.on('sensorsChanged', function(msg){
 		startAgain();
 	});
@@ -85,14 +93,20 @@ function startAgain(){
 	$.getJSON("getAlarmStatus.json").done(function(data){
 		setAlarmStatus(data);
 	});
-	$.getJSON("getSensorsLog.json?limit=11").done(function(data){
-		addSensorLog(data);
-	});
 	$.getJSON("getSereneSettings.json").done(function(data){
 		allproperties['serenePin'] = data.pin;
 	});
+	refreshLogs()
 }
 
+function refreshLogs(){
+	$("#sensorListLog").empty();
+	loglimit = $("#loglimit").val();
+	logtype = $("#logtype").val();
+	$.getJSON("getSensorsLog.json?limit="+loglimit+"&type="+logtype).done(function(data){
+		addSensorLog(data);
+	});
+}
 function refreshStatus(data){
 	console.log("refreshing status")
 	allproperties['sensors'] = data.sensors
@@ -213,10 +227,13 @@ function ArmDisarmAlarm(){
 }
 
 function openConfigWindow(){
+	document.body.style.overflowY = "hidden";
 	$("#myModal").show();
 }
 
 function closeConfigWindow(){
+	document.body.style.overflowY = "auto";
+	console.log("now it will be auto")
 	$("#myModal").hide();
 	$("#settingsModal").hide();
 }
