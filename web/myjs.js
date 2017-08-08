@@ -45,7 +45,7 @@ $( document ).ready(function() {
 	var acc = document.getElementsByClassName("accordion");
 	for (i = 0; i < acc.length; i++) {
 		acc[i].onclick = function() {
-			this.classList.toggle("active");
+			this.classList.toggle("enabled");
 			var panel = this.nextElementSibling;
 			if (panel.style.maxHeight){
 				panel.style.maxHeight = null;
@@ -116,14 +116,14 @@ function refreshStatus(data){
 	$.each(data.sensors, function(sensor, alertsensor){
 		enabledPins['in'].push(sensor)
 		btnColour = "";
-		if (alertsensor.active === false)
+		if (alertsensor.enabled === false)
 			btnColour = "white";
 		else
 			btnColour = (alertsensor.alert === true ? "green" : "red");
 		shadowBtnColour = "inset 0px 30px 40px -20px " + btnColour
 		$("#sensorstatus"+sensor).css("background-color", btnColour);
 		$("#sensordiv"+sensor).css("box-shadow", shadowBtnColour);
-		$("#myonoffswitch"+sensor).prop('checked', alertsensor.active);
+		$("#myonoffswitch"+sensor).prop('checked', alertsensor.enabled);
 		$("#sensorname"+sensor).text(alertsensor.name);
 		$("#sensorgpio"+sensor).text(sensor);
 	});
@@ -157,8 +157,8 @@ function changeSensorState(checkbox, sensor){
 	console.log(checkbox);
 	console.log(checkbox.checked);
 	console.log(sensor);
-	allproperties['sensors'][sensor]['active'] = checkbox.checked
-	socket.emit('setSensorState', {"sensor": sensor, "active": checkbox.checked});
+	allproperties['sensors'][sensor]['enabled'] = checkbox.checked
+	socket.emit('setSensorState', {"sensor": sensor, "enabled": checkbox.checked});
 }
 
 function changeSensorSettings(sensor, type){
@@ -198,7 +198,7 @@ function saveConfigSettings(type, sensor, currentName){
 	console.log(type);
 	if (type === 'newSensor') {
 		if (newpin !== null && newname !== ""){
-			socket.emit('addSensor', {"sensor": newpin, "name": newname, "active": false});
+			socket.emit('addSensor', {"sensor": newpin, "name": newname, "enabled": false});
 		}
 	} else if (type === 'oldSensor') {
 		if (currentName !== newname){

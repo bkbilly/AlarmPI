@@ -236,11 +236,11 @@ def deactivateAlarmOnline():
 def setSensorStateOnline():
     message = {
         "sensor": request.args.get('sensor'),
-        "active": strtobool(request.args.get('active').lower())
+        "enabled": strtobool(request.args.get('enabled').lower())
     }
-    message['active'] = True if message['active'] else False
+    message['enabled'] = True if message['enabled'] else False
     print message
-    alarmSensors.setSensorState(message['sensor'], message['active'])
+    alarmSensors.setSensorState(message['sensor'], message['enabled'])
     socketio.emit('settingsChanged', alarmSensors.getSensorsArmed())
 
 
@@ -254,7 +254,7 @@ def setSerenePin(message):
 @socketio.on('setSensorState')
 @requires_auth
 def setSensorState(message):
-    alarmSensors.setSensorState(message['sensor'], message['active'])
+    alarmSensors.setSensorState(message['sensor'], message['enabled'])
     socketio.emit('settingsChanged', alarmSensors.getSensorsArmed())
 
 
@@ -289,7 +289,7 @@ def deactivateAlarm():
 @socketio.on('addSensor')
 @requires_auth
 def addSensor(message):
-    alarmSensors.addSensor(str(message['sensor']), message['name'], 'GPIO', message['active'])
+    alarmSensors.addSensor(str(message['sensor']), message['name'], 'GPIO', message['enabled'])
     socketio.emit('sensorsChanged')
 
 

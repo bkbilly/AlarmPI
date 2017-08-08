@@ -51,13 +51,13 @@ class DoorSensor(sensorGPIO):
         self.settings['sensors'][str(sensorName)]['alert'] = True
         self.RefreshAlarmData()
         name = self.settings['sensors'][str(sensorName)]['name']
-        active = self.settings['sensors'][str(sensorName)]['active']
-        activeText = "Active sensor: "
-        sensorLogType = "active_sensor"
-        if active is False:
-            activeText = "Inactive sensor: "
-            sensorLogType = "inactive_sensor"
-        self.writeLog(sensorLogType, activeText + name)
+        enabled = self.settings['sensors'][str(sensorName)]['enabled']
+        enabledText = "enabled sensor: "
+        sensorLogType = "enabled_sensor"
+        if enabled is False:
+            enabledText = "Disabled sensor: "
+            sensorLogType = "disabled_sensor"
+        self.writeLog(sensorLogType, enabledText + name)
         self.checkIntruderAlert()
 
     def sensorStopAlert(self, sensorName):
@@ -86,7 +86,7 @@ class DoorSensor(sensorGPIO):
                 self.sensorsGPIO.add_sensor(sensor)
                 self.allSensors[sensor] = sensorvalue
                 sensor_alert = False
-                if sensorvalue['active'] is True:
+                if sensorvalue['enabled'] is True:
                     if self.sensorsGPIO.is_sensor_active(int(sensor)):
                         sensor_alert = True
                 self.allSensors[sensor]['alert'] = sensor_alert
@@ -97,7 +97,7 @@ class DoorSensor(sensorGPIO):
                 self.sensorsHikvision.add_sensor(sensor, ip, username, password)
                 self.allSensors[sensor] = sensorvalue
                 sensor_alert = False
-                if sensorvalue['active'] is True:
+                if sensorvalue['enabled'] is True:
                     if self.sensorsHikvision.is_sensor_active(sensor):
                         sensor_alert = True
                 self.allSensors[sensor]['alert'] = sensor_alert
@@ -234,7 +234,7 @@ class DoorSensor(sensorGPIO):
     def getSensorsLog(self, limit=100, selectTypes='all', getFormat='text'):
         ''' Returns the last n lines if the log file. 
         If selectTypes is specified, then it returns only this type of logs.
-        Available types: user_action, inactive_sensor, active_sensor, system, alarm
+        Available types: user_action, disabled_sensor, enabled_sensor, system, alarm
         If the getFormat is specified as json, then it returns it in a 
         json format (programmer friendly) '''
         with open(self.logfile, "r") as f:
@@ -313,7 +313,7 @@ class DoorSensor(sensorGPIO):
 
     def setSensorState(self, sensor, state):
         ''' Activate or Deactivate a sensor '''
-        self.settings['sensors'][str(sensor)]['active'] = state
+        self.settings['sensors'][str(sensor)]['enabled'] = state
         self.writeNewSettingsToFile()
 
         logState = "Deactivated"
@@ -330,12 +330,12 @@ class DoorSensor(sensorGPIO):
         self.sensorsGPIO.del_sensor(pin)
         self.writeNewSettingsToFile()
 
-    def addSensor(self, sensor, name, sensorType, active):
+    def addSensor(self, sensor, name, sensorType, enabled):
         ''' Add a new sensor '''
         self.settings['sensors'][str(sensor)] = {
-            "name": name,
-            "active": active,
-            "type": sensorType
+            'name': name,
+            'enabled': enabled,
+            'type': sensorType
         }
         self.writeNewSettingsToFile()
 
