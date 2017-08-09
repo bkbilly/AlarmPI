@@ -126,7 +126,7 @@ class sensorHikvision():
     def __init__(self, sensorName):
         # Global Required Variables
         self.sensorName = sensorName
-        self.online = True
+        self.online = False
         self.alert = False
         self._event_alert = []
         self._event_alert_stop = []
@@ -136,6 +136,7 @@ class sensorHikvision():
         # Other Variables
         self.alertTime = 8
         self.threadRunforever = None
+        self.runforever = True
 
     def add_sensor(self, sensor):
         ip = sensor['ip']
@@ -154,15 +155,13 @@ class sensorHikvision():
     def runInBackground(self, sensor, ip, username, password):
         print "RUNNIN NEW HIKVISION!!!"
         authorization = requests.auth.HTTPBasicAuth(username, password)
-        while True:
+        while self.runforever:
             try:
                 response = requests.get('http://' + ip + '/ISAPI/Event/notification/alertStream',
                                         auth=authorization,
                                         timeout=5,
                                         stream=True)
-                if not self.online:
-                    print "Now it is Online!!!"
-                    self._notify_error_stop()
+                self._notify_error_stop()
                 for chunk in response.iter_lines():
                     if chunk:
                         match = re.match(r'<eventType>(.*)</eventType>', chunk)
@@ -170,20 +169,16 @@ class sensorHikvision():
                             if match.group(1) == 'linedetection':
                                 self._notify_alert()
             except requests.exceptions.RequestException as e:
-                if self.online:
-                    print "Now it is not Online... :("
-                    self._notify_error()
+                self._notify_error()
                 print e
                 time.sleep(5)
 
-    def del_sensor(self, *sensors):
+    def del_sensor(self):
+        self.runforever = False
         try:
             self.threadRunforever._Thread__stop()
         except Exception as e:
             print e
-        for sensor in sensors:
-            if sensor in self.allSensors:
-                del self.allSensors[sensor]
 
     def forceNotify(self):
         pass
