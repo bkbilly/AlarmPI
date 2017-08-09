@@ -112,6 +112,8 @@ function refreshStatus(data){
 			btnColour = "white";
 		else
 			btnColour = (alertsensor.alert === true ? "green" : "red");
+		if (alertsensor.online === false)
+			btnColour = "blue"
 		shadowBtnColour = "inset 0px 30px 40px -20px " + btnColour
 		$("#sensorstatus"+sensor).css("background-color", btnColour);
 		$("#sensordiv"+sensor).css("box-shadow", shadowBtnColour);
@@ -172,6 +174,7 @@ function changeSensorSettings(sensor, type){
 		addPinsToSelect('#GPIO-pin', '');
 	else
 		addPinsToSelect('#GPIO-pin', allproperties['sensors'][sensor]['pin']);
+	console.log(allproperties['sensors'][sensor])
 	$("#okButton").attr("onclick","saveConfigSettings('"+ type+"','"+sensor+"','"+currentName+"')");
 	$("#inputName").val(currentName);
 	$("#myModal").show();

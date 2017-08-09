@@ -76,13 +76,19 @@ class DoorSensor(sensorGPIO):
         self.updateUI('settingsChanged', self.getSensorsArmed())
 
     def sensorError(self, sensorName):
+        name = self.settings['sensors'][str(sensorName)]['name']
         self.settings['sensors'][str(sensorName)]['online'] = False
         self.writeNewSettingsToFile()
+        self.writeLog("error", "Lost connection to: " + name)
+        self.updateUI('settingsChanged', self.getSensorsArmed())
         print sensorName, "-------------error started."
 
     def sensorStopError(self, sensorName):
+        name = self.settings['sensors'][str(sensorName)]['name']
         self.settings['sensors'][str(sensorName)]['online'] = True
         self.writeNewSettingsToFile()
+        self.writeLog("error", "Restored connection to: " + name)
+        self.updateUI('settingsChanged', self.getSensorsArmed())
         print sensorName, "-------------stopped error."
 
     def checkIntruderAlert(self):
@@ -308,10 +314,10 @@ class DoorSensor(sensorGPIO):
             self.writeLog("user_action", "Settings for UI changed")
             self.writeNewSettingsToFile()
 
-    def setSensorName(self, sensor, name):
-        ''' Changes the Sensor Name '''
-        self.settings['sensors'][str(sensor)]['name'] = name
-        self.writeNewSettingsToFile()
+    # def setSensorName(self, sensor, name):
+    #     ''' Changes the Sensor Name '''
+    #     self.settings['sensors'][str(sensor)]['name'] = name
+    #     self.writeNewSettingsToFile()
 
     def setSensorState(self, sensor, state):
         ''' Activate or Deactivate a sensor '''
@@ -325,12 +331,12 @@ class DoorSensor(sensorGPIO):
         self.writeLog("user_action", "{0} sensor: {1}".format(logState, logSensorName))
         self.writeNewSettingsToFile()
 
-    def setSensorPin(self, pin, newpin):
-        ''' Changes the Sensor Pin '''
-        self.settings['sensors'][str(newpin)] = self.settings['sensors'][str(pin)]
-        del self.settings['sensors'][str(pin)]
-        self.sensorsGPIO.del_sensor(pin)
-        self.writeNewSettingsToFile()
+    # def setSensorPin(self, pin, newpin):
+    #     ''' Changes the Sensor Pin '''
+    #     self.settings['sensors'][str(newpin)] = self.settings['sensors'][str(pin)]
+    #     del self.settings['sensors'][str(pin)]
+    #     self.sensorsGPIO.del_sensor(pin)
+    #     self.writeNewSettingsToFile()
 
     def addSensor(self, sensorValues):
         ''' Add a new sensor '''
@@ -347,8 +353,8 @@ class DoorSensor(sensorGPIO):
 
     def delSensor(self, sensorName):
         ''' Delete a sensor '''
-        del self.settings['sensors'][str(sensorName)]
         self.sensors.del_sensor(sensorName)
+        del self.settings['sensors'][str(sensorName)]
         self.writeNewSettingsToFile()
 
     def check_auth(self, username, password):
