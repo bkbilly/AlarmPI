@@ -126,7 +126,7 @@ class sensorHikvision():
     def __init__(self, sensorName):
         # Global Required Variables
         self.sensorName = sensorName
-        self.online = False
+        self.online = None
         self.alert = False
         self._event_alert = []
         self._event_alert_stop = []
@@ -161,24 +161,26 @@ class sensorHikvision():
                                         auth=authorization,
                                         timeout=5,
                                         stream=True)
-                self._notify_error_stop()
+                if not self.online:
+                    self._notify_error_stop()
                 for chunk in response.iter_lines():
                     if chunk:
                         match = re.match(r'<eventType>(.*)</eventType>', chunk)
                         if match:
                             if match.group(1) == 'linedetection':
                                 self._notify_alert()
-            except requests.exceptions.RequestException as e:
-                self._notify_error()
+            except Exception as e:
+                if self.online:
+                    self._notify_error()
                 print e
                 time.sleep(5)
 
     def del_sensor(self):
         self.runforever = False
-        try:
-            self.threadRunforever._Thread__stop()
-        except Exception as e:
-            print e
+        # try:
+        #     self.threadRunforever._Thread__stop()
+        # except Exception as e:
+        #     print e
 
     def forceNotify(self):
         pass

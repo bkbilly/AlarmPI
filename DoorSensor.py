@@ -77,6 +77,7 @@ class DoorSensor(sensorGPIO):
 
     def sensorError(self, sensorName):
         name = self.settings['sensors'][str(sensorName)]['name']
+        self.settings['sensors'][str(sensorName)]['alert'] = True
         self.settings['sensors'][str(sensorName)]['online'] = False
         self.writeNewSettingsToFile()
         self.writeLog("error", "Lost connection to: " + name)
@@ -342,6 +343,8 @@ class DoorSensor(sensorGPIO):
         ''' Add a new sensor '''
         key = sensorValues.iteritems().next()[0]
         sensorValues[key]['enabled'] = True
+        sensorValues[key]['online'] = False
+        sensorValues[key]['alert'] = True
         if 'undefined' in sensorValues:
             sensorName = str(uuid.uuid4())
             sensorValues[sensorName] = sensorValues.pop('undefined')
