@@ -2,6 +2,21 @@
 All notable changes to this project will be documented in this file.
 
 
+## [[2.7]](https://github.com/bkbilly/AlarmPI/tree/v2.7) - Aug 9, 2017
+#### CHANGED
+  - Renamed active/inactive sensors to enabled/disabled
+  - better sensors with callbacks, auto delete old logs, better developer friendly
+  - filled the online and alert when creating new sensor
+
+## [[2.6]](https://github.com/bkbilly/AlarmPI/tree/v2.6) - Jul 25, 2017
+#### CHANGED
+  - fixed hikvision sensor, added UI log filter, print accessed ipaddress
+
+## [[2.5]](https://github.com/bkbilly/AlarmPI/tree/v2.5) - Jul 10, 2017
+#### CHANGED
+  - categorize logs and get them as json if required
+  - Min size of css merged with Mobile version
+
 ## [[2.4]](https://github.com/bkbilly/AlarmPI/tree/v2.4) - Apr 27, 2017
 #### CHANGED
   - Refactor the services
