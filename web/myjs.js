@@ -24,15 +24,7 @@ var sensorHTMLTemplate = '<div class="sensordiv" id="sensordiv{sensor}">\
 		<div id="sensorgpio{sensor}">55</div>\
 	</div> -->\
 </div>'
-//var fileref=document.createElement("link");
-//fileref.setAttribute("rel", "stylesheet");
-//fileref.setAttribute("type", "text/css");
-//fileref.setAttribute("href", "mycss.css");
-////if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
-////} else {
-////	fileref.setAttribute("href", "mycss.css");
-////}
-//document.getElementsByTagName("head")[0].appendChild(fileref)
+
 
 $( document ).ready(function() {
 	var modal = document.getElementById('myModal');
@@ -114,7 +106,7 @@ function refreshStatus(data){
 	enabledPins['in'] = []
 	console.log(data);
 	$.each(data.sensors, function(sensor, alertsensor){
-		enabledPins['in'].push(sensor)
+		enabledPins['in'].push(alertsensor.pin)
 		btnColour = "";
 		if (alertsensor.enabled === false)
 			btnColour = "white";
@@ -164,50 +156,73 @@ function changeSensorState(checkbox, sensor){
 function changeSensorSettings(sensor, type){
 	if (type === 'newSensor') {
 		var currentName = ""
-		$("#sensorType").val('GPIO');
-		$("#inputName").show();
+		$("#sensorType").show()
 		$("#delSensorBTN").hide();
 		$("#inputName").val('');
 	} else if (type === 'oldSensor') {
 		var currentName = allproperties['sensors'][sensor]['name'];
 		$("#sensorType").val(allproperties['sensors'][sensor]['type']).change();
+		$("#sensorType").hide()
 		$("#delSensorBTN").attr("onclick","deleteSensor('"+ sensor +"')");
 		$("#delSensorBTN").show();
-		$("#inputName").show();
 	}
 	
 	selectSensorType($("#sensorType"));
-	addPinsToSelect('#inputPin', sensor);
+	if (allproperties['sensors'][sensor] == undefined)
+		addPinsToSelect('#GPIO-pin', '');
+	else
+		addPinsToSelect('#GPIO-pin', allproperties['sensors'][sensor]['pin']);
 	$("#okButton").attr("onclick","saveConfigSettings('"+ type+"','"+sensor+"','"+currentName+"')");
 	$("#inputName").val(currentName);
 	$("#myModal").show();
 }
 
 selectSensorType = function(Dd) {
-	Dd.blur();
-	if (Dd.prop("value") === "GPIO")
-		$("#inputPinDiv").show();
-	else
-		$("#inputPinDiv").hide();
+	sensorType = Dd.prop("value")
+	$('[id^="inputDiv"]').each(function(){
+		$(this).hide();
+	});
+	$('[id^="inputDiv'+sensorType+'"]').each(function(){
+		$(this).show();
+	});
 };
-
 
 function saveConfigSettings(type, sensor, currentName){
 	var newname = $("#inputName").val();
-	var newpin = $("#inputPin").val();
-	console.log(type);
-	if (type === 'newSensor') {
-		if (newpin !== null && newname !== ""){
-			socket.emit('addSensor', {"sensor": newpin, "name": newname, "enabled": false});
-		}
-	} else if (type === 'oldSensor') {
-		if (currentName !== newname){
-			socket.emit('setSensorName', {"sensor": sensor, "name": newname});
-		}
-		if (sensor != newpin){
-			socket.emit('setSensorPin', {"sensor": sensor, "newpin": newpin});
-		}
-	}
+	var sensorType = $("#sensorType").prop("value");
+	var sensorValues = {}
+	sensorValues[sensor] = {'type': sensorType, 'name': newname}
+	$('#inputDiv'+sensorType+' [id^="'+sensorType+'-"]').each(function(){
+		var key = this.id.replace(sensorType+'-', '');
+		var value = $(this).val();
+		console.log(key, value);
+		sensorValues[sensor][key] = value;
+	});
+	console.log(JSON.stringify(sensorValues))
+	$.ajax({
+		type: 'POST',
+		contentType: 'application/json',
+		url: "addSensor2",
+		dataType : 'json',
+		data: JSON.stringify(sensorValues)
+	});
+
+	// socket.emit('addSensor', sensorValues);
+	// var newname = $("#inputName").val();
+	// var newpin = $("#GPIO-pin").val();
+	// console.log(type);
+	// if (type === 'newSensor') {
+	// 	if (newpin !== null && newname !== ""){
+	// 		socket.emit('addSensor', {"sensor": newpin, "name": newname, "enabled": false});
+	// 	}
+	// } else if (type === 'oldSensor') {
+	// 	if (currentName !== newname){
+	// 		socket.emit('setSensorName', {"sensor": sensor, "name": newname});
+	// 	}
+	// 	if (sensor != newpin){
+	// 		socket.emit('setSensorPin', {"sensor": sensor, "newpin": newpin});
+	// 	}
+	// }
 	closeConfigWindow();
 }
 
@@ -233,7 +248,6 @@ function openConfigWindow(){
 
 function closeConfigWindow(){
 	document.body.style.overflowY = "auto";
-	console.log("now it will be auto")
 	$("#myModal").hide();
 	$("#settingsModal").hide();
 }

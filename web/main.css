@@ -66,8 +66,8 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* input */
-input[type=text] {
-	padding: 12px 20px 12px 40px;
+input[type=text], input[type=password] {
+	padding: 12px 20px 12px 20px;
 	border: 2px solid #ccc; 
 	border-radius: 9px;
 	font-size: 16px;

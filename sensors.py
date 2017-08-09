@@ -8,99 +8,7 @@ import requests
 import re
 
 
-class Sensor():
-    """docstring for Sensor"""
-
-    def __init__(self, sensorType, autoStop, alertTime):
-        self.sensorType = sensorType
-        self.autoStop = autoStop
-        self.alertTime = alertTime  # seconds
-        self._event_alert = []
-        self._event_alert_stop = []
-        self.allSensors = {}
-        self.activeSensorText = "active"
-        self.inactiveSensorText = "inactive"
-
-    def add_sensor(self, *sensors):
-        pass
-
-    def del_sensor(self, *sensors):
-        pass
-
-    def get_all_sensors(self):
-        return self.allSensors
-
-    def is_sensor_active(self, sensor):
-        if self.allSensors[sensor]['state'] == self.activeSensorText:
-            return True
-        else:
-            return False
-
-    def on_alert(self, callback):
-        self._event_alert.append(callback)
-
-    def _notify_alert(self, sensorName):
-        self.allSensors[sensorName]['state'] = self.activeSensorText
-        if self.autoStop is True:
-            threading.Thread(target=self._notify_alert_stop_later, args=[sensorName]).start()
-        for callback in self._event_alert:
-            callback(sensorName)
-
-    def on_alert_stop(self, callback):
-        self._event_alert_stop.append(callback)
-
-    def _notify_alert_stop(self, sensorName):
-        self.allSensors[sensorName]['state'] = self.inactiveSensorText
-        for callback in self._event_alert_stop:
-            callback(sensorName)
-
-    def _notify_alert_stop_later(self, sensorName):
-        time.sleep(self.alertTime)
-        self._notify_alert_stop(sensorName)
-
-
-class sensorGPIO(Sensor):
-    def __init__(self):
-        Sensor.__init__(self, 'GPIO', False, 0)
-        # GPIO Setup
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setwarnings(False)
-
-        # Global Variables
-        self.outputPins = {}
-
-    def add_sensor(self, *sensors):
-        for sensor in sensors:
-            pin = int(sensor)
-            if pin not in self.allSensors:
-                GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-                GPIO.remove_event_detect(pin)
-                GPIO.add_event_detect(
-                    pin, GPIO.BOTH,
-                    callback=self._checkInputPinState,
-                    bouncetime=500)
-                state = GPIO.input(pin)
-                self.allSensors[pin] = {'state': state, 'type': self.sensorType}
-
-    def del_sensor(self, *sensors):
-        for sensor in sensors:
-            pin = int(sensor)
-            if pin in self.allSensors:
-                del self.allSensors[pin]
-                GPIO.remove_event_detect(pin)
-
-    def _checkInputPinState(self, inputPin):
-        prevState = self.allSensors[inputPin]['state']
-        nowState = GPIO.input(inputPin)
-        if nowState != prevState:
-            # print "Pin: {0} changed state to: {1}".format(inputPin, str(nowState))
-            if nowState == 1:
-                self._notify_alert(inputPin)
-            else:
-                self._notify_alert_stop(inputPin)
-        else:
-            print "Wrong state change. Ignoring!!!"
-
+class outputGPIO():
     def enableOutputPin(self, *pins):
         for pin in pins:
             GPIO.setup(pin, GPIO.OUT)
@@ -122,14 +30,126 @@ class sensorGPIO(Sensor):
         return self.outputPins
 
 
-class sensorHikvision(Sensor):
-    def __init__(self):
-        Sensor.__init__(self, 'Hikvision', True, 8)
+class sensorGPIO():
+    def __init__(self, sensorName):
+        # GPIO Setup
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setwarnings(False)
 
-    def add_sensor(self, sensor, ip, username, password):
-        if sensor not in self.allSensors:
-            self.allSensors[sensor] = {'state': True, 'type': self.sensorType}
-            threading.Thread(target=self.runInBackground, args=[sensor, ip, username, password]).start()
+        # Global Required Variables
+        self.sensorName = sensorName
+        self.online = True
+        self.alert = None
+        self._event_alert = []
+        self._event_alert_stop = []
+        self._event_error = []
+        self._event_error_stop = []
+
+        # Other Variables
+        self.gpioState = None
+        self.pin = None
+
+    def getOnlineStatus(self):
+        return self.online
+
+    def getAlertStatus(self):
+        return self.alert
+
+    def setAlertStatus(self):
+        self.gpioState = GPIO.input(self.pin)
+        self.alert = False
+        if self.gpioState == 1:
+            self.alert = True
+
+    def add_sensor(self, sensor):
+        self.pin = int(sensor['pin'])
+        GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        GPIO.remove_event_detect(self.pin)
+        GPIO.add_event_detect(
+            self.pin, GPIO.BOTH,
+            callback=self._checkInputPinState,
+            bouncetime=600)
+        self._checkInputPinState(self.pin)
+        self.setAlertStatus()
+
+    def del_sensor(self):
+        GPIO.remove_event_detect(self.pin)
+
+    def _checkInputPinState(self, inputPin):
+        nowState = GPIO.input(self.pin)
+        if nowState != self.gpioState:
+            # print "Pin: {0} changed state to: {1}".format(self.pin, str(nowState))
+            if nowState == 1:
+                self._notify_alert()
+            else:
+                self._notify_alert_stop()
+        else:
+            print "Wrong state change. Ignoring!!!"
+
+    def forceNotify(self):
+        if GPIO.input(self.pin) == 1:
+            self._notify_alert()
+        else:
+            self._notify_alert_stop()
+
+    # ------------------------------
+    def on_alert(self, callback):
+        self._event_alert.append(callback)
+
+    def on_alert_stop(self, callback):
+        self._event_alert_stop.append(callback)
+
+    def on_error(self, callback):
+        pass
+
+    def on_error_stop(self, callback):
+        pass
+
+    def _notify_alert(self):
+        self.setAlertStatus()
+        for callback in self._event_alert:
+            callback(self.sensorName)
+
+    def _notify_alert_stop(self):
+        self.setAlertStatus()
+        for callback in self._event_alert_stop:
+            callback(self.sensorName)
+
+    def _notify_error(self):
+        pass
+
+    def _notify_error_stop(self):
+        pass
+
+
+class sensorHikvision():
+    def __init__(self, sensorName):
+        # Global Required Variables
+        self.sensorName = sensorName
+        self.online = True
+        self.alert = False
+        self._event_alert = []
+        self._event_alert_stop = []
+        self._event_error = []
+        self._event_error_stop = []
+
+        # Other Variables
+        self.alertTime = 8
+        self.threadRunforever = None
+
+    def add_sensor(self, sensor):
+        ip = sensor['ip']
+        username = sensor['user']
+        password = sensor['pass']
+        # sensor_settings = {'ip': ip, 'username': username, 'password': password}
+        # print sensor_settings
+        try:
+            self.threadRunforever._Thread__stop()
+        except Exception as e:
+            print e
+        self.threadRunforever = threading.Thread(target=self.runInBackground, args=[sensor, ip, username, password])
+        self.threadRunforever.daemon = True
+        self.threadRunforever.start()
 
     def runInBackground(self, sensor, ip, username, password):
         print "RUNNIN NEW HIKVISION!!!"
@@ -140,21 +160,151 @@ class sensorHikvision(Sensor):
                                         auth=authorization,
                                         timeout=5,
                                         stream=True)
+                if not self.online:
+                    print "Now it is Online!!!"
+                    self._notify_error_stop()
                 for chunk in response.iter_lines():
                     if chunk:
                         match = re.match(r'<eventType>(.*)</eventType>', chunk)
                         if match:
                             if match.group(1) == 'linedetection':
-                                if not self.is_sensor_active(sensor):
-                                    self._notify_alert(sensor)
+                                self._notify_alert()
             except requests.exceptions.RequestException as e:
+                if self.online:
+                    print "Now it is not Online... :("
+                    self._notify_error()
                 print e
                 time.sleep(5)
 
     def del_sensor(self, *sensors):
+        try:
+            self.threadRunforever._Thread__stop()
+        except Exception as e:
+            print e
         for sensor in sensors:
             if sensor in self.allSensors:
                 del self.allSensors[sensor]
-                pin = int(sensor)
-                GPIO.remove_event_detect(pin)
-                del self.allSensors[pin]
+
+    def forceNotify(self):
+        pass
+
+    # ------------------------------
+    def on_alert(self, callback):
+        self._event_alert.append(callback)
+
+    def on_alert_stop(self, callback):
+        self._event_alert_stop.append(callback)
+
+    def on_error(self, callback):
+        self._event_error.append(callback)
+
+    def on_error_stop(self, callback):
+        self._event_error_stop.append(callback)
+
+    def _notify_alert(self):
+        self.alert = True
+        threading.Thread(target=self._notify_alert_stop_later).start()
+        for callback in self._event_alert:
+            callback(self.sensorName)
+
+    def _notify_alert_stop(self):
+        self.alert = False
+        for callback in self._event_alert_stop:
+            callback(self.sensorName)
+
+    def _notify_alert_stop_later(self):
+        time.sleep(self.alertTime)
+        self._notify_alert_stop(self.sensorName)
+
+    def _notify_error(self):
+        self.online = False
+        for callback in self._event_error:
+            callback(self.sensorName)
+
+    def _notify_error_stop(self):
+        self.online = True
+        for callback in self._event_error_stop:
+            callback(self.sensorName)
+
+
+class Sensor():
+    """docstring for Sensor"""
+
+    def __init__(self):
+        # self.sensorType = sensorType
+        # self.autoStop = autoStop
+        # self.alertTime = alertTime  # seconds
+        self._event_alert = []
+        self._event_alert_stop = []
+        self._event_error = []
+        self._event_error_stop = []
+        self.allSensors = {}
+
+    def add_sensors(self, sensors):
+        for sensor, sensorvalues in sensors.iteritems():
+            if sensor not in self.allSensors:
+                print sensor
+                sensorType = sensorvalues['type']
+                if sensorType == 'GPIO':
+                    sensorobject = sensorGPIO(sensor)
+                    print 'GPIO', sensor
+                elif sensorType == 'Hikvision':
+                    sensorobject = sensorHikvision(sensor)
+                    print 'Hikvision', sensor
+                self.allSensors[sensor] = {'values': sensorvalues, 'obj': sensorobject}
+                self.allSensors[sensor]['obj'].on_alert(self._notify_alert)
+                self.allSensors[sensor]['obj'].on_alert_stop(self._notify_alert_stop)
+                self.allSensors[sensor]['obj'].on_error(self._notify_error)
+                self.allSensors[sensor]['obj'].on_error_stop(self._notify_error_stop)
+                self.allSensors[sensor]['obj'].add_sensor(self.allSensors[sensor]['values'])
+            self.allSensors[sensor]['obj'].forceNotify()
+
+    def printTest1(self, hello):
+        print "on_alert", hello
+
+    def printTest2(self, hello):
+        print "on_alert_stop", hello
+
+    def printTest3(self, hello):
+        print "on_error", hello
+
+    def printTest4(self, hello):
+        print "on_error_stop", hello
+
+    def del_sensor(self, sensor):
+        self.allSensors[sensor]['obj'].del_sensor()
+        del self.allSensors[sensor]
+
+    def get_all_sensors(self):
+        return self.allSensors
+
+    # ------------------------------
+    def on_alert(self, callback):
+        self._event_alert.append(callback)
+
+    def on_alert_stop(self, callback):
+        self._event_alert_stop.append(callback)
+
+    def on_error(self, callback):
+        self._event_error.append(callback)
+
+    def on_error_stop(self, callback):
+        self._event_error_stop.append(callback)
+
+    def _notify_alert(self, sensorName):
+        for callback in self._event_alert:
+            callback(sensorName)
+
+    def _notify_alert_stop(self, sensorName):
+        for callback in self._event_alert_stop:
+            callback(sensorName)
+
+    def _notify_error(self, sensorName):
+        self.online = False
+        for callback in self._event_error:
+            callback(sensorName)
+
+    def _notify_error_stop(self, sensorName):
+        self.online = True
+        for callback in self._event_error_stop:
+            callback(sensorName)

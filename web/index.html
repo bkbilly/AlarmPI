@@ -33,10 +33,19 @@
 				<option value="GPIO" selected>GPIO</option>
 				<option value="Hikvision">Hikvision</option>
 			</select><br>
-			<div id="inputPinDiv">
-				BCM Pin:<select id="inputPin" class="pinSelect">
+			<div id="inputDivGPIO">
+				<label for="GPIO-pin">BCM Pin:</label>
+				<select id="GPIO-pin" class="pinSelect">
 					<option value="" disabled selected></option></select>
 				<br>
+			</div>
+			<div id="inputDivHikvision">
+				<label for="Hikvision-ip">IP Address</label><br>
+				<input type="text" id="Hikvision-ip" placeholder="Enter IP Address of camera"><br>
+				<label for="Hikvision-user">Username</label><br>
+				<input type="text" id="Hikvision-user" placeholder="Enter Username"><br>
+				<label for="Hikvision-pass">Password</label><br>
+				<input type="password" id="Hikvision-pass" placeholder="Enter Password"><br>
 			</div>
 			<button class="button delbutton" id="delSensorBTN">Delete</button><br>
 			<button class="button" id="okButton">OK</button>
