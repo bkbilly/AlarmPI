@@ -8,7 +8,7 @@ All notable changes to this project will be documented in this file.
   - better sensors with callbacks, auto delete old logs, better developer friendly
   - filled the online and alert when creating new sensor
 
-## [[2.6]](https://github.com/bkbilly/AlarmPI/tree/v2.6) - Jul 25, 2017
+## [2.6] - Jul 25, 2017
 #### CHANGED
   - fixed hikvision sensor, added UI log filter, print accessed ipaddress
 
