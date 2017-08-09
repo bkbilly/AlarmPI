@@ -1,15 +1,18 @@
 #!/usr/bin/env python
 
-from sensors import sensorGPIO, sensorHikvision
+from sensors import sensorGPIO, sensorHikvision, Sensor
 from datetime import datetime
 import pytz
 import json
 import threading
+import time
 import subprocess
 import sys
 import smtplib
 import re
 from email.mime.text import MIMEText
+import uuid
+
 
 
 class DoorSensor(sensorGPIO):
@@ -28,28 +31,34 @@ class DoorSensor(sensorGPIO):
         self.logfile = logfile
         self.sipcallfile = sipcallfile
         self.settings = self.ReadSettings()
-        self.allSensors = {}
 
         # Stop execution on exit
         self.setAlert = False
         self.kill_now = False
 
         # Init Alarm
-        self.sensorsGPIO = sensorGPIO()
-        self.sensorsHikvision = sensorHikvision()
-        self.writeLog("system", "Alarm Booted")
-        self.RefreshAlarmData()
+        threadTrimLogFile = threading.Thread(target=self.trimLogFile)
+        threadTrimLogFile.daemon = True
+        threadTrimLogFile.start()
+
+        # self.sensorsGPIO = sensorGPIO()
+        # self.writeLog("system", "Alarm Booted")
 
         # Event Listeners
-        self.sensorsGPIO.on_alert(self.sensorAlert)
-        self.sensorsGPIO.on_alert_stop(self.sensorStopAlert)
-        # Event Listeners
-        self.sensorsHikvision.on_alert(self.sensorAlert)
-        self.sensorsHikvision.on_alert_stop(self.sensorStopAlert)
+        self.sensors = Sensor()
+        self.sensors.on_alert(self.sensorAlert)
+        self.sensors.on_alert_stop(self.sensorStopAlert)
+        self.sensors.on_error(self.sensorError)
+        self.sensors.on_error_stop(self.sensorStopError)
+        self.sensors.add_sensors(self.settings['sensors'])
+        # self.sensorsGPIO.on_alert(self.sensorAlert)
+        # self.sensorsGPIO.on_alert_stop(self.sensorStopAlert)
 
     def sensorAlert(self, sensorName):
         self.settings['sensors'][str(sensorName)]['alert'] = True
-        self.RefreshAlarmData()
+        self.settings['sensors'][str(sensorName)]['online'] = True
+        self.writeNewSettingsToFile()
+        self.updateUI('settingsChanged', self.getSensorsArmed())
         name = self.settings['sensors'][str(sensorName)]['name']
         enabled = self.settings['sensors'][str(sensorName)]['enabled']
         enabledText = "enabled sensor: "
@@ -62,48 +71,38 @@ class DoorSensor(sensorGPIO):
 
     def sensorStopAlert(self, sensorName):
         self.settings['sensors'][str(sensorName)]['alert'] = False
-        self.RefreshAlarmData()
+        self.settings['sensors'][str(sensorName)]['online'] = True
+        self.writeNewSettingsToFile()
+        self.updateUI('settingsChanged', self.getSensorsArmed())
+
+    def sensorError(self, sensorName):
+        self.settings['sensors'][str(sensorName)]['online'] = False
+        self.writeNewSettingsToFile()
+        print sensorName, "-------------error started."
+
+    def sensorStopError(self, sensorName):
+        self.settings['sensors'][str(sensorName)]['online'] = True
+        self.writeNewSettingsToFile()
+        print sensorName, "-------------stopped error."
 
     def checkIntruderAlert(self):
         # Write Alerted Sensors Log and call IntruderAlert when alarm is activated
         if self.settings['settings']['alarmArmed'] is True and self.setAlert is False:
             for sensor, sensorvalue in self.settings['sensors'].iteritems():
                 if sensorvalue['alert'] is True:
-                    threading.Thread(target=self.intruderAlert).start()
+                    threadIntruderAlert = threading.Thread(target=self.intruderAlert)
+                    threadIntruderAlert.daemon = True
+                    threadIntruderAlert.start()
 
-    def RefreshAlarmData(self):
-        ''' This method adds event listener on enabled sensors and removes them for
-        the disabled sensors.
-        After each call it checks for an alert and calls the method responsible
-        for the alert.
-        '''
-        self.allSensors = {}
-
-        # Get a list of the enabled and the disabled sensors
-        for sensor, sensorvalue in self.settings['sensors'].iteritems():
-            print sensorvalue
-            if sensorvalue['type'] == 'GPIO':
-                self.sensorsGPIO.add_sensor(sensor)
-                self.allSensors[sensor] = sensorvalue
-                sensor_alert = False
-                if sensorvalue['enabled'] is True:
-                    if self.sensorsGPIO.is_sensor_active(int(sensor)):
-                        sensor_alert = True
-                self.allSensors[sensor]['alert'] = sensor_alert
-            if sensorvalue['type'] == 'Hikvision':
-                ip = sensorvalue['ip']
-                password = sensorvalue['pass']
-                username = sensorvalue['user']
-                self.sensorsHikvision.add_sensor(sensor, ip, username, password)
-                self.allSensors[sensor] = sensorvalue
-                sensor_alert = False
-                if sensorvalue['enabled'] is True:
-                    if self.sensorsHikvision.is_sensor_active(sensor):
-                        sensor_alert = True
-                self.allSensors[sensor]['alert'] = sensor_alert
-
-        # Send to JS
-        self.updateUI('settingsChanged', self.getSensorsArmed())
+    def trimLogFile(self):
+        lines = 1000  # Number of lines of logs to keep
+        repeat_every_n_sec = 86400  # 24 Hours
+        while True:
+            with open(self.logfile, 'r') as f:
+                data = f.readlines()
+            with open(self.logfile, 'w') as f:
+                f.writelines(data[-lines:])
+            time.sleep(repeat_every_n_sec)
 
     def ReadSettings(self):
         ''' Reads the json settings file and returns it '''
@@ -113,7 +112,6 @@ class DoorSensor(sensorGPIO):
 
     def writeNewSettingsToFile(self):
         ''' Write the new settings to the json file '''
-        self.RefreshAlarmData()
         with open(self.jsonfile, 'w') as outfile:
             json.dump(self.settings, outfile, sort_keys=True, indent=4, separators=(',', ': '))
 
@@ -127,7 +125,7 @@ class DoorSensor(sensorGPIO):
         '''
         try:
             mytimezone = pytz.timezone(self.settings['ui']['timezone'])
-        except:
+        except Exception:
             mytimezone = pytz.utc
 
         myTimeLog = datetime.now(tz=mytimezone).strftime("%Y-%m-%d %H:%M:%S")
@@ -143,8 +141,12 @@ class DoorSensor(sensorGPIO):
         self.writeLog("alarm", "Intruder Alert")
         self.enableSerene()
         self.updateUI('alarmStatus', self.getAlarmStatus())
-        threading.Thread(target=self.sendMail).start()
-        threading.Thread(target=self.callVoip).start()
+        threadSendMail = threading.Thread(target=self.sendMail)
+        threadSendMail.daemon = True
+        threadSendMail.start()
+        threadCallVoip = threading.Thread(target=self.callVoip)
+        threadCallVoip.daemon = True
+        threadCallVoip.start()
 
     def callVoip(self):
         ''' This method uses a prebuild application in C to connect to the SIP provider
@@ -330,20 +332,23 @@ class DoorSensor(sensorGPIO):
         self.sensorsGPIO.del_sensor(pin)
         self.writeNewSettingsToFile()
 
-    def addSensor(self, sensor, name, sensorType, enabled):
+    def addSensor(self, sensorValues):
         ''' Add a new sensor '''
-        self.settings['sensors'][str(sensor)] = {
-            'name': name,
-            'enabled': enabled,
-            'type': sensorType
-        }
+        key = sensorValues.iteritems().next()[0]
+        sensorValues[key]['enabled'] = True
+        if 'undefined' in sensorValues:
+            sensorName = str(uuid.uuid4())
+            sensorValues[sensorName] = sensorValues.pop('undefined')
+        else:
+            self.sensors.del_sensor(key)
+        self.settings['sensors'].update(sensorValues)
         self.writeNewSettingsToFile()
+        self.sensors.add_sensors(sensorValues)
 
-    def delSensor(self, sensor):
+    def delSensor(self, sensorName):
         ''' Delete a sensor '''
-        del self.settings['sensors'][str(sensor)]
-        self.sensorsGPIO.del_sensor(sensor)
-
+        del self.settings['sensors'][str(sensorName)]
+        self.sensors.del_sensor(sensorName)
         self.writeNewSettingsToFile()
 
     def check_auth(self, username, password):

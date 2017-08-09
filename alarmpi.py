@@ -10,9 +10,9 @@ from flask_socketio import SocketIO
 from functools import wraps
 from distutils.util import strtobool
 
-import time
-import subprocess
-from multiprocessing import Process, Queue
+# import time
+# import subprocess
+# from multiprocessing import Process, Queue
 
 from DoorSensor import DoorSensor
 
@@ -71,7 +71,7 @@ def shutdownServer():
     func()
 
 
-#def startServer(queue):
+# def startServer(queue):
 def startServer():
     global some_queue
     # Save the PID to a file
@@ -85,9 +85,8 @@ def startServer():
         context.use_certificate_file(certcrtfile)
     else:
         context = None
-    socketio.run(app, host="", port=alarmSensors.getPortUI(), ssl_context=context)
-    alarmSensors.RefreshAlarmData()
-
+    socketio.run(app, host="", port=alarmSensors.getPortUI(), ssl_context=context, debug=True)
+    # alarmSensors.RefreshAlarmData()
 
 
 @app.route('/restart')
@@ -244,11 +243,11 @@ def setSensorStateOnline():
     socketio.emit('settingsChanged', alarmSensors.getSensorsArmed())
 
 
-@socketio.on('setSerenePin')
-@requires_auth
-def setSerenePin(message):
-    alarmSensors.setSerenePin(str(message['pin']))
-    socketio.emit('sensorsChanged')
+# @socketio.on('setSerenePin')
+# @requires_auth
+# def setSerenePin(message):
+#     alarmSensors.setSerenePin(str(message['pin']))
+#     socketio.emit('sensorsChanged')
 
 
 @socketio.on('setSensorState')
@@ -258,11 +257,11 @@ def setSensorState(message):
     socketio.emit('settingsChanged', alarmSensors.getSensorsArmed())
 
 
-@socketio.on('setSensorName')
-@requires_auth
-def setSensorName(message):
-    alarmSensors.setSensorName(message['sensor'], message['name'])
-    socketio.emit('settingsChanged', alarmSensors.getSensorsArmed())
+# @socketio.on('setSensorName')
+# @requires_auth
+# def setSensorName(message):
+#     alarmSensors.setSensorName(message['sensor'], message['name'])
+#     socketio.emit('settingsChanged', alarmSensors.getSensorsArmed())
 
 
 @socketio.on('setSensorPin')
@@ -289,8 +288,18 @@ def deactivateAlarm():
 @socketio.on('addSensor')
 @requires_auth
 def addSensor(message):
-    alarmSensors.addSensor(str(message['sensor']), message['name'], 'GPIO', message['enabled'])
+    print message
+    alarmSensors.addSensor(message)
     socketio.emit('sensorsChanged')
+
+
+@app.route('/addSensor2', methods=['GET', 'POST'])
+@requires_auth
+def addSensor2():
+    message = request.get_json()
+    alarmSensors.addSensor(message)
+    socketio.emit('sensorsChanged')
+    return json.dumps("done")
 
 
 @socketio.on('delSensor')
@@ -343,4 +352,3 @@ if __name__ == '__main__':
     # #p.terminate()  # terminate flaskapp and then restart the app on subprocess
     # #args = [sys.executable] + [sys.argv[0]]
     # #subprocess.call(args)
-
