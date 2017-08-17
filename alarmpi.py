@@ -70,10 +70,10 @@ def shutdownServer():
     func()
 
 
-def startServer(queue):
-# def startServer():
-    global some_queue
-    some_queue = queue
+# def startServer(queue):
+def startServer():
+    # global some_queue
+    # some_queue = queue
     # Save the PID to a file
     if len(sys.argv) > 1:
         if ".pid" in sys.argv[1]:
@@ -86,16 +86,16 @@ def startServer(queue):
     socketio.run(app, host="", port=alarmSensors.getPortUI(), ssl_context=context)
 
 
-@app.route('/restart')
-@requires_auth
-def restart():
-    try:
-        some_queue.put("something")
-        print("Restarted successfully")
-        return "Quit"
-    except Exception:
-        print("Failed in restart")
-        return "Failed"
+# @app.route('/restart')
+# @requires_auth
+# def restart():
+#     try:
+#         some_queue.put("something")
+#         print("Restarted successfully")
+#         return "Quit"
+#     except Exception:
+#         print("Failed in restart")
+#         return "Failed"
 
 
 # Get the required files for the UI
@@ -335,16 +335,16 @@ def setUISettings(message):
 
 # Run
 if __name__ == '__main__':
-    # startServer()
-    q = Queue()
-    p = Process(target=startServer, args=[q, ])
-    p.start()
-    while True:  # wathing queue, if there is no call than sleep, otherwise break
-        if q.empty():
-            time.sleep(1)
-        else:
-            break
-    subprocess.call('service alarmpi stop', shell=True)
-    p.terminate()  # terminate flaskapp and then restart the app on subprocess
-    args = [sys.executable] + [sys.argv[0]]
-    subprocess.call(args)
+    startServer()
+    # q = Queue()
+    # p = Process(target=startServer, args=[q, ])
+    # p.start()
+    # while True:  # wathing queue, if there is no call than sleep, otherwise break
+    #     if q.empty():
+    #         time.sleep(1)
+    #     else:
+    #         break
+    # subprocess.call('service alarmpi stop', shell=True)
+    # p.terminate()  # terminate flaskapp and then restart the app on subprocess
+    # args = [sys.executable] + [sys.argv[0]]
+    # subprocess.call(args)
