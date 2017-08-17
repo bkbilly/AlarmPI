@@ -7,6 +7,8 @@ import time
 import requests
 import re
 
+from colors import bcolors
+
 
 class outputGPIO():
     def enableOutputPin(self, *pins):
@@ -78,19 +80,20 @@ class sensorGPIO():
     def _checkInputPinState(self, inputPin):
         nowState = GPIO.input(self.pin)
         if nowState != self.gpioState:
-            # print "Pin: {0} changed state to: {1}".format(self.pin, str(nowState))
+            # print("Pin: {0} changed state to: {1}".format(self.pin, str(nowState)))
             if nowState == 1:
                 self._notify_alert()
             else:
                 self._notify_alert_stop()
         else:
-            print "Wrong state change. Ignoring!!!"
+            print(bcolors.STRIKE + "Wrong state change. Ignoring!!!" + bcolors.ENDC)
 
     def forceNotify(self):
-        if GPIO.input(self.pin) == 1:
-            self._notify_alert()
-        else:
-            self._notify_alert_stop()
+        # if GPIO.input(self.pin) == 1:
+        #     self._notify_alert()
+        # else:
+        #     self._notify_alert_stop()
+        pass
 
     # ------------------------------
     def on_alert(self, callback):
@@ -137,23 +140,18 @@ class sensorHikvision():
         self.alertTime = 8
         self.threadRunforever = None
         self.runforever = True
+        self.hasBeenNotified = False
 
     def add_sensor(self, sensor):
         ip = sensor['ip']
         username = sensor['user']
         password = sensor['pass']
-        # sensor_settings = {'ip': ip, 'username': username, 'password': password}
-        # print sensor_settings
-        try:
-            self.threadRunforever._Thread__stop()
-        except Exception as e:
-            print e
         self.threadRunforever = threading.Thread(target=self.runInBackground, args=[sensor, ip, username, password])
         self.threadRunforever.daemon = True
         self.threadRunforever.start()
+        self._notify_alert_stop()
 
     def runInBackground(self, sensor, ip, username, password):
-        print "RUNNIN NEW HIKVISION!!!"
         authorization = requests.auth.HTTPBasicAuth(username, password)
         while self.runforever:
             try:
@@ -165,24 +163,23 @@ class sensorHikvision():
                     self._notify_error_stop()
                 for chunk in response.iter_lines():
                     if chunk:
+                        chunk = chunk.decode("utf-8")
                         match = re.match(r'<eventType>(.*)</eventType>', chunk)
                         if match:
                             if match.group(1) == 'linedetection':
-                                self._notify_alert()
+                                if not self.hasBeenNotified:
+                                    self._notify_alert()
             except Exception as e:
                 if self.online:
                     self._notify_error()
-                print e
+                print(bcolors.WARNING, e, bcolors.ENDC)
                 time.sleep(5)
 
     def del_sensor(self):
         self.runforever = False
-        # try:
-        #     self.threadRunforever._Thread__stop()
-        # except Exception as e:
-        #     print e
 
     def forceNotify(self):
+        # self._notify_alert_stop()
         pass
 
     # ------------------------------
@@ -199,6 +196,7 @@ class sensorHikvision():
         self._event_error_stop.append(callback)
 
     def _notify_alert(self):
+        self.hasBeenNotified = False
         self.alert = True
         threading.Thread(target=self._notify_alert_stop_later).start()
         for callback in self._event_alert:
@@ -206,6 +204,7 @@ class sensorHikvision():
 
     def _notify_alert_stop(self):
         self.alert = False
+        self.hasBeenNotified = True
         for callback in self._event_alert_stop:
             callback(self.sensorName)
 
@@ -228,9 +227,6 @@ class Sensor():
     """docstring for Sensor"""
 
     def __init__(self):
-        # self.sensorType = sensorType
-        # self.autoStop = autoStop
-        # self.alertTime = alertTime  # seconds
         self._event_alert = []
         self._event_alert_stop = []
         self._event_error = []
@@ -238,16 +234,15 @@ class Sensor():
         self.allSensors = {}
 
     def add_sensors(self, sensors):
-        for sensor, sensorvalues in sensors.iteritems():
+        for sensor, sensorvalues in sensors.items():
             if sensor not in self.allSensors:
-                print sensor
                 sensorType = sensorvalues['type']
+                sensorName = sensorvalues['name']
+                print("{0}{1} {2} sensor with id: {3}{4}".format(bcolors.OKBLUE, sensorType, sensorName, sensor, bcolors.ENDC))
                 if sensorType == 'GPIO':
                     sensorobject = sensorGPIO(sensor)
-                    print 'GPIO', sensor
                 elif sensorType == 'Hikvision':
                     sensorobject = sensorHikvision(sensor)
-                    print 'Hikvision', sensor
                 self.allSensors[sensor] = {'values': sensorvalues, 'obj': sensorobject}
                 self.allSensors[sensor]['obj'].on_alert(self._notify_alert)
                 self.allSensors[sensor]['obj'].on_alert_stop(self._notify_alert_stop)
@@ -257,16 +252,16 @@ class Sensor():
             self.allSensors[sensor]['obj'].forceNotify()
 
     def printTest1(self, hello):
-        print "on_alert", hello
+        print("on_alert", hello)
 
     def printTest2(self, hello):
-        print "on_alert_stop", hello
+        print("on_alert_stop", hello)
 
     def printTest3(self, hello):
-        print "on_error", hello
+        print("on_error", hello)
 
     def printTest4(self, hello):
-        print "on_error_stop", hello
+        print("on_error_stop", hello)
 
     def del_sensor(self, sensor):
         self.allSensors[sensor]['obj'].del_sensor()

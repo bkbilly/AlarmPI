@@ -3,16 +3,15 @@
 import json
 import os
 import sys
-from OpenSSL import SSL
 
 from flask import Flask, send_from_directory, request, Response
 from flask_socketio import SocketIO
 from functools import wraps
 from distutils.util import strtobool
 
-# import time
-# import subprocess
-# from multiprocessing import Process, Queue
+import time
+import subprocess
+from multiprocessing import Process, Queue
 
 from DoorSensor import DoorSensor
 
@@ -55,9 +54,9 @@ def requires_auth(f):
         ipaddr = request.remote_addr
         if not auth or not alarmSensors.check_auth(auth.username, auth.password):
             if not auth:
-                print "Trying to login with IP:", ipaddr
+                print("Trying to login with IP:", ipaddr)
             else:
-                print "Unauthorized login:", ipaddr
+                print("Unauthorized login:", ipaddr)
             return authenticate()
         return f(*args, **kwargs)
     return decorated
@@ -71,22 +70,20 @@ def shutdownServer():
     func()
 
 
-# def startServer(queue):
-def startServer():
+def startServer(queue):
+# def startServer():
     global some_queue
+    some_queue = queue
     # Save the PID to a file
     if len(sys.argv) > 1:
         if ".pid" in sys.argv[1]:
             with open(sys.argv[1], "w") as f:
                 f.write(str(os.getpid()))
     if alarmSensors.getUISettings()['https'] is True:
-        context = SSL.Context(SSL.SSLv23_METHOD)
-        context.use_privatekey_file(certkeyfile)
-        context.use_certificate_file(certcrtfile)
+        context = (certcrtfile, certkeyfile)
     else:
         context = None
-    socketio.run(app, host="", port=alarmSensors.getPortUI(), ssl_context=context, debug=True)
-    # alarmSensors.RefreshAlarmData()
+    socketio.run(app, host="", port=alarmSensors.getPortUI(), ssl_context=context)
 
 
 @app.route('/restart')
@@ -94,10 +91,10 @@ def startServer():
 def restart():
     try:
         some_queue.put("something")
-        print "Restarted successfully"
+        print("Restarted successfully")
         return "Quit"
-    except:
-        print "Failed in restart"
+    except Exception:
+        print("Failed in restart")
         return "Failed"
 
 
@@ -238,7 +235,7 @@ def setSensorStateOnline():
         "enabled": strtobool(request.args.get('enabled').lower())
     }
     message['enabled'] = True if message['enabled'] else False
-    print message
+    print(message)
     alarmSensors.setSensorState(message['sensor'], message['enabled'])
     socketio.emit('settingsChanged', alarmSensors.getSensorsArmed())
 
@@ -288,7 +285,6 @@ def deactivateAlarm():
 @socketio.on('addSensor')
 @requires_auth
 def addSensor(message):
-    print message
     alarmSensors.addSensor(message)
     socketio.emit('sensorsChanged')
 
@@ -339,16 +335,16 @@ def setUISettings(message):
 
 # Run
 if __name__ == '__main__':
-    startServer()
-    # q = Queue()
-    # p = Process(target=startServer, args=[q, ])
-    # p.start()
-    # while True:  # wathing queue, if there is no call than sleep, otherwise break
-    #     if q.empty():
-    #         time.sleep(1)
-    #     else:
-    #         break
-    # subprocess.call('service alarmpi stop', shell=True)
-    # #p.terminate()  # terminate flaskapp and then restart the app on subprocess
-    # #args = [sys.executable] + [sys.argv[0]]
-    # #subprocess.call(args)
+    # startServer()
+    q = Queue()
+    p = Process(target=startServer, args=[q, ])
+    p.start()
+    while True:  # wathing queue, if there is no call than sleep, otherwise break
+        if q.empty():
+            time.sleep(1)
+        else:
+            break
+    subprocess.call('service alarmpi stop', shell=True)
+    p.terminate()  # terminate flaskapp and then restart the app on subprocess
+    args = [sys.executable] + [sys.argv[0]]
+    subprocess.call(args)

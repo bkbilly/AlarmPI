@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from sensors import sensorGPIO, sensorHikvision, Sensor
+from colors import bcolors
 from datetime import datetime
 import pytz
 import json
@@ -26,6 +27,7 @@ class DoorSensor(sensorGPIO):
     '''
 
     def __init__(self, jsonfile, logfile, sipcallfile):
+        print(bcolors.HEADER + "------------ INIT FOR DOOR SENSOR CLASS! ----------------" + bcolors.ENDC)
         # Global Variables
         self.jsonfile = jsonfile
         self.logfile = logfile
@@ -55,6 +57,7 @@ class DoorSensor(sensorGPIO):
         # self.sensorsGPIO.on_alert_stop(self.sensorStopAlert)
 
     def sensorAlert(self, sensorName):
+        # print("Alert Sensor", sensorName)
         self.settings['sensors'][str(sensorName)]['alert'] = True
         self.settings['sensors'][str(sensorName)]['online'] = True
         self.writeNewSettingsToFile()
@@ -70,27 +73,28 @@ class DoorSensor(sensorGPIO):
         self.checkIntruderAlert()
 
     def sensorStopAlert(self, sensorName):
+        # print("Stop Alert Sensor", sensorName)
         self.settings['sensors'][str(sensorName)]['alert'] = False
         self.settings['sensors'][str(sensorName)]['online'] = True
         self.writeNewSettingsToFile()
         self.updateUI('settingsChanged', self.getSensorsArmed())
 
     def sensorError(self, sensorName):
+        # print("Error Sensor", sensorName)
         name = self.settings['sensors'][str(sensorName)]['name']
         self.settings['sensors'][str(sensorName)]['alert'] = True
         self.settings['sensors'][str(sensorName)]['online'] = False
         self.writeNewSettingsToFile()
         self.writeLog("error", "Lost connection to: " + name)
         self.updateUI('settingsChanged', self.getSensorsArmed())
-        print sensorName, "-------------error started."
 
     def sensorStopError(self, sensorName):
+        # print("Error Stop Sensor", sensorName)
         name = self.settings['sensors'][str(sensorName)]['name']
         self.settings['sensors'][str(sensorName)]['online'] = True
         self.writeNewSettingsToFile()
         self.writeLog("error", "Restored connection to: " + name)
         self.updateUI('settingsChanged', self.getSensorsArmed())
-        print sensorName, "-------------stopped error."
 
     def checkIntruderAlert(self):
         # Write Alerted Sensors Log and call IntruderAlert when alarm is activated
@@ -169,13 +173,13 @@ class DoorSensor(sensorGPIO):
                 if self.setAlert is True:
                     self.writeLog("alarm", "Calling " + phone_number)
                     cmd = self.sipcallfile, '-sd', sip_domain, '-su', sip_user, '-sp', sip_password, '-pn', phone_number, '-s', '1', '-mr', sip_repeat
-                    print cmd
+                    print(bcolors.FADE, " ".join(cmd), bcolors.ENDC)
                     proc = subprocess.Popen(cmd, stderr=subprocess.PIPE)
                     for line in proc.stderr:
                         sys.stderr.write(line)
                     proc.wait()
                     self.writeLog("alarm", "Call to " + phone_number + " endend")
-                    print "Call Ended"
+                    print(bcolors.FADE + "Call Ended" + bcolors.ENDC)
 
     def sendMail(self):
         ''' This method sends an email to all recipients in the json settings file. '''
