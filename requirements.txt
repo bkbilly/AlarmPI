@@ -1,7 +1,5 @@
-pyOpenSSL==0.13.1
-Flask==0.10.1
-Flask-SocketIO==2.7.2
+Flask==0.12.2
+Flask-SocketIO==2.9.2
 RPi.GPIO==0.6.3
-requests==2.4.3
-pytz==2016.10
-
+requests==2.18.4
+pytz==2017.2
