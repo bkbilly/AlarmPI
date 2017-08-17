@@ -13,7 +13,7 @@ import smtplib
 import re
 from email.mime.text import MIMEText
 import uuid
-
+import paho.mqtt.client as mqtt
 
 
 class DoorSensor(sensorGPIO):
@@ -33,6 +33,7 @@ class DoorSensor(sensorGPIO):
         self.logfile = logfile
         self.sipcallfile = sipcallfile
         self.settings = self.ReadSettings()
+        self.mqttclient = mqtt.Client("", True, None, mqtt.MQTTv31)
 
         # Stop execution on exit
         self.setAlert = False
@@ -53,8 +54,40 @@ class DoorSensor(sensorGPIO):
         self.sensors.on_error(self.sensorError)
         self.sensors.on_error_stop(self.sensorStopError)
         self.sensors.add_sensors(self.settings['sensors'])
+        self.mqttclient.on_connect = self.on_connect
+        self.mqttclient.on_message = self.on_message
         # self.sensorsGPIO.on_alert(self.sensorAlert)
         # self.sensorsGPIO.on_alert_stop(self.sensorStopAlert)
+
+        # Init MQTT Messages
+        self.startstopMQTT()
+        self.sendStateMQTT()
+
+    def sendStateMQTT(self):
+        stateTopic = self.settings['mqtt']['state_topic']
+        state = 'disarmed'
+        if self.setAlert:
+            state = 'triggered'
+        elif self.settings['settings']['alarmArmed']:
+            state = 'armed_away'
+        self.mqttclient.publish(stateTopic, state, retain=True, qos=2)
+
+    def startstopMQTT(self):
+        if self.settings['mqtt']['enabled']:
+            mqttHost = self.settings['mqtt']['host']
+            mqttPort = self.settings['mqtt']['port']
+            self.mqttclient.connect(mqttHost, mqttPort, 60)
+            self.mqttclient.loop_start()
+        else:
+            self.mqttclient.disconnect()
+            self.mqttclient.loop_stop(force=False)
+
+    def on_connect(self, mqttclient, userdata, flags, rc):
+        print("Connected to MQTT with result code " + str(rc))
+        mqttclient.subscribe(self.settings['mqtt']['command_topic'])
+
+    def on_message(self, mqttclient, userdata, msg):
+        print(msg.topic + " ------- " + str(msg.payload))
 
     def sensorAlert(self, sensorName):
         # print("Alert Sensor", sensorName)
@@ -99,9 +132,10 @@ class DoorSensor(sensorGPIO):
     def checkIntruderAlert(self):
         # Write Alerted Sensors Log and call IntruderAlert when alarm is activated
         if self.settings['settings']['alarmArmed'] is True and self.setAlert is False:
-            for sensor, sensorvalue in self.settings['sensors'].iteritems():
+            for sensor, sensorvalue in self.settings['sensors'].items():
                 if sensorvalue['alert'] is True:
-                    threadIntruderAlert = threading.Thread(target=self.intruderAlert)
+                    threadIntruderAlert = threading.Thread(
+                        target=self.intruderAlert)
                     threadIntruderAlert.daemon = True
                     threadIntruderAlert.start()
 
@@ -124,7 +158,8 @@ class DoorSensor(sensorGPIO):
     def writeNewSettingsToFile(self):
         ''' Write the new settings to the json file '''
         with open(self.jsonfile, 'w') as outfile:
-            json.dump(self.settings, outfile, sort_keys=True, indent=4, separators=(',', ': '))
+            json.dump(self.settings, outfile, sort_keys=True,
+                      indent=4, separators=(',', ': '))
 
     def updateUI(self, event, data):
         ''' Override this method to send changes to the UI '''
@@ -141,7 +176,8 @@ class DoorSensor(sensorGPIO):
 
         myTimeLog = datetime.now(tz=mytimezone).strftime("%Y-%m-%d %H:%M:%S")
         with open(self.logfile, "a") as myfile:
-            myfile.write('({0}) [{1}] {2}\n'.format(logType, myTimeLog, message))
+            myfile.write('({0}) [{1}] {2}\n'.format(
+                logType, myTimeLog, message))
         self.updateUI('sensorsLog', self.getSensorsLog(1))
 
     def intruderAlert(self):
@@ -151,6 +187,7 @@ class DoorSensor(sensorGPIO):
         self.setAlert = True
         self.writeLog("alarm", "Intruder Alert")
         self.enableSerene()
+        self.sendStateMQTT()
         self.updateUI('alarmStatus', self.getAlarmStatus())
         threadSendMail = threading.Thread(target=self.sendMail)
         threadSendMail.daemon = True
@@ -178,7 +215,8 @@ class DoorSensor(sensorGPIO):
                     for line in proc.stderr:
                         sys.stderr.write(line)
                     proc.wait()
-                    self.writeLog("alarm", "Call to " + phone_number + " endend")
+                    self.writeLog("alarm", "Call to " +
+                                  phone_number + " endend")
                     print(bcolors.FADE + "Call Ended" + bcolors.ENDC)
 
     def sendMail(self):
@@ -222,6 +260,7 @@ class DoorSensor(sensorGPIO):
         ''' Activates the alarm '''
         self.writeLog("user_action", "Alarm activated")
         self.settings['settings']['alarmArmed'] = True
+        self.sendStateMQTT()
         self.writeNewSettingsToFile()
 
     def deactivateAlarm(self):
@@ -230,6 +269,7 @@ class DoorSensor(sensorGPIO):
         self.writeLog("user_action", "Alarm deactivated")
         self.settings['settings']['alarmArmed'] = False
         self.stopSerene()
+        self.sendStateMQTT()
         self.updateUI('alarmStatus', self.getAlarmStatus())
         self.writeNewSettingsToFile()
 
@@ -333,7 +373,8 @@ class DoorSensor(sensorGPIO):
         if state is True:
             logState = "Activated"
         logSensorName = self.settings['sensors'][str(sensor)]['name']
-        self.writeLog("user_action", "{0} sensor: {1}".format(logState, logSensorName))
+        self.writeLog("user_action", "{0} sensor: {1}".format(
+            logState, logSensorName))
         self.writeNewSettingsToFile()
 
     # def setSensorPin(self, pin, newpin):
@@ -345,7 +386,7 @@ class DoorSensor(sensorGPIO):
 
     def addSensor(self, sensorValues):
         ''' Add a new sensor '''
-        key = sensorValues.iteritems().next()[0]
+        key = sensorValues.items().next()[0]
         sensorValues[key]['enabled'] = True
         sensorValues[key]['online'] = False
         sensorValues[key]['alert'] = True
