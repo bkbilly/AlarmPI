@@ -14,6 +14,7 @@ import re
 from email.mime.text import MIMEText
 import uuid
 import paho.mqtt.client as mqtt
+from collections import OrderedDict
 
 
 class DoorSensor(sensorGPIO):
@@ -45,7 +46,7 @@ class DoorSensor(sensorGPIO):
         threadTrimLogFile.start()
 
         # self.sensorsGPIO = sensorGPIO()
-        # self.writeLog("system", "Alarm Booted")
+        self.writeLog("system", "Alarm Booted")
 
         # Event Listeners
         self.sensors = Sensor()
@@ -53,7 +54,7 @@ class DoorSensor(sensorGPIO):
         self.sensors.on_alert_stop(self.sensorStopAlert)
         self.sensors.on_error(self.sensorError)
         self.sensors.on_error_stop(self.sensorStopError)
-        self.sensors.add_sensors(self.settings['sensors'])
+        self.sensors.add_sensors(self.settings)
         self.mqttclient.on_connect = self.on_connect
         self.mqttclient.on_message = self.on_message
         # self.sensorsGPIO.on_alert(self.sensorAlert)
@@ -73,11 +74,16 @@ class DoorSensor(sensorGPIO):
         self.mqttclient.publish(stateTopic, state, retain=True, qos=2)
 
     def startstopMQTT(self):
-        if self.settings['mqtt']['enabled']:
-            mqttHost = self.settings['mqtt']['host']
-            mqttPort = self.settings['mqtt']['port']
-            self.mqttclient.connect(mqttHost, mqttPort, 60)
-            self.mqttclient.loop_start()
+        self.mqttclient.disconnect()
+        self.mqttclient.loop_stop(force=False)
+        if self.settings['mqtt']['enable']:
+            try:
+                mqttHost = self.settings['mqtt']['host']
+                mqttPort = self.settings['mqtt']['port']
+                self.mqttclient.connect(mqttHost, mqttPort, 60)
+                self.mqttclient.loop_start()
+            except Exception as e:
+                print(e)
         else:
             self.mqttclient.disconnect()
             self.mqttclient.loop_stop(force=False)
@@ -87,7 +93,13 @@ class DoorSensor(sensorGPIO):
         mqttclient.subscribe(self.settings['mqtt']['command_topic'])
 
     def on_message(self, mqttclient, userdata, msg):
-        print(msg.topic + " ------- " + str(msg.payload))
+        message = msg.payload.decode("utf-8")
+        print(msg.topic + " " + message)
+        if message == "DISARM":
+            self.deactivateAlarm()
+        elif message == "ARM_AWAY":
+            self.activateAlarm()
+
 
     def sensorAlert(self, sensorName):
         # print("Alert Sensor", sensorName)
@@ -261,6 +273,7 @@ class DoorSensor(sensorGPIO):
         self.writeLog("user_action", "Alarm activated")
         self.settings['settings']['alarmArmed'] = True
         self.sendStateMQTT()
+        self.updateUI('settingsChanged', self.getSensorsArmed())
         self.writeNewSettingsToFile()
 
     def deactivateAlarm(self):
@@ -270,13 +283,16 @@ class DoorSensor(sensorGPIO):
         self.settings['settings']['alarmArmed'] = False
         self.stopSerene()
         self.sendStateMQTT()
-        self.updateUI('alarmStatus', self.getAlarmStatus())
+        self.updateUI('settingsChanged', self.getSensorsArmed())
         self.writeNewSettingsToFile()
 
     def getSensorsArmed(self):
         ''' Returns the sensors and alarm status as a json to use it to the UI '''
         sensorsArmed = {}
-        sensorsArmed['sensors'] = self.settings['sensors']
+        sensors = self.settings['sensors']
+        # orderedSensors = OrderedDict(sorted(sensors.items(), key=lambda x: x['name']))
+        orderedSensors = OrderedDict(sorted(sensors.items(), key=lambda k_v: k_v[1]['name']))
+        sensorsArmed['sensors'] = orderedSensors
         sensorsArmed['alarmArmed'] = self.settings['settings']['alarmArmed']
         return sensorsArmed
 
@@ -335,6 +351,9 @@ class DoorSensor(sensorGPIO):
     def getUISettings(self):
         return self.settings['ui']
 
+    def getMQTTSettings(self):
+        return self.settings['mqtt']
+
     def setSereneSettings(self, message):
         if self.settings['serene'] != message:
             self.settings['serene'] = message
@@ -359,10 +378,18 @@ class DoorSensor(sensorGPIO):
             self.writeLog("user_action", "Settings for UI changed")
             self.writeNewSettingsToFile()
 
+    def setMQTTSettings(self, message):
+        if self.settings['mqtt'] != message:
+            self.settings['mqtt'] = message
+            self.writeLog("user_action", "Settings for MQTT changed")
+            self.writeNewSettingsToFile()
+            self.startstopMQTT()
+            self.sensors.reload('MQTT', message)
+
     # def setSensorName(self, sensor, name):
-    #     ''' Changes the Sensor Name '''
-    #     self.settings['sensors'][str(sensor)]['name'] = name
-    #     self.writeNewSettingsToFile()
+        # ''' Changes the Sensor Name '''
+        # self.settings['sensors'][str(sensor)]['name'] = name
+        # self.writeNewSettingsToFile()
 
     def setSensorState(self, sensor, state):
         ''' Activate or Deactivate a sensor '''
@@ -378,15 +405,16 @@ class DoorSensor(sensorGPIO):
         self.writeNewSettingsToFile()
 
     # def setSensorPin(self, pin, newpin):
-    #     ''' Changes the Sensor Pin '''
-    #     self.settings['sensors'][str(newpin)] = self.settings['sensors'][str(pin)]
-    #     del self.settings['sensors'][str(pin)]
-    #     self.sensorsGPIO.del_sensor(pin)
-    #     self.writeNewSettingsToFile()
+        # ''' Changes the Sensor Pin '''
+        # self.settings['sensors'][str(newpin)] = self.settings['sensors'][str(pin)]
+        # del self.settings['sensors'][str(pin)]
+        # self.sensorsGPIO.del_sensor(pin)
+        # self.writeNewSettingsToFile()
 
     def addSensor(self, sensorValues):
         ''' Add a new sensor '''
-        key = sensorValues.items().next()[0]
+        print(sensorValues)
+        key = next(iter(sensorValues))
         sensorValues[key]['enabled'] = True
         sensorValues[key]['online'] = False
         sensorValues[key]['alert'] = True
@@ -397,7 +425,7 @@ class DoorSensor(sensorGPIO):
             self.sensors.del_sensor(key)
         self.settings['sensors'].update(sensorValues)
         self.writeNewSettingsToFile()
-        self.sensors.add_sensors(sensorValues)
+        self.sensors.add_sensors(self.settings)
 
     def delSensor(self, sensorName):
         ''' Delete a sensor '''
