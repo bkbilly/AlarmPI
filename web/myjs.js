@@ -262,29 +262,39 @@ function settingsMenu(){
 		addPinsToSelect('#inputSerenePin', data.pin);
 	});
 	$.getJSON("getMailSettings.json").done(function(data){
-		$("#myonoffswitchMail").prop('checked', data.enable);
-		$("#usernameMailInput").val(data.username);
-		$("#passwordMailInput").val(data.password);
-		$("#smtpServerMailInput").val(data.smtpServer);
-		$("#smtpPortMailInput").val(data.smtpPort);
-		$("#recipientsMailInput").val(data.recipients);
-		$("#messageSubjectMailInput").val(data.messageSubject);
-		$("#messageBodyMailInput").val(data.messageBody);
+		$("#settMail-enable").prop('checked', data.enable);
+		$("#settMail-username").val(data.username);
+		$("#settMail-password").val(data.password);
+		$("#settMail-smtpServer").val(data.smtpServer);
+		$("#settMail-smtpPort").val(data.smtpPort);
+		$("#settMail-recipients").val(data.recipients);
+		$("#settMail-messageSubject").val(data.messageSubject);
+		$("#settMail-messageBody").val(data.messageBody);
 	});
 	$.getJSON("getVoipSettings.json").done(function(data){
-		$("#myonoffswitchVoip").prop('checked', data.enable);
-		$("#usernameVoipInput").val(data.username);
-		$("#passwordVoipInput").val(data.password);
-		$("#domainVoipInput").val(data.domain);
-		$("#numbersToCallVoipInput").val(data.numbersToCall);
-		$("#timesOfRepeatVoipInput").val(data.timesOfRepeat);
+		$("#settVoip-enable").prop('checked', data.enable);
+		$("#settVoip-username").val(data.username);
+		$("#settVoip-password").val(data.password);
+		$("#settVoip-domain").val(data.domain);
+		$("#settVoip-numbersToCall").val(data.numbersToCall);
+		$("#settVoip-timesOfRepeat").val(data.timesOfRepeat);
 	});
 	$.getJSON("getUISettings.json").done(function(data){
-		$("#myonoffswitchHTTPs").prop('checked', data.https);
-		$("#usernameUIInput").val(data.username);
-		$("#passwordUIInput").val(data.password);
-		$("#timezoneUIInput").val(data.timezone);
-		$("#portUIInput").val(data.port);
+		$("#settUI-enable").prop('checked', data.https);
+		$("#settUI-username").val(data.username);
+		$("#settUI-password").val(data.password);
+		$("#settUI-timezone").val(data.timezone);
+		$("#settUI-port").val(data.port);
+	});
+	$.getJSON("getMQTTSettings.json").done(function(data){
+		$("#settMQTT-enable").prop('checked', data.enable);
+		$("#settMQTT-host").val(data.host);
+		$("#settMQTT-port").val(data.port);
+		$("#settMQTT-authentication").val(data.authentication);
+		$("#settMQTT-username").val(data.username);
+		$("#settMQTT-password").val(data.password);
+		$("#settMQTT-state_topic").val(data.state_topic);
+		$("#settMQTT-command_topic").val(data.command_topic);
 	});
 }
 
@@ -294,40 +304,52 @@ function saveSettings(){
 	var messageMail = {}
 	var messageVoip = {}
 	var messageUI = {}
+	var messageMQTT = {}
 
 	messageSerene.enable = $("#myonoffswitchSerene").prop('checked');
 	messageSerene.pin = parseInt($("#inputSerenePin").val());
 
-	messageMail.enable = $("#myonoffswitchMail").prop('checked');
-	messageMail.username = $("#usernameMailInput").val();
-	messageMail.password = $("#passwordMailInput").val();
-	messageMail.smtpServer = $("#smtpServerMailInput").val();
-	messageMail.smtpPort = parseInt($("#smtpPortMailInput").val());
-	messageMail.recipients = $("#recipientsMailInput").val().split(/[\s,]+/);
-	messageMail.messageSubject = $("#messageSubjectMailInput").val();
-	messageMail.messageBody = $("#messageBodyMailInput").val();
+	messageMail.enable = $("#settMail-enable").prop('checked');
+	messageMail.username = $("#settMail-username").val();
+	messageMail.password = $("#settMail-password").val();
+	messageMail.smtpServer = $("#settMail-smtpServer").val();
+	messageMail.smtpPort = parseInt($("#settMail-smtpPort").val());
+	messageMail.recipients = $("#settMail-recipients").val().split(/[\s,]+/);
+	messageMail.messageSubject = $("#settMail-messageSubject").val();
+	messageMail.messageBody = $("#settMail-messageBody").val();
 
-	messageVoip.enable = $("#myonoffswitchVoip").prop('checked');
-	messageVoip.username = $("#usernameVoipInput").val();
-	messageVoip.password = $("#passwordVoipInput").val();
-	messageVoip.domain = $("#domainVoipInput").val();
-	messageVoip.numbersToCall = $("#numbersToCallVoipInput").val().split(/[\s,]+/);
-	messageVoip.timesOfRepeat = $("#timesOfRepeatVoipInput").val();
+	messageVoip.enable = $("#settVoip-enable").prop('checked');
+	messageVoip.username = $("#settVoip-username").val();
+	messageVoip.password = $("#settVoip-password").val();
+	messageVoip.domain = $("#settVoip-domain").val();
+	messageVoip.numbersToCall = $("#settVoip-numbersToCall").val().split(/[\s,]+/);
+	messageVoip.timesOfRepeat = $("#settVoip-timesOfRepeat").val();
 
-	messageUI.https = $("#myonoffswitchHTTPs").prop('checked');
-	messageUI.username = $("#usernameUIInput").val();
-	messageUI.password = $("#passwordUIInput").val();
-	messageUI.timezone = $("#timezoneUIInput").val();
-	messageUI.port = parseInt($("#portUIInput").val());
+	messageUI.https = $("#settUI-enable").prop('checked');
+	messageUI.username = $("#settUI-username").val();
+	messageUI.password = $("#settUI-password").val();
+	messageUI.timezone = $("#settUI-timezone").val();
+	messageUI.port = parseInt($("#settUI-port").val());
+
+	messageMQTT.enable = $("#settMQTT-enable").prop('checked');
+	messageMQTT.host = $("#settMQTT-host").val();
+	messageMQTT.port = parseInt($("#settMQTT-port").val());
+	messageMQTT.authentication = $("#settMQTT-authentication").val() == 'true';
+	messageMQTT.username = $("#settMQTT-username").val();
+	messageMQTT.password = $("#settMQTT-password").val();
+	messageMQTT.state_topic = $("#settMQTT-state_topic").val();
+	messageMQTT.command_topic = $("#settMQTT-command_topic").val();
 
 	console.log(messageSerene);
 	console.log(messageMail);
 	console.log(messageVoip);
 	console.log(messageUI);
+	console.log(messageMQTT);
 	socket.emit('setSereneSettings', messageSerene);
 	socket.emit('setMailSettings', messageMail);
 	socket.emit('setVoipSettings', messageVoip);
 	socket.emit('setUISettings', messageUI);
+	socket.emit('setMQTTSettings', messageMQTT);
 	closeConfigWindow();
 }
 

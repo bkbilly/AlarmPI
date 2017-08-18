@@ -32,6 +32,7 @@
 			<select id="sensorType" onchange="selectSensorType($(this));">
 				<option value="GPIO" selected>GPIO</option>
 				<option value="Hikvision">Hikvision</option>
+				<option value="MQTT">MQTT</option>
 			</select><br>
 			<div id="inputDivGPIO">
 				<label for="GPIO-pin">BCM Pin:</label>
@@ -47,6 +48,14 @@
 				<label for="Hikvision-pass">Password</label><br>
 				<input type="password" id="Hikvision-pass" placeholder="Enter Password"><br>
 			</div>
+			<div id="inputDivMQTT">
+				<label for="MQTT-state_topic">State Topic</label><br>
+				<input type="text" id="MQTT-state_topic" placeholder="Enter State Topic"><br>
+				<label for="MQTT-message_alert">Message Alert</label><br>
+				<input type="text" id="MQTT-message_alert" placeholder="Enter Message Alert"><br>
+				<label for="MQTT-message_noalert">Message Stop Alert</label><br>
+				<input type="text" id="MQTT-message_noalert" placeholder="Enter Message Stop Alert"><br>
+			</div>
 			<button class="button delbutton" id="delSensorBTN">Delete</button><br>
 			<button class="button" id="okButton">OK</button>
 			<button class="button" onclick="closeConfigWindow()">Cancel</button>
@@ -57,6 +66,7 @@
 			
 			<span class="close" onclick="closeConfigWindow()">x</span><br><br>
 
+			<!-- SERENE SETTINGS -->
 			<div class="onoffswitch settingsOnOffSwitch">
 				<input type="checkbox" name="onoffswitchSerene" class="onoffswitch-checkbox" id="myonoffswitchSerene">
 				<label class="onoffswitch-label" for="myonoffswitchSerene">
@@ -77,9 +87,10 @@
 				</table>
 			</div>
 
+			<!-- MAIL SETTINGS -->
 			<div class="onoffswitch settingsOnOffSwitch">
-				<input type="checkbox" name="onoffswitchMail" class="onoffswitch-checkbox" id="myonoffswitchMail">
-				<label class="onoffswitch-label" for="myonoffswitchMail">
+				<input type="checkbox" name="onoffswitchMail" class="onoffswitch-checkbox" id="settMail-enable">
+				<label class="onoffswitch-label" for="settMail-enable">
 					<span class="onoffswitch-inner"></span>
 					<span class="onoffswitch-switch"></span>
 				</label>
@@ -89,30 +100,31 @@
 				<table>
 					<tr>
 						<td>
-							<label for="usernameMailInput">username</label><br>
-							<input type="text" id="usernameMailInput" placeholder="Username"><br>
-							<label for="passwordMailInput">password</label><br>
-							<input type="password" id="passwordMailInput" placeholder="Password"><br>
-							<label for="smtpServerMailInput">SMTP Server</label><br>
-							<input type="text" id="smtpServerMailInput" placeholder="SMTP Server"><br>
-							<label for="smtpPortMailInput">smtpPort</label><br>
-							<input type="text" id="smtpPortMailInput" placeholder="SmtpPort"><br>
+							<label for="settMail-username">username</label><br>
+							<input type="text" id="settMail-username" placeholder="Username"><br>
+							<label for="settMail-password">password</label><br>
+							<input type="password" id="settMail-password" placeholder="Password"><br>
+							<label for="settMail-smtpServer">SMTP Server</label><br>
+							<input type="text" id="settMail-smtpServer" placeholder="SMTP Server"><br>
+							<label for="settMail-smtpPort">smtpPort</label><br>
+							<input type="text" id="settMail-smtpPort" placeholder="SmtpPort"><br>
 						</td>
 						<td>
-							<label for="recipientsMailInput">recipients</label><br>
-							<input type="text" id="recipientsMailInput" placeholder="Recipients"><br>
-							<label for="messageSubjectMailInput">messageSubject</label><br>
-							<input type="text" id="messageSubjectMailInput" placeholder="MessageSubject"><br>
-							<label for="messageBodyMailInput">messageBody</label><br>
-							<input type="text" id="messageBodyMailInput" placeholder="MessageBody"><br>
+							<label for="settMail-recipients">recipients</label><br>
+							<input type="text" id="settMail-recipients" placeholder="Recipients"><br>
+							<label for="settMail-messageSubject">messageSubject</label><br>
+							<input type="text" id="settMail-messageSubject" placeholder="MessageSubject"><br>
+							<label for="settMail-messageBody">messageBody</label><br>
+							<input type="text" id="settMail-messageBody" placeholder="MessageBody"><br>
 						</td>
 					</tr>
 				</table>
 			</div>
 
+			<!-- VOIP SETTINGS -->
 			<div class="onoffswitch settingsOnOffSwitch">
-				<input type="checkbox" name="onoffswitchVoip" class="onoffswitch-checkbox" id="myonoffswitchVoip">
-				<label class="onoffswitch-label" for="myonoffswitchVoip">
+				<input type="checkbox" name="onoffswitchVoip" class="onoffswitch-checkbox" id="setVoip-enable">
+				<label class="onoffswitch-label" for="setVoip-enable">
 					<span class="onoffswitch-inner"></span>
 					<span class="onoffswitch-switch"></span>
 				</label>
@@ -122,27 +134,27 @@
 				<table>
 					<tr>
 						<td>
-							<label for="domainVoipInput">domain</label><br>
-							<input type="text" id="domainVoipInput" placeholder="domain"><br>
-							<label for="usernameVoipInput">username</label><br>
-							<input type="text" id="usernameVoipInput" placeholder="username"><br>
-							<label for="passwordVoipInput">password</label><br>
-							<input type="password" id="passwordVoipInput" placeholder="password"><br>
+							<label for="settVoip-domain">domain</label><br>
+							<input type="text" id="settVoip-domain" placeholder="domain"><br>
+							<label for="settVoip-username">username</label><br>
+							<input type="text" id="settVoip-username" placeholder="username"><br>
+							<label for="settVoip-password">password</label><br>
+							<input type="password" id="settVoip-password" placeholder="password"><br>
 						</td>
 						<td>
-							<label for="numbersToCallVoipInput">numbersToCall</label><br>
-							<input type="text" id="numbersToCallVoipInput" placeholder="numbersToCall"><br>
-							<label for="timesOfRepeatVoipInput">timesOfRepeat</label><br>
-							<input type="text" id="timesOfRepeatVoipInput" placeholder="timesOfRepeat"><br>
+							<label for="settVoip-numbersToCall">numbersToCall</label><br>
+							<input type="text" id="settVoip-numbersToCall" placeholder="numbersToCall"><br>
+							<label for="settVoip-timesOfRepeat">timesOfRepeat</label><br>
+							<input type="text" id="settVoip-timesOfRepeat" placeholder="timesOfRepeat"><br>
 						</td>
 					</tr>
 				</table>
 			</div>
 
-
+			<!-- UI SETTINGS -->
 			<div class="onoffswitch settingsOnOffSwitch">
-				<input type="checkbox" name="onoffswitchMail" class="onoffswitch-checkbox" id="myonoffswitchHTTPs">
-				<label class="onoffswitch-label" for="myonoffswitchHTTPs">
+				<input type="checkbox" name="onoffswitchMail" class="onoffswitch-checkbox" id="settUI-enable">
+				<label class="onoffswitch-label" for="settUI-enable">
 					<span class="onoffswitch-inner onoffswitch-innerHttps"></span>
 					<span class="onoffswitch-switch"></span>
 				</label>
@@ -152,20 +164,55 @@
 				<table>
 					<tr>
 						<td>
-							<label for="usernameUIInput">username</label><br>
-							<input type="text" id="usernameUIInput" placeholder="username"><br>
-							<label for="passwordUIInput">password</label><br>
-							<input type="password" id="passwordUIInput" placeholder="password"><br>
+							<label for="settUI-username">username</label><br>
+							<input type="text" id="settUI-username" placeholder="username"><br>
+							<label for="settUI-password">password</label><br>
+							<input type="password" id="settUI-password" placeholder="password"><br>
 						</td>
 						<td>
-							<label for="timezoneUIInput">timezone</label><br>
-							<input type="text" id="timezoneUIInput" placeholder="timezone"><br>
-							<label for="portUIInput">port</label><br>
-							<input type="text" id="portUIInput" placeholder="port"><br>
+							<label for="settUI-timezone">timezone</label><br>
+							<input type="text" id="settUI-timezone" placeholder="timezone"><br>
+							<label for="settUI-port">port</label><br>
+							<input type="text" id="settUI-port" placeholder="port"><br>
 						</td>
 					</tr>
 				</table>
 			</div>
+
+			<!-- MQTT SETTINGS -->
+			<div class="onoffswitch settingsOnOffSwitch">
+				<input type="checkbox" name="onoffswitchMail" class="onoffswitch-checkbox" id="settMQTT-enable">
+				<label class="onoffswitch-label" for="settMQTT-enable">
+					<span class="onoffswitch-inner"></span>
+					<span class="onoffswitch-switch"></span>
+				</label>
+			</div>
+			<h1 class="settingsTitle">MQTT Settings</h1>
+			<div class="settingsContent">
+				<table>
+					<tr>
+						<td>
+							<label for="settMQTT-host">Host</label><br>
+							<input type="text" id="settMQTT-host" placeholder="Host"><br>
+							<label for="settMQTT-port">Port</label><br>
+							<input type="text" id="settMQTT-port" placeholder="Port"><br>
+							<label for="settMQTT-state_topic">State Topic</label><br>
+							<input type="text" id="settMQTT-state_topic" placeholder="State Topic"><br>
+							<label for="settMQTT-command_topic">Command Topic</label><br>
+							<input type="text" id="settMQTT-command_topic" placeholder="Command Topic"><br>
+						</td>
+						<td>
+							<label for="settMQTT-username">Username</label><br>
+							<input type="text" id="settMQTT-username" placeholder="Username"><br>
+							<label for="settMQTT-authentication">Authentication</label><br>
+							<input type="text" id="settMQTT-authentication" placeholder="Authentication"><br>
+							<label for="settMQTT-password">Password</label><br>
+							<input type="password" id="settMQTT-password" placeholder="Password"><br>
+						</td>
+					</tr>
+				</table>
+			</div>
+
 			<button class="button" id="okButton" onclick="saveSettings()">OK</button>
 			<button class="button" onclick="closeConfigWindow()">Cancel</button>
 		</div>

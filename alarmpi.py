@@ -9,8 +9,8 @@ from flask_socketio import SocketIO
 from functools import wraps
 from distutils.util import strtobool
 
-import time
-import subprocess
+# import time
+# import subprocess
 from multiprocessing import Process, Queue
 
 from DoorSensor import DoorSensor
@@ -211,6 +211,12 @@ def getUISettings():
     return json.dumps(alarmSensors.getUISettings())
 
 
+@app.route('/getMQTTSettings.json')
+@requires_auth
+def getMQTTSettings():
+    return json.dumps(alarmSensors.getMQTTSettings())
+
+
 # Change settings to the AlarmPI
 
 @app.route('/activateAlarmOnline')
@@ -218,6 +224,7 @@ def getUISettings():
 def activateAlarmOnline():
     alarmSensors.activateAlarm()
     socketio.emit('settingsChanged', alarmSensors.getSensorsArmed())
+    return json.dumps("done")
 
 
 @app.route('/deactivateAlarmOnline')
@@ -225,6 +232,7 @@ def activateAlarmOnline():
 def deactivateAlarmOnline():
     alarmSensors.deactivateAlarm()
     socketio.emit('settingsChanged', alarmSensors.getSensorsArmed())
+    return json.dumps("done")
 
 
 @app.route('/setSensorStateOnline', methods=['GET', 'POST'])
@@ -330,6 +338,13 @@ def setVoipSettings(message):
 @requires_auth
 def setUISettings(message):
     alarmSensors.setUISettings(message)
+    socketio.emit('settingsChanged', alarmSensors.getSensorsArmed())
+
+
+@socketio.on('setMQTTSettings')
+@requires_auth
+def setMQTTSettings(message):
+    alarmSensors.setMQTTSettings(message)
     socketio.emit('settingsChanged', alarmSensors.getSensorsArmed())
 
 
