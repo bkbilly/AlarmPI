@@ -28,7 +28,8 @@ class DoorSensor():
     '''
 
     def __init__(self, jsonfile, logfile, sipcallfile):
-        print(bcolors.HEADER + "------------ INIT FOR DOOR SENSOR CLASS! ----------------" + bcolors.ENDC)
+        print("{0}------------ INIT FOR DOOR SENSOR CLASS! ----------------{1}".format(
+            bcolors.HEADER, bcolors.ENDC))
         # Global Variables
         self.jsonfile = jsonfile
         self.logfile = logfile
@@ -80,18 +81,19 @@ class DoorSensor():
                 self.mqttclient.connect(mqttHost, mqttPort, 60)
                 self.mqttclient.loop_start()
             except Exception as e:
-                print(e)
+                print("{0}MQTT: {2}{1}".format(bcolors.FAIL, bcolors.ENDC, str(e)))
         else:
             self.mqttclient.disconnect()
             self.mqttclient.loop_stop(force=False)
 
     def on_connect(self, mqttclient, userdata, flags, rc):
-        print("Connected to MQTT with result code " + str(rc))
+        print("{0}Connected to MQTT with result code {2}{1}".format(
+            bcolors.WARNING, bcolors.ENDC, str(rc)))
         mqttclient.subscribe(self.settings['mqtt']['command_topic'])
 
     def on_message(self, mqttclient, userdata, msg):
         message = msg.payload.decode("utf-8")
-        print(msg.topic + " " + message)
+        # print(msg.topic + " " + message)
         if message == "DISARM":
             self.deactivateAlarm()
         elif message == "ARM_AWAY":
@@ -99,12 +101,13 @@ class DoorSensor():
 
 
     def sensorAlert(self, sensorName):
-        # print("Alert Sensor", sensorName)
+        name = self.settings['sensors'][str(sensorName)]['name']
+        print("{0}-> Alert Sensor: {2}{1}".format(
+            bcolors.OKGREEN, bcolors.ENDC, name))
         self.settings['sensors'][str(sensorName)]['alert'] = True
         self.settings['sensors'][str(sensorName)]['online'] = True
         self.writeNewSettingsToFile()
         self.updateUI('settingsChanged', self.getSensorsArmed())
-        name = self.settings['sensors'][str(sensorName)]['name']
         enabled = self.settings['sensors'][str(sensorName)]['enabled']
         enabledText = "enabled sensor: "
         sensorLogType = "enabled_sensor"
@@ -115,13 +118,18 @@ class DoorSensor():
         self.checkIntruderAlert()
 
     def sensorStopAlert(self, sensorName):
-        # print("Stop Alert Sensor", sensorName)
+        name = self.settings['sensors'][str(sensorName)]['name']
+        print("{0}<- Stop Alert Sensor: {2}{1}".format(
+            bcolors.OKGREEN, bcolors.ENDC, name))
         self.settings['sensors'][str(sensorName)]['alert'] = False
         self.settings['sensors'][str(sensorName)]['online'] = True
         self.writeNewSettingsToFile()
         self.updateUI('settingsChanged', self.getSensorsArmed())
 
     def sensorError(self, sensorName):
+        name = self.settings['sensors'][str(sensorName)]['name']
+        print("{0}!- Error Sensor: {2}{1}".format(
+            bcolors.FAIL, bcolors.ENDC, name))
         # print("Error Sensor", sensorName)
         name = self.settings['sensors'][str(sensorName)]['name']
         self.settings['sensors'][str(sensorName)]['alert'] = True
@@ -219,14 +227,15 @@ class DoorSensor():
                 if self.alarmTriggered is True:
                     self.writeLog("alarm", "Calling " + phone_number)
                     cmd = self.sipcallfile, '-sd', sip_domain, '-su', sip_user, '-sp', sip_password, '-pn', phone_number, '-s', '1', '-mr', sip_repeat
-                    print(bcolors.FADE, " ".join(cmd), bcolors.ENDC)
+                    print("{0}Voip command: {2}{1}".format(
+                        bcolors.FADE, bcolors.ENDC, " ".join(cmd)))
                     proc = subprocess.Popen(cmd, stderr=subprocess.PIPE)
                     for line in proc.stderr:
                         sys.stderr.write(line)
                     proc.wait()
                     self.writeLog("alarm", "Call to " +
                                   phone_number + " endend")
-                    print(bcolors.FADE + "Call Ended" + bcolors.ENDC)
+                    print("{0}Call Ended{1}".format(bcolors.FADE, bcolors.ENDC))
 
     def sendMail(self):
         ''' This method sends an email to all recipients in the json settings file. '''
@@ -410,7 +419,8 @@ class DoorSensor():
 
     def addSensor(self, sensorValues):
         ''' Add a new sensor '''
-        print(sensorValues)
+        print("{0}New Sensor: {2}{1}".format(
+            bcolors.WARNING, bcolors.ENDC, sensorValues))
         key = next(iter(sensorValues))
         sensorValues[key]['enabled'] = True
         sensorValues[key]['online'] = False

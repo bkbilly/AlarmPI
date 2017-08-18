@@ -252,7 +252,7 @@ def setSensorStateOnline():
         "enabled": strtobool(request.args.get('enabled').lower())
     }
     message['enabled'] = True if message['enabled'] else False
-    print(message)
+    # print(message)
     alarmSensors.setSensorState(message['sensor'], message['enabled'])
     socketio.emit('settingsChanged', alarmSensors.getSensorsArmed())
 

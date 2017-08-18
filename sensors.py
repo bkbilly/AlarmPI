@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
-import RPi.GPIO as GPIO
+try:
+    import RPi.GPIO as GPIO
+except Exception as e:
+    print(e)
 import threading
 import time
 
@@ -84,7 +87,8 @@ class sensorGPIO():
             else:
                 self._notify_alert_stop()
         else:
-            print(bcolors.STRIKE + "GPIO: Wrong state change. Ignoring!!!" + bcolors.ENDC)
+            print("{0}GPIO {2}: Wrong state change. Ignoring!!!{1}".format(
+                bcolors.STRIKE, bcolors.ENDC, str(inputPin)))
 
     def forceNotify(self):
         # if GPIO.input(self.pin) == 1:
@@ -178,7 +182,8 @@ class sensorHikvision():
             except Exception as e:
                 if self.online:
                     self._notify_error()
-                print(bcolors.WARNING, e, bcolors.ENDC)
+                print("{0}Hikvision: {2}{1}".format(
+                    bcolors.FAIL, bcolors.ENDC, str(e)))
                 time.sleep(5)
 
     def del_sensor(self):
@@ -270,13 +275,15 @@ class sensorMQTT():
                 self.mqttclient.connect(mqttHost, mqttPort, 60)
                 self.mqttclient.loop_start()
             except Exception as e:
-                print(e)
+                self._notify_error()
+                # print(bcolors.FAIL, 'MQTT:', e, bcolors.ENDC)
+                pass
         else:
             self.mqttclient.disconnect()
             self.mqttclient.loop_stop(force=False)
 
     def on_connect(self, mqttclient, userdata, flags, rc):
-        print("Sensor connected to MQTT with result code " + str(rc))
+        # print(bcolors.WARNING, "Sensor connected to MQTT with result code " + str(rc), bcolors.ENDC)
         mqttclient.subscribe(self.sensor['state_topic'])
 
     def on_message(self, mqttclient, userdata, msg):
@@ -339,8 +346,8 @@ class Sensor():
             if sensor not in self.allSensors:
                 sensorType = sensorvalues['type']
                 sensorName = sensorvalues['name']
-                print("{0}{1} {2} sensor with id: {3}{4}".format(
-                    bcolors.OKBLUE, sensorType, sensorName, sensor, bcolors.ENDC))
+                print(" {0}{2} {3} sensor with id: {4}{1}".format(
+                    bcolors.OKBLUE, bcolors.ENDC, sensorType, sensorName, sensor))
                 if sensorType == 'GPIO':
                     sensorobject = sensorGPIO(sensor)
                     sensorsettings = None
@@ -373,7 +380,7 @@ class Sensor():
     def reload(self, sensortype=None, settings=None):
         for sensor in self.allSensors:
             if sensortype is None or sensortype == self.allSensors[sensor]['values']['type']:
-                print(self.allSensors[sensor]['values']['name'])
+                # print(self.allSensors[sensor]['values']['name'])
                 self.allSensors[sensor]['obj'].reload(settings)
 
     def get_all_sensors(self):

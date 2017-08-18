@@ -175,9 +175,14 @@ function changeSensorSettings(sensor, type){
 	selectSensorType($("#sensorType"));
 	if (allproperties['sensors'][sensor] == undefined)
 		addPinsToSelect('#GPIO-pin', '');
-	else
+	else if (allproperties['sensors'][sensor]['pin'] !== undefined)
 		addPinsToSelect('#GPIO-pin', allproperties['sensors'][sensor]['pin']);
 	console.log(allproperties['sensors'][sensor])
+	sensortype = allproperties['sensors'][sensor]['type']
+	for( property in allproperties['sensors'][sensor])
+		if( !['type', 'online', 'alert', 'enabled', 'name'].includes(property) ){
+			$("#"+ sensortype + '-' + property).val(allproperties['sensors'][sensor][property])
+		}
 	$("#okButton").attr("onclick","saveConfigSettings('"+ type+"','"+sensor+"','"+currentName+"')");
 	$("#inputName").val(currentName);
 	$("#myModal").show();
@@ -213,22 +218,6 @@ function saveConfigSettings(type, sensor, currentName){
 		data: JSON.stringify(sensorValues)
 	});
 
-	// socket.emit('addSensor', sensorValues);
-	// var newname = $("#inputName").val();
-	// var newpin = $("#GPIO-pin").val();
-	// console.log(type);
-	// if (type === 'newSensor') {
-	// 	if (newpin !== null && newname !== ""){
-	// 		socket.emit('addSensor', {"sensor": newpin, "name": newname, "enabled": false});
-	// 	}
-	// } else if (type === 'oldSensor') {
-	// 	if (currentName !== newname){
-	// 		socket.emit('setSensorName', {"sensor": sensor, "name": newname});
-	// 	}
-	// 	if (sensor != newpin){
-	// 		socket.emit('setSensorPin', {"sensor": sensor, "newpin": newpin});
-	// 	}
-	// }
 	closeConfigWindow();
 }
 
