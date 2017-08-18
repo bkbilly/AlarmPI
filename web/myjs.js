@@ -82,13 +82,10 @@ function startAgain(){
 		});
 		refreshStatus(data);
 	});
-	$.getJSON("getAlarmStatus.json").done(function(data){
-		setAlarmStatus(data);
-	});
+	refreshLogs()
 	$.getJSON("getSereneSettings.json").done(function(data){
 		allproperties['serenePin'] = data.pin;
 	});
-	refreshLogs()
 }
 
 function refreshLogs(){
@@ -267,40 +264,38 @@ function settingsMenu(){
 		$("#myonoffswitchSerene").prop('checked', data.enable);
 		addPinsToSelect('#inputSerenePin', data.pin);
 	});
-	$.getJSON("getMailSettings.json").done(function(data){
-		$("#settMail-enable").prop('checked', data.enable);
-		$("#settMail-username").val(data.username);
-		$("#settMail-password").val(data.password);
-		$("#settMail-smtpServer").val(data.smtpServer);
-		$("#settMail-smtpPort").val(data.smtpPort);
-		$("#settMail-recipients").val(data.recipients);
-		$("#settMail-messageSubject").val(data.messageSubject);
-		$("#settMail-messageBody").val(data.messageBody);
-	});
-	$.getJSON("getVoipSettings.json").done(function(data){
-		$("#settVoip-enable").prop('checked', data.enable);
-		$("#settVoip-username").val(data.username);
-		$("#settVoip-password").val(data.password);
-		$("#settVoip-domain").val(data.domain);
-		$("#settVoip-numbersToCall").val(data.numbersToCall);
-		$("#settVoip-timesOfRepeat").val(data.timesOfRepeat);
-	});
-	$.getJSON("getUISettings.json").done(function(data){
-		$("#settUI-enable").prop('checked', data.https);
-		$("#settUI-username").val(data.username);
-		$("#settUI-password").val(data.password);
-		$("#settUI-timezone").val(data.timezone);
-		$("#settUI-port").val(data.port);
-	});
-	$.getJSON("getMQTTSettings.json").done(function(data){
-		$("#settMQTT-enable").prop('checked', data.enable);
-		$("#settMQTT-host").val(data.host);
-		$("#settMQTT-port").val(data.port);
-		$("#settMQTT-authentication").val(data.authentication);
-		$("#settMQTT-username").val(data.username);
-		$("#settMQTT-password").val(data.password);
-		$("#settMQTT-state_topic").val(data.state_topic);
-		$("#settMQTT-command_topic").val(data.command_topic);
+	$.getJSON("getAllSettings.json").done(function(data){
+		$("#settMail-enable").prop('checked', data.mail.enable);
+		$("#settMail-username").val(data.mail.username);
+		$("#settMail-password").val(data.mail.password);
+		$("#settMail-smtpServer").val(data.mail.smtpServer);
+		$("#settMail-smtpPort").val(data.mail.smtpPort);
+		$("#settMail-recipients").val(data.mail.recipients);
+		$("#settMail-messageSubject").val(data.mail.messageSubject);
+		$("#settMail-messageBody").val(data.mail.messageBody);
+
+		$("#settVoip-enable").prop('checked', data.voip.enable);
+		$("#settVoip-username").val(data.voip.username);
+		$("#settVoip-password").val(data.voip.password);
+		$("#settVoip-domain").val(data.voip.domain);
+		$("#settVoip-numbersToCall").val(data.voip.numbersToCall);
+		$("#settVoip-timesOfRepeat").val(data.voip.timesOfRepeat);
+
+		$("#settUI-enable").prop('checked', data.ui.https);
+		$("#settUI-username").val(data.ui.username);
+		$("#settUI-password").val(data.ui.password);
+		$("#settUI-timezone").val(data.ui.timezone);
+		$("#settUI-port").val(data.ui.port);
+
+		$("#settMQTT-enable").prop('checked', data.mqtt.enable);
+		$("#settMQTT-host").val(data.mqtt.host);
+		$("#settMQTT-port").val(data.mqtt.port);
+		$("#settMQTT-authentication").val(data.mqtt.authentication);
+		$("#settMQTT-username").val(data.mqtt.username);
+		$("#settMQTT-password").val(data.mqtt.password);
+		$("#settMQTT-state_topic").val(data.mqtt.state_topic);
+		$("#settMQTT-command_topic").val(data.mqtt.command_topic);
+
 	});
 }
 

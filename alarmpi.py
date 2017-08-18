@@ -192,29 +192,38 @@ def serenePin():
 def getSereneSettings():
     return json.dumps(alarmSensors.getSereneSettings())
 
-
-@app.route('/getMailSettings.json')
+@app.route('/getAllSettings.json')
 @requires_auth
-def getMailSettings():
-    return json.dumps(alarmSensors.getMailSettings())
+def getAllSettings():
+    return json.dumps({
+        "mail": alarmSensors.getMailSettings(),
+        "voip": alarmSensors.getVoipSettings(),
+        "ui": alarmSensors.getUISettings(),
+        "mqtt": alarmSensors.getMQTTSettings()
+    })
+
+# @app.route('/getMailSettings.json')
+# @requires_auth
+# def getMailSettings():
+#     return json.dumps(alarmSensors.getMailSettings())
 
 
-@app.route('/getVoipSettings.json')
-@requires_auth
-def getVoipSettings():
-    return json.dumps(alarmSensors.getVoipSettings())
+# @app.route('/getVoipSettings.json')
+# @requires_auth
+# def getVoipSettings():
+#     return json.dumps(alarmSensors.getVoipSettings())
 
 
-@app.route('/getUISettings.json')
-@requires_auth
-def getUISettings():
-    return json.dumps(alarmSensors.getUISettings())
+# @app.route('/getUISettings.json')
+# @requires_auth
+# def getUISettings():
+#     return json.dumps(alarmSensors.getUISettings())
 
 
-@app.route('/getMQTTSettings.json')
-@requires_auth
-def getMQTTSettings():
-    return json.dumps(alarmSensors.getMQTTSettings())
+# @app.route('/getMQTTSettings.json')
+# @requires_auth
+# def getMQTTSettings():
+#     return json.dumps(alarmSensors.getMQTTSettings())
 
 
 # Change settings to the AlarmPI
