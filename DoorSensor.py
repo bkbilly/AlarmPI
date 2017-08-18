@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from sensors import sensorGPIO, sensorHikvision, Sensor
+from sensors import Sensor, outputGPIO
 from colors import bcolors
 from datetime import datetime
 import pytz
@@ -17,7 +17,7 @@ import paho.mqtt.client as mqtt
 from collections import OrderedDict
 
 
-class DoorSensor(sensorGPIO):
+class DoorSensor():
 
     ''' This class runs on the background using GPIO Events Changes.
     It uses a json file to store the settings and a log file to store the logs.
@@ -37,7 +37,7 @@ class DoorSensor(sensorGPIO):
         self.mqttclient = mqtt.Client("", True, None, mqtt.MQTTv31)
 
         # Stop execution on exit
-        self.setAlert = False
+        self.alarmTriggered = False
         self.kill_now = False
 
         # Init Alarm
@@ -45,7 +45,6 @@ class DoorSensor(sensorGPIO):
         threadTrimLogFile.daemon = True
         threadTrimLogFile.start()
 
-        # self.sensorsGPIO = sensorGPIO()
         self.writeLog("system", "Alarm Booted")
 
         # Event Listeners
@@ -57,8 +56,6 @@ class DoorSensor(sensorGPIO):
         self.sensors.add_sensors(self.settings)
         self.mqttclient.on_connect = self.on_connect
         self.mqttclient.on_message = self.on_message
-        # self.sensorsGPIO.on_alert(self.sensorAlert)
-        # self.sensorsGPIO.on_alert_stop(self.sensorStopAlert)
 
         # Init MQTT Messages
         self.startstopMQTT()
@@ -67,7 +64,7 @@ class DoorSensor(sensorGPIO):
     def sendStateMQTT(self):
         stateTopic = self.settings['mqtt']['state_topic']
         state = 'disarmed'
-        if self.setAlert:
+        if self.alarmTriggered:
             state = 'triggered'
         elif self.settings['settings']['alarmArmed']:
             state = 'armed_away'
@@ -143,9 +140,10 @@ class DoorSensor(sensorGPIO):
 
     def checkIntruderAlert(self):
         # Write Alerted Sensors Log and call IntruderAlert when alarm is activated
-        if self.settings['settings']['alarmArmed'] is True and self.setAlert is False:
+        if self.settings['settings']['alarmArmed'] is True and self.alarmTriggered is False:
             for sensor, sensorvalue in self.settings['sensors'].items():
-                if sensorvalue['alert'] is True:
+                if sensorvalue['alert'] is True and sensorvalue['enabled'] is True:
+                    self.alarmTriggered = True
                     threadIntruderAlert = threading.Thread(
                         target=self.intruderAlert)
                     threadIntruderAlert.daemon = True
@@ -196,11 +194,10 @@ class DoorSensor(sensorGPIO):
         ''' This method is called when an intruder is detected. It calls
         all the methods whith the actions that we want to do.
         '''
-        self.setAlert = True
         self.writeLog("alarm", "Intruder Alert")
         self.enableSerene()
         self.sendStateMQTT()
-        self.updateUI('alarmStatus', self.getAlarmStatus())
+        self.updateUI('alarmStatus', self.getTriggeredStatus())
         threadSendMail = threading.Thread(target=self.sendMail)
         threadSendMail.daemon = True
         threadSendMail.start()
@@ -219,7 +216,7 @@ class DoorSensor(sensorGPIO):
         if self.settings['voip']['enable'] is True:
             for phone_number in self.settings['voip']['numbersToCall']:
                 phone_number = str(phone_number)
-                if self.setAlert is True:
+                if self.alarmTriggered is True:
                     self.writeLog("alarm", "Calling " + phone_number)
                     cmd = self.sipcallfile, '-sd', sip_domain, '-su', sip_user, '-sp', sip_password, '-pn', phone_number, '-s', '1', '-mr', sip_repeat
                     print(bcolors.FADE, " ".join(cmd), bcolors.ENDC)
@@ -260,13 +257,13 @@ class DoorSensor(sensorGPIO):
         if self.settings['serene']['enable'] is True:
             self.writeLog("alarm", "Serene started")
             serenePin = int(self.settings['serene']['pin'])
-            self.sensorsGPIO.enableOutputPin(serenePin)
+            outputGPIO().enableOutputPin(serenePin)
 
     def stopSerene(self):
         ''' This method disables the output pin for the serene '''
         if self.settings['serene']['enable'] is True:
             serenePin = self.settings['serene']['pin']
-            self.sensorsGPIO.disableOutputPin(serenePin)
+            outputGPIO().disableOutputPin(serenePin)
 
     def activateAlarm(self):
         ''' Activates the alarm '''
@@ -278,7 +275,7 @@ class DoorSensor(sensorGPIO):
 
     def deactivateAlarm(self):
         ''' Deactivates the alarm '''
-        self.setAlert = False
+        self.alarmTriggered = False
         self.writeLog("user_action", "Alarm deactivated")
         self.settings['settings']['alarmArmed'] = False
         self.stopSerene()
@@ -293,12 +290,13 @@ class DoorSensor(sensorGPIO):
         # orderedSensors = OrderedDict(sorted(sensors.items(), key=lambda x: x['name']))
         orderedSensors = OrderedDict(sorted(sensors.items(), key=lambda k_v: k_v[1]['name']))
         sensorsArmed['sensors'] = orderedSensors
+        sensorsArmed['triggered'] = self.alarmTriggered
         sensorsArmed['alarmArmed'] = self.settings['settings']['alarmArmed']
         return sensorsArmed
 
-    def getAlarmStatus(self):
+    def getTriggeredStatus(self):
         ''' Returns the status of the alert for the UI '''
-        return {"alert": self.setAlert}
+        return {"alert": self.alarmTriggered}
 
     def getSensorsLog(self, limit=100, selectTypes='all', getFormat='text'):
         ''' Returns the last n lines if the log file. 
@@ -408,7 +406,6 @@ class DoorSensor(sensorGPIO):
         # ''' Changes the Sensor Pin '''
         # self.settings['sensors'][str(newpin)] = self.settings['sensors'][str(pin)]
         # del self.settings['sensors'][str(pin)]
-        # self.sensorsGPIO.del_sensor(pin)
         # self.writeNewSettingsToFile()
 
     def addSensor(self, sensorValues):
