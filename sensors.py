@@ -84,7 +84,7 @@ class sensorGPIO():
             else:
                 self._notify_alert_stop()
         else:
-            print(bcolors.STRIKE + "Wrong state change. Ignoring!!!" + bcolors.ENDC)
+            print(bcolors.STRIKE + "GPIO: Wrong state change. Ignoring!!!" + bcolors.ENDC)
 
     def forceNotify(self):
         # if GPIO.input(self.pin) == 1:
@@ -202,7 +202,7 @@ class sensorHikvision():
         self._event_error_stop.append(callback)
 
     def _notify_alert(self):
-        self.hasBeenNotified = False
+        self.hasBeenNotified = True
         self.alert = True
         threading.Thread(target=self._notify_alert_stop_later).start()
         for callback in self._event_alert:
@@ -210,13 +210,13 @@ class sensorHikvision():
 
     def _notify_alert_stop(self):
         self.alert = False
-        self.hasBeenNotified = True
+        self.hasBeenNotified = False
         for callback in self._event_alert_stop:
             callback(self.sensorName)
 
     def _notify_alert_stop_later(self):
         time.sleep(self.alertTime)
-        self._notify_alert_stop(self.sensorName)
+        self._notify_alert_stop()
 
     def _notify_error(self):
         self.online = False
