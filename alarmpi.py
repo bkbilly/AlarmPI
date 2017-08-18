@@ -159,7 +159,7 @@ def getSensors():
 @app.route('/getAlarmStatus.json')
 @requires_auth
 def getAlarmStatus():
-    return json.dumps(alarmSensors.getAlarmStatus())
+    return json.dumps(alarmSensors.getTriggeredStatus())
 
 
 @app.route('/getSensorsLog.json', methods=['Get', 'POST'])

@@ -18,19 +18,13 @@ class outputGPIO():
             state = GPIO.input(pin)
             if state == GPIO.LOW:
                 GPIO.output(pin, GPIO.HIGH)
-            self.outputPins[pin] = {'state': state, 'type': 'GPIO.output'}
 
     def disableOutputPin(self, *pins):
         for pin in pins:
-            if pin in self.outputPins:
-                GPIO.setup(pin, GPIO.OUT)
-                if GPIO.input(pin) == GPIO.HIGH:
-                    GPIO.output(pin, GPIO.LOW)
-                GPIO.setup(pin, GPIO.IN)
-                del self.outputPins[pin]
-
-    def getOutputPinStates(self):
-        return self.outputPins
+            GPIO.setup(pin, GPIO.OUT)
+            if GPIO.input(pin) == GPIO.HIGH:
+                GPIO.output(pin, GPIO.LOW)
+            GPIO.setup(pin, GPIO.IN)
 
 
 class sensorGPIO():
@@ -258,7 +252,8 @@ class sensorMQTT():
         self.reload(settings)
 
     def del_sensor(self):
-        self.runforever = False
+        self.mqttclient.disconnect()
+        self.mqttclient.loop_stop(force=False)
 
     def forceNotify(self):
         # self._notify_alert_stop()

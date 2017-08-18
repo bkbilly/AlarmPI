@@ -126,6 +126,12 @@ function refreshStatus(data){
 	} else {
 		$("#armButton").removeClass("armedAlarm").addClass("disarmedAlarm");
 	}
+	if (data.triggered === true){
+		$("#alertStatus").addClass("activeAlarm");
+	} else if (data.triggered === false){
+		$("#alertStatus").removeClass("activeAlarm");
+	}
+
 }
 
 function setAlarmStatus(data){
