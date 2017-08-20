@@ -56,17 +56,22 @@ $( document ).ready(function() {
 		refreshLogs();
 	});
 
+	socket.emit('join', {})
 
 	socket.on('sensorsChanged', function(msg){
+		console.log("THIS IS A TEST OF A ROOM1");
 		startAgain();
 	});
 	socket.on('settingsChanged', function(msg){
+		console.log("THIS IS A TEST OF A ROOM2");
 		refreshStatus(msg);
 	});
 	socket.on('alarmStatus', function(msg){
+		console.log("THIS IS A TEST OF A ROOM3");
 		setAlarmStatus(msg);
 	});
 	socket.on('sensorsLog', function(msg){
+		console.log("THIS IS A TEST OF A ROOM4");
 		addSensorLog(msg);
 	});
 });
@@ -178,9 +183,9 @@ function changeSensorSettings(sensor, type){
 	else if (allproperties['sensors'][sensor]['pin'] !== undefined)
 		addPinsToSelect('#GPIO-pin', allproperties['sensors'][sensor]['pin']);
 	console.log(allproperties['sensors'][sensor])
-	sensortype = allproperties['sensors'][sensor]['type']
 	for( property in allproperties['sensors'][sensor])
 		if( !['type', 'online', 'alert', 'enabled', 'name'].includes(property) ){
+			sensortype = allproperties['sensors'][sensor]['type']
 			$("#"+ sensortype + '-' + property).val(allproperties['sensors'][sensor][property])
 		}
 	$("#okButton").attr("onclick","saveConfigSettings('"+ type+"','"+sensor+"','"+currentName+"')");
@@ -213,7 +218,7 @@ function saveConfigSettings(type, sensor, currentName){
 	$.ajax({
 		type: 'POST',
 		contentType: 'application/json',
-		url: "addSensor2",
+		url: "addSensor",
 		dataType : 'json',
 		data: JSON.stringify(sensorValues)
 	});

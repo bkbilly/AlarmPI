@@ -1,5 +1,6 @@
 Flask==0.12.2
 Flask-SocketIO==2.9.2
-RPi.GPIO==0.6.3
+Flask-Login==0.4.0
 requests==2.18.4
 pytz==2017.2
+RPi.GPIO==0.6.3
