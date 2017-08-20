@@ -1,0 +1,18 @@
+{
+    "ui": {
+        "https": false,
+        "port": 5000
+    },
+    "users": {
+        "test1": {
+            "logfile": "alert.log",
+            "pw": "secret",
+            "settings": "settings.json"
+        },
+        "test2": {
+            "logfile": "alert2.log",
+            "pw": "secret",
+            "settings": "settings_template.json"
+        }
+    }
+}

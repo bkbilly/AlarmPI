@@ -99,7 +99,6 @@ class DoorSensor():
         elif message == "ARM_AWAY":
             self.activateAlarm()
 
-
     def sensorAlert(self, sensorName):
         name = self.settings['sensors'][str(sensorName)]['name']
         print("{0}-> Alert Sensor: {2}{1}".format(
@@ -188,7 +187,7 @@ class DoorSensor():
         It also uses the timezone from json file to get the local time.
         '''
         try:
-            mytimezone = pytz.timezone(self.settings['ui']['timezone'])
+            mytimezone = pytz.timezone(self.settings['settings']['timezone'])
         except Exception:
             mytimezone = pytz.utc
 
@@ -317,16 +316,21 @@ class DoorSensor():
             lines = f.readlines()
         logTypes = []
         for line in lines:
+            logType = ""
+            logTime = ""
+            logText = ""
             try:
                 mymatch = re.match(r'^\((.*)\) \[(.*)\] (.*)', line)
-                logType = mymatch.group(1)
-                logTime = mymatch.group(2)
-                logText = mymatch.group(3)
+                if mymatch:
+                    logType = mymatch.group(1)
+                    logTime = mymatch.group(2)
+                    logText = mymatch.group(3)
             except:
                 mymatch = re.match(r'^\[(.*)\] (.*)', line)
-                logType = "unknown"
-                logTime = mymatch.group(1)
-                logText = mymatch.group(2)
+                if mymatch:
+                    logType = "unknown"
+                    logTime = mymatch.group(1)
+                    logText = mymatch.group(2)
             if (logType in selectTypes or 'all' in selectTypes):
                 if getFormat == 'json':
                     logTypes.append({
@@ -342,9 +346,9 @@ class DoorSensor():
         ''' Returns the output pin for the serene '''
         return {'serenePin': self.settings['serene']['pin']}
 
-    def getPortUI(self):
-        ''' Returns the port for the UI '''
-        return self.settings['ui']['port']
+    # def getPortUI(self):
+    #     ''' Returns the port for the UI '''
+    #     return self.settings['ui']['port']
 
     def getSereneSettings(self):
         return self.settings['serene']
@@ -355,8 +359,8 @@ class DoorSensor():
     def getVoipSettings(self):
         return self.settings['voip']
 
-    def getUISettings(self):
-        return self.settings['ui']
+    def getTimezoneSettings(self):
+        return self.settings['settings']['timezone']
 
     def getMQTTSettings(self):
         return self.settings['mqtt']
@@ -379,9 +383,9 @@ class DoorSensor():
             self.writeLog("user_action", "Settings for VoIP changed")
             self.writeNewSettingsToFile()
 
-    def setUISettings(self, message):
-        if self.settings['ui'] != message:
-            self.settings['ui'] = message
+    def setTimezoneSettings(self, message):
+        if self.settings['settings']['timezone'] != message:
+            self.settings['settings']['timezone'] = message
             self.writeLog("user_action", "Settings for UI changed")
             self.writeNewSettingsToFile()
 
@@ -440,10 +444,10 @@ class DoorSensor():
         del self.settings['sensors'][str(sensorName)]
         self.writeNewSettingsToFile()
 
-    def check_auth(self, username, password):
-        """This function is called to check if a
-        username / password combination is valid.
-        """
-        myuser = self.settings['ui']['username']
-        mypass = self.settings['ui']['password']
-        return username == myuser and password == mypass
+    # def check_auth(self, username, password):
+    #     """This function is called to check if a
+    #     username / password combination is valid.
+    #     """
+    #     myuser = self.settings['ui']['username']
+    #     mypass = self.settings['ui']['password']
+    #     return username == myuser and password == mypass

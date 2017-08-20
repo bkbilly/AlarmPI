@@ -1,36 +1,40 @@
 {
+    "mail": {
+        "enable": true,
+        "messageBody": "Alert",
+        "messageSubject": "Home Security",
+        "password": "",
+        "recipients": [],
+        "smtpPort": 587,
+        "smtpServer": "smtp.gmail.com",
+        "username": ""
+    },
+    "mqtt": {
+        "authentication": false,
+        "command_topic": "home/alarm2/set",
+        "enable": true,
+        "host": "",
+        "password": "",
+        "port": 1883,
+        "state_topic": "home/alarm2",
+        "username": ""
+    },
+    "sensors": {
+    },
     "serene": {
         "enable": false,
         "pin": 14
     },
-    "mail": {
-        "enable": true,
-        "smtpServer": "smtp.gmail.com",
-        "smtpPort": 587,
-        "username": "",
-        "password": "",
-        "recipients": [],
-        "messageSubject": "Home Security",
-        "messageBody": "Alert"
+    "settings": {
+        "alarmArmed": false,
+        "timezone": "Europe/Athens"
     },
     "voip": {
-        "enable": true,
         "domain": "",
-        "username": "",
-        "password": "",
+        "enable": true,
         "numbersToCall": [],
-        "timesOfRepeat": ""
-    },
-    "sensors": {
-    },
-    "settings": {
-        "alarmArmed": false
-    },
-    "ui": {
-        "port": 5000,
-        "https": true,
-        "password": "secret",
-        "username": "admin",
-        "timezone": "Europe/Athens"
+        "password": "",
+        "timesOfRepeat": "",
+        "username": ""
     }
 }
