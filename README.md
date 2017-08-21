@@ -1,9 +1,12 @@
 # AlarmPI
 
-AlarmPI is a home alarm system based on Raspberry PI controlling PIR sensors, Door sensors or any other wired sensor. It is controlled with a Web UI, or a Android Application using HTTPS. When the alarm detects movement, it supports the following events:
+AlarmPI is a home security system based on Raspberry PI. It supports wired sensors (PIR, Magnetic etc.) and wireless through MQTT or Hikvision. It is controlled with a Web UI, a Android Application, or through HTTP & MQTT messages. When the alarm detects movement, it supports the following events:
  * Enables the Serene
  * Send Mail
  * VoIP Calls
+ * Send MQTT message
+
+It is written in python and supports both python 2.7 & python 3.6. There is also the option of having more than one user by editing the server.json file accordingly.
 
 ## Usage
 
@@ -26,9 +29,31 @@ It can also be used with IFTTT using the Webhooks module like this:
 
 
 ## Installation
+With this command on your terminal you can install and update the application with my latest commit.
 ```bash
 bash <(curl -s "https://raw.githubusercontent.com/bkbilly/AlarmPI/master/install.sh")
 ```
+You can chose a release with this command by replacing the v2.7.
+```bash
+bash <(curl -s "https://raw.githubusercontent.com/bkbilly/AlarmPI/v2.7/install.sh")
+```
+
+## SipCall (VoIP)
+
+I have built the sipcall for the Raspberry Pi, so hopefully you will not have to build it yourself.
+To test it, execute this replacing the (myserver, myusername, mypassword, mynumbertocall):
+
+`./sipcall -sd myserver -su myusername -sp mypassword -pn mynumbertocall -s 1 -mr 2 -ttsf ../play.wav`
+
+## Configuration
+### Configuration Explained `server.json`
+* `ui.https` (bool) Use HTTPs
+* `ui.port` (bool) The port
+* `users[user]` (str) The username for login
+* `users[user].pw` (str) the password for login
+* `users[user].logfile` (str) The name of the log file
+* `users[user].settings` (str) The name of the settings file
+
 
 ### Configuration Explained `settings.json`
 
@@ -48,23 +73,29 @@ bash <(curl -s "https://raw.githubusercontent.com/bkbilly/AlarmPI/master/install
 * `voip.password` (str) VoIP password
 * `voip.numbersToCall` (list str) List of numbers to call. eg. ["3849392849", "3582735872"]
 * `voip.timesOfRepeat` (str) How many times the recorded message is played
-* `sensors[pin]` (str) Input pin of the specific sensor
-* `sensors[pin].active` (bool) Activate the specific sensor
-* `sensors[pin].name` (str) Name of the specific sensor
-* `sensors[pin].alert` (bool) Automatically created. Status of the sensor
+* `sensors[uuid]` (str) The specific ID of the sensor (auto created)
+* `sensors[uuid].name` (str) Name of the sensor
+* `sensors[uuid].type` (str) The type of the sensor (GPIO, MQTT, Hikvision)
+* `sensors[uuid].enabled` (bool) Set the sensor as Active/Inactive
+* `sensors[uuid].online` (bool) The online status of the sensor
+* `sensors[uuid].alert` (bool) Automatically created. Status of the sensor
+* `sensors[uuid].pin` (str) [GPIO] Input pin of the sensor
+* `sensors[uuid].ip` (str) [Hikvision] IP of the Hikvision camera
+* `sensors[uuid].user` (str) [Hikvision] Username of the Hikvision camera
+* `sensors[uuid].pass` (str) [Hikvision] Password of the Hikvision camera
+* `sensors[uuid].state_topic` (str) [MQTT] The unique topic for the sensor
+* `sensors[uuid].message_alert` (str) [MQTT] The message for alert
+* `sensors[uuid].message_noalert` (str) [MQTT] The message for stop alert
+* `mqtt.enable` (bool) Enable the mqtt server
+* `mqtt.authentication` (bool) Use authentication for the mqtt server
+* `mqtt.state_topic` (str) The MQTT topic for the state (disarmed, triggered, armed_away)
+* `mqtt.command_topic` (str) The MQTT topic for the commands (DISARM, ARM_AWAY)
+* `mqtt.host` (str) IP Address of the mqtt server
+* `mqtt.port` (int) Port of the mqtt server
+* `mqtt.username` (str) Username of the mqtt server if authentication is true
+* `mqtt.password` (str) Passwrd of the mqtt server if authentication is true
 * `settings.alarmArmed` (bool) If true, activate the alarm
-* `ui.username` (str) Username for the Web UI
-* `ui.password` (str) Password for the Web UI
-* `ui.https` (bool) Use TLS encryption for the Web UI
-* `ui.port` (int) TCP port for the Web UI
-* `ui.timezone` (str) The timezone for the log file based on pytz
-
-### SipCall (VoIP)
-
-I have built the sipcall for the Raspberry Pi, so hopefully you will not have to build it yourself.
-To test it, execute this replacing the (myserver, myusername, mypassword, mynumbertocall):
-
-`./sipcall -sd myserver -su myusername -sp mypassword -pn mynumbertocall -s 1 -mr 2 -ttsf ../play.wav`
+* `settings.timezone` (str) The timezone for the log file based on pytz
 
 ## Contributing
 

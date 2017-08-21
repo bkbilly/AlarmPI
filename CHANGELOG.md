@@ -2,34 +2,34 @@
 All notable changes to this project will be documented in this file.
 
 
+## [[2.8]](https://github.com/bkbilly/AlarmPI/tree/v2.8) - Aug 21, 2017
+#### ADDED
+  - Support Python 2.7 & python 3.6
+  - MQTT Support
+  - Multiple Users
+#### CHANGED
+  - Performance improvements
+  - Better output on the terminal
+  - Bug fixes
+
 ## [[2.7]](https://github.com/bkbilly/AlarmPI/tree/v2.7) - Aug 9, 2017
 #### CHANGED
   - Renamed active/inactive sensors to enabled/disabled
-  - better sensors with callbacks, auto delete old logs, better developer friendly
-  - filled the online and alert when creating new sensor
-
-## [2.6] - Jul 25, 2017
-#### CHANGED
+  - Better sensors with callbacks, auto delete old logs, better developer friendly
+  - Filled the online and alert when creating new sensor
+  - Categorize logs and get them as json if required
+  - Min size of css merged with Mobile version
+#### FIXED
   - fixed hikvision sensor, added UI log filter, print accessed ipaddress
 
-## [[2.5]](https://github.com/bkbilly/AlarmPI/tree/v2.5) - Jul 10, 2017
-#### CHANGED
-  - categorize logs and get them as json if required
-  - Min size of css merged with Mobile version
-
 ## [[2.4]](https://github.com/bkbilly/AlarmPI/tree/v2.4) - Apr 27, 2017
-#### CHANGED
-  - Refactor the services
-
-## [2.3] - Apr 26, 2017
-#### CHANGED
-  - Installation script, ask configuration questions.
-
-## [2.2] - Apr 25, 2017
 #### ADDED
   - Startup Script.
   - Python requirements.
   - Install Script.
+#### CHANGED
+  - Refactor the services
+  - Installation script, ask configuration questions.
 
 ## [[2.1]](https://github.com/bkbilly/AlarmPI/tree/v2.1) - Apr 24, 2017
 #### ADDED
