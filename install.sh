@@ -48,18 +48,22 @@ fi
 if [ ! -f $basedir/settings.json ]; then
     sudo cp $basedir/settings_template.json $basedir/settings.json
 fi
+if [ ! -f $basedir/server.json ]; then
+    sudo cp $basedir/server_template.json $basedir/server.json
+fi
 settingsJson=`cat $basedir/settings.json`
-defport=`echo $settingsJson | jq -r ".ui.port"`
-defhttps=`echo $settingsJson | jq ".ui.https"`
+serverJson=`cat $basedir/server.json`
+defport=`echo $serverJson | jq -r ".ui.port"`
+defhttps=`echo $serverJson | jq -r ".ui.https"`
 echo $defhttps
 if [[ $defhttps == 'true' ]]; then
     defhttps='Y/n'
 else
     defhttps='y/N'
 fi
-defusername=`echo $settingsJson | jq -r ".ui.username"`
-defpassword=`echo $settingsJson | jq -r ".ui.password"`
-deftimezone=`echo $settingsJson | jq -r ".ui.timezone"`
+defusername=`echo $serverJson | jq -r ".users | keys[0]"`
+defpassword=`echo $serverJson | jq -r ".users.$defusername.pw"`
+deftimezone=`echo $settingsJson | jq -r ".settings.timezone"`
 
 read -p "Change port? [$defport] " port
 if [[ ! $port =~ ^[0-9]+$ ]]; then
@@ -88,19 +92,21 @@ read -p "Enter your timezone [$deftimezone]: " timezone
 if [[ $timezone == "" ]]; then
     timezone=$deftimezone
 fi
-settingsJson=`echo $settingsJson | jq ".ui.port=$port"`
-settingsJson=`echo $settingsJson | jq ".ui.https=$https"`
-settingsJson=`echo $settingsJson | jq ".ui.username=\"$username\""`
-settingsJson=`echo $settingsJson | jq ".ui.password=\"$password\""`
-settingsJson=`echo $settingsJson | jq ".ui.timezone=\"$timezone\""`
+serverJson=`echo $serverJson | jq ".ui.port=$port"`
+serverJson=`echo $serverJson | jq ".ui.https=$https"`
+serverJson=`echo $serverJson | jq ".users.$defusername.pw=\"$password\""`
+if [ "$defusername" != "$username" ]; then
+    serverJson=`echo $serverJson | jq ".users.$username=.users.$defusername | del(.users.$defusername)"`
+fi
+settingsJson=`echo $settingsJson | jq ".settings.timezone=\"$timezone\""`
 echo $settingsJson | jq '.' | sudo tee $basedir/settings.json > /dev/null
+echo $serverJson | jq '.' | sudo tee $basedir/server.json > /dev/null
 
 if [[ $https == 'true' ]]; then
     httpsurl='https'
 else
     httpsurl='http'
 fi
-myURL="$httpsurl://$username:$password@localhost:$port"
 
 
 # Install Python requirements
@@ -116,8 +122,8 @@ sudo service alarmpi stop
 sudo service alarmpi start
 
 # Done
+myURL="$httpsurl://$username:$password@localhost:$port"
 echo -e "\n\n\nAll done!"
 echo -e "\e[33mThis is your URL: $myURL\e[0m"
 echo "Enjoy!!!"
-
 
