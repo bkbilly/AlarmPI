@@ -93,15 +93,6 @@ def login():
         return send_from_directory(webDirectory, 'login.html')
     request_loader(request)
     return redirect('/')
-    # email = request.form['email']
-    # if email not in users:
-    #     return 'Bad login'
-    # if request.form['pw'] == users[email]['pw']:
-    #     user = User()
-    #     user.id = email
-    #     flask_login.login_user(user)
-    #     return redirect('/')
-    # return 'Bad login'
 
 
 @app.route('/logout')
