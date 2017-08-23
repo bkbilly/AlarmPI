@@ -3,4 +3,5 @@ Flask-SocketIO==2.9.2
 Flask-Login==0.4.0
 requests==2.18.4
 pytz==2017.2
+paho-mqtt==1.3.0
 RPi.GPIO==0.6.3

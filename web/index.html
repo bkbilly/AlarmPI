@@ -227,23 +227,25 @@
 		</div>
 		<div id="sensors" class="smallSensors"></div>
 		<div id="sensorLog">
-			<select id="logtype">
-					<option value="all" selected="selected">Show all Logs</option>
-					<option value="disabled_sensor,enabled_sensor">All Sensors</option>
-					<option value="disabled_sensor">Disabled Sensors</option>
-					<option value="enabled_sensor">Enabled Sensors</option>
-					<option value="system">System Logs</option>
-					<option value="user_action">User Actions</option>
-					<option value="alarm">Alarm Actions</option>
-			</select>
-			<select id="loglimit">
-					<option value="10" selected="selected">10</option>
-					<option value="20">20</option>
-					<option value="40">40</option>
-					<option value="50">50</option>
-					<option value="100">100</option>
-					<option value="200">200</option>
-			</select>
+			<div id="logSettings">
+				<select id="logtype">
+						<option value="all" selected="selected">Show all Logs</option>
+						<option value="disabled_sensor,enabled_sensor">All Sensors</option>
+						<option value="disabled_sensor">Disabled Sensors</option>
+						<option value="enabled_sensor">Enabled Sensors</option>
+						<option value="system">System Logs</option>
+						<option value="user_action">User Actions</option>
+						<option value="alarm">Alarm Actions</option>
+				</select>
+				<select id="loglimit">
+						<option value="10" selected="selected">10</option>
+						<option value="20">20</option>
+						<option value="40">40</option>
+						<option value="50">50</option>
+						<option value="100">100</option>
+						<option value="200">200</option>
+				</select>
+			</div>
 			<ul id="sensorListLog">
 			</ul>
 		</div>

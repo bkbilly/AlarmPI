@@ -1,55 +1,3 @@
-/* ----------- Large ----------- */
-@media all and (min-width: 768px){
-        /* topBar */
-        #sereneSettings {
-                position: relative;
-                width: 300px;
-                height: 200px;
-                background-color: #222;
-                border-radius: 1px 30px 30px 1px;
-                box-shadow: inset -10px 0px 40px 1px #777;
-                float: left;
-        }
-
-        #settingsSphere {
-                cursor: pointer;
-                background-color: #666;
-                width: 40px;
-                height: 40px;
-                top: 140px;
-                left: 190px;
-        }
-        #settingsSphereText {
-                font-size: xx-large;
-                margin-top: 10px;
-        }
-
-        /* List */
-        #sensorLog{
-                position: absolute;
-                width: 300px;
-                top: 210px;
-        }
-
-        #armButton {
-                position: relative;
-                top: 10px;
-                left: 20px;
-                width: 200px;
-                height: 70px;
-        }
-
-        .sphere {
-                margin: 5px 50px 0 40px;
-                left: 50px;
-                top: 100px;
-        }
-
-        .smallSensors {
-                margin-left: 300px;
-        }
-}
-
 @media not all and (min-width: 768px){
 
         /* ----------- Small ----------- */
@@ -93,6 +41,157 @@
                 min-width: 350px;
                 margin-left: 0;
         }
+
+        #sensorLog{
+                border-radius: 20px;
+                background-color: rgba(50, 50, 50, 0.7);;
+        }
+        td{
+                display: block;
+        }
+        .settingsModalContent {
+                width: auto;
+                margin: 3% auto; 
+        }
+        table {
+                width: 100%;
+        }
+        .settingsContent input {
+                width: 100%;
+        }
+
+}
+
+
+@media all and (min-width: 768px){
+        /* ----------- Large ----------- */
+        /* topBar */
+        #sereneSettings {
+                position: relative;
+                width: 300px;
+                height: 200px;
+                background-color: #222;
+                border-radius: 1px 30px 30px 1px;
+                box-shadow: inset -10px 0px 40px 1px #777;
+                float: left;
+        }
+
+        #settingsSphere {
+                cursor: pointer;
+                background-color: #666;
+                width: 40px;
+                height: 40px;
+                top: 140px;
+                left: 190px;
+        }
+        #settingsSphereText {
+                font-size: xx-large;
+                margin-top: 10px;
+        }
+
+        /* List */
+        #sensorLog{
+                border-radius: 20px;
+                background-color: rgba(50, 50, 50, 0.7);;
+                position: absolute;
+                width: 300px;
+                top: 210px;
+        }
+
+        #armButton {
+                position: relative;
+                top: 10px;
+                left: 20px;
+                width: 200px;
+                height: 70px;
+        }
+
+        .sphere {
+                margin: 5px 50px 0 40px;
+                left: 50px;
+                top: 100px;
+        }
+
+        .smallSensors {
+                margin-left: 300px;
+        }
+
+        .settingsModalContent {
+                width: 650px;
+                margin: 3% auto; 
+        }
+        
+        table {
+                width: 100%;
+        }
+        .settingsContent input {
+                width: 100%;
+        }
+
+}
+@media all and (min-width: 1400px){
+        /* ----------- Ultra ----------- */
+        /* topBar */
+        #sereneSettings {
+                position: relative;
+                width: 500px;
+                height: 100px;
+                background-color: #222;
+                border-radius: 1px 30px 30px 1px;
+                box-shadow: inset -10px 0px 40px 1px #777;
+                float: left;
+        }
+
+        #settingsSphere {
+                cursor: pointer;
+                background-color: #666;
+                width: 40px;
+                height: 40px;
+                top: 22px;
+                left: 350px;
+        }
+        #settingsSphereText {
+                font-size: xx-large;
+                margin-top: 10px;
+        }
+
+        /* List */
+        #sensorLog{
+                border-radius: 20px;
+                background-color: rgba(50, 50, 50, 0.7);;
+                position: absolute;
+                width: 500px;
+                top: 110px;
+        }
+
+        #armButton {
+                position: relative;
+                top: 0px;
+                left: 150px;
+                width: 200px;
+                height: 70px;
+        }
+
+        .sphere {
+                margin: 5px 50px 0 40px;
+                left: 0px;
+                top: 0px;
+        }
+
+        .smallSensors {
+                margin-left: 500px;
+        }
+        .settingsModalContent {
+                width: 1000px;
+                margin: 3% auto; 
+        }
+        table {
+                width: 100%;
+        }
+        .settingsContent input {
+                width: 100%;
+        }
+
 }
 
 
