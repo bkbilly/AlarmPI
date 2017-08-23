@@ -89,6 +89,8 @@ def request_loader(request):
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if flask_login.current_user.is_authenticated:
+        return redirect('/')
     if request.method == 'GET':
         return send_from_directory(webDirectory, 'login.html')
     request_loader(request)
