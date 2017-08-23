@@ -113,7 +113,7 @@ function refreshStatus(data){
 		if (alertsensor.enabled === false)
 			btnColour = "white";
 		else
-			btnColour = (alertsensor.alert === true ? "green" : "red");
+			btnColour = (alertsensor.alert === true ? "red" : "green");
 		if (alertsensor.online === false)
 			btnColour = "blue"
 		shadowBtnColour = "inset 0px 30px 40px -20px " + btnColour
