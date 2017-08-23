@@ -244,7 +244,11 @@ class DoorSensor():
             smtp_server = self.settings['mail']['smtpServer']
             smtp_port = int(self.settings['mail']['smtpPort'])
 
-            msg = MIMEText(self.settings['mail']['messageBody'])
+            bodyMsg = self.settings['mail']['messageBody']
+            LogsTriggered = self.getSensorsLog(fromtext='Alarm activated')['log']
+            for logTriggered in LogsTriggered.reversed():
+                bodyMsg += '<br>' + logTriggered
+            msg = MIMEText(bodyMsg, 'html')
             sender = mail_user
             recipients = self.settings['mail']['recipients']
             msg['Subject'] = self.settings['mail']['messageSubject']
@@ -306,15 +310,16 @@ class DoorSensor():
         ''' Returns the status of the alert for the UI '''
         return {"alert": self.alarmTriggered}
 
-    def getSensorsLog(self, limit=100, selectTypes='all', getFormat='text'):
+    def getSensorsLog(self, limit=100, selectTypes='all', getFormat='text', fromtext=None):
         ''' Returns the last n lines if the log file. 
         If selectTypes is specified, then it returns only this type of logs.
         Available types: user_action, disabled_sensor, enabled_sensor, system, alarm
         If the getFormat is specified as json, then it returns it in a 
         json format (programmer friendly) '''
+        txtlimit = 0
+        logTypes = []
         with open(self.logfile, "r") as f:
             lines = f.readlines()
-        logTypes = []
         for line in lines:
             logType = ""
             logTime = ""
@@ -325,13 +330,19 @@ class DoorSensor():
                     logType = mymatch.group(1)
                     logTime = mymatch.group(2)
                     logText = mymatch.group(3)
-            except:
+            except Exception:
                 mymatch = re.match(r'^\[(.*)\] (.*)', line)
                 if mymatch:
                     logType = "unknown"
                     logTime = mymatch.group(1)
                     logText = mymatch.group(2)
             if (logType in selectTypes or 'all' in selectTypes):
+                if fromtext is not None:
+                    txtlimit += 1
+                    limit = txtlimit
+                    txtmatch = re.match(r'.*{0}.*'.format(fromtext), logText)
+                    if txtmatch:
+                        txtlimit = 0
                 if getFormat == 'json':
                     logTypes.append({
                         'type': logType,
