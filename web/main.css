@@ -170,6 +170,7 @@ select {
 }
 .onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-inner {
 	margin-left: 0;
+	text-align: left
 }
 .onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-switch {
 	right: 0px; 
