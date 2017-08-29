@@ -1,3 +1,17 @@
+.sensordiv {
+        width: 80%;
+        min-width: 250px;
+        /*float:left;*/
+        border-radius: 20px;
+        background-color: rgba(0, 0, 0, 0.7);
+        margin: 10px;
+        height: 7em;
+        margin: 10px auto;
+        box-shadow: inset 0px 30px 40px -20px blue;
+        position: relative;
+}
+
+
 @media not all and (min-width: 768px){
 
         /* ----------- Small ----------- */
@@ -51,7 +65,7 @@
         }
         .settingsModalContent {
                 width: auto;
-                margin: 3% auto; 
+                margin: 3% 10px;
         }
         table {
                 width: 100%;
@@ -117,7 +131,7 @@
         }
 
         .settingsModalContent {
-                width: 650px;
+                width: 80%;
                 margin: 3% auto; 
         }
         
@@ -180,9 +194,10 @@
 
         .smallSensors {
                 margin-left: 500px;
+                text-align: center;
         }
         .settingsModalContent {
-                width: 1000px;
+                width: 80%;
                 margin: 3% auto; 
         }
         table {
@@ -191,6 +206,12 @@
         .settingsContent input {
                 width: 100%;
         }
+        .sensordiv {
+                width: 40%;
+                margin: 10px 20px;
+                display: inline-block;
+        }
+
 
 }
 
@@ -202,19 +223,6 @@
 
 /* ----------- STATIC ----------- */
 /* sensor */
-.sensordiv {
-        width: 80%;
-        min-width: 250px;
-        /*float:left;*/
-        border-radius: 20px;
-        background-color: rgba(0, 0, 0, 0.7);
-        margin: 10px;
-        height: 7em;
-        margin: 10px auto;
-        box-shadow: inset 0px 30px 40px -20px blue;
-        position: relative;
-}
-
 
 .sensortext {
         text-align: center;
