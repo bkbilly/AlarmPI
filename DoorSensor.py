@@ -106,13 +106,7 @@ class DoorSensor():
         self.settings['sensors'][str(sensorName)]['online'] = True
         self.writeNewSettingsToFile()
         self.updateUI('settingsChanged', self.getSensorsArmed())
-        enabled = self.settings['sensors'][str(sensorName)]['enabled']
-        enabledText = "enabled sensor: "
-        sensorLogType = "enabled_sensor"
-        if enabled is False:
-            enabledText = "Disabled sensor: "
-            sensorLogType = "disabled_sensor"
-        self.writeLog(sensorLogType, enabledText + name)
+        self.writeLog("sensor,start," + sensorName, name)
         self.checkIntruderAlert()
 
     def sensorStopAlert(self, sensorName):
@@ -123,6 +117,7 @@ class DoorSensor():
         self.settings['sensors'][str(sensorName)]['online'] = True
         self.writeNewSettingsToFile()
         self.updateUI('settingsChanged', self.getSensorsArmed())
+        self.writeLog("sensor,stop," + sensorName, name)
 
     def sensorError(self, sensorName):
         name = self.settings['sensors'][str(sensorName)]['name']
@@ -309,6 +304,23 @@ class DoorSensor():
         ''' Returns the status of the alert for the UI '''
         return {"alert": self.alarmTriggered}
 
+    def _convert_timedelta(self, duration):
+        days, seconds = duration.days, duration.seconds
+        hours = days * 24 + seconds // 3600
+        minutes = (seconds % 3600) // 60
+        seconds = (seconds % 60)
+        diffText = ""
+        if days > 0:
+            diffText = "{days} days, {hours} hour, {minutes} min, {seconds} sec"
+        elif hours > 0:
+            diffText = "{hours} hour, {minutes} min, {seconds} sec"
+        elif minutes > 0:
+            diffText = "{minutes} min, {seconds} sec"
+        else:
+            diffText = "{seconds} sec"
+        diffText = diffText.format(days=days, hours=hours, minutes=minutes, seconds=seconds)
+        return diffText
+
     def getSensorsLog(self, limit=100, selectTypes='all', getFormat='text', fromtext=None):
         ''' Returns the last n lines if the log file. 
         If selectTypes is specified, then it returns only this type of logs.
@@ -319,6 +331,7 @@ class DoorSensor():
         logTypes = []
         with open(self.logfile, "r") as f:
             lines = f.readlines()
+        asdf = {}
         for line in lines:
             logType = ""
             logTime = ""
@@ -349,7 +362,26 @@ class DoorSensor():
                         'time': logTime
                     })
                 else:
-                    logTypes.append('[{0}] {1}'.format(logTime, logText))
+                    add = True
+                    if 'sensor' in logType:
+                        try:
+                            stype, status, uuid = logType.split(',')
+                            if status == 'start':
+                                asdf[uuid] = {
+                                    'start': logTime,
+                                    'ind': len(logTypes)
+                                }
+                            elif status == 'stop':
+                                info = asdf.pop(uuid, None)
+                                starttime = datetime.strptime(info['start'], "%Y-%m-%d %H:%M:%S")
+                                endtime = datetime.strptime(logTime, "%Y-%m-%d %H:%M:%S")
+                                timediff = self._convert_timedelta(endtime - starttime)
+                                logTypes[info['ind']] = '[{0}] ({1}) {2}'.format(logTime, timediff, logText)
+                                add = False
+                        except Exception:
+                            print "problem on log sensor!!!"
+                    if add:
+                        logTypes.append('[{0}] {1}'.format(logTime, logText))
         return {"log": logTypes[-limit:]}
 
     def getSerenePin(self):
