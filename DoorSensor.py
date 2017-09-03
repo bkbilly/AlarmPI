@@ -42,11 +42,10 @@ class DoorSensor():
         self.kill_now = False
 
         # Init Alarm
+        self.writeLog("system", "Alarm Booted")
         threadTrimLogFile = threading.Thread(target=self.trimLogFile)
         threadTrimLogFile.daemon = True
         threadTrimLogFile.start()
-
-        self.writeLog("system", "Alarm Booted")
 
         # Event Listeners
         self.sensors = Sensor()
