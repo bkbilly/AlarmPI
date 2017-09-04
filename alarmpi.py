@@ -106,6 +106,10 @@ def logout():
 @login_manager.unauthorized_handler
 def unauthorized_handler():
     return redirect('/login')
+    # return Response(
+    #     'Could not verify your access level for that URL.', 401,
+    #     {'WWWAuthenticate': 'Basic realm="Login Required"'}
+    # )
 
 
 # **********************************
@@ -232,6 +236,7 @@ def getSensorsLog():
         logformat = request.args.get('format')
     user = flask_login.current_user.id
     sensorClass = users[user]['obj']
+    sensorClass.setLogFilters(limit, logtype)
     return json.dumps(sensorClass.getSensorsLog(limit, logtype, logformat))
 
 

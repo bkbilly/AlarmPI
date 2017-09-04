@@ -94,7 +94,6 @@ function startAgain(){
 }
 
 function refreshLogs(){
-	$("#sensorListLog").empty();
 	loglimit = $("#loglimit").val();
 	logtype = $("#logtype").val();
 	$.getJSON("getSensorsLog.json?limit="+loglimit+"&type="+logtype).done(function(data){
@@ -149,6 +148,7 @@ function setAlarmStatus(data){
 
 
 function addSensorLog(msg){
+	$("#sensorListLog").empty();
 	$.each(msg.log, function(i, tmplog){
 		$("#sensorListLog").prepend("<li>"+tmplog+"</li>");
 	});

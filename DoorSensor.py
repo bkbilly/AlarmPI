@@ -36,6 +36,8 @@ class DoorSensor():
         self.sipcallfile = sipcallfile
         self.settings = self.ReadSettings()
         self.mqttclient = mqtt.Client("", True, None, mqtt.MQTTv31)
+        self.limit = 10
+        self.logtypes = 'all'
 
         # Stop execution on exit
         self.alarmTriggered = False
@@ -80,7 +82,8 @@ class DoorSensor():
                 self.mqttclient.connect(mqttHost, mqttPort, 60)
                 self.mqttclient.loop_start()
             except Exception as e:
-                print("{0}MQTT: {2}{1}".format(bcolors.FAIL, bcolors.ENDC, str(e)))
+                print("{0}MQTT: {2}{1}".format(
+                    bcolors.FAIL, bcolors.ENDC, str(e)))
         else:
             self.mqttclient.disconnect()
             self.mqttclient.loop_stop(force=False)
@@ -106,13 +109,7 @@ class DoorSensor():
         self.settings['sensors'][str(sensorName)]['online'] = True
         self.writeNewSettingsToFile()
         self.updateUI('settingsChanged', self.getSensorsArmed())
-        enabled = self.settings['sensors'][str(sensorName)]['enabled']
-        enabledText = "enabled sensor: "
-        sensorLogType = "enabled_sensor"
-        if enabled is False:
-            enabledText = "Disabled sensor: "
-            sensorLogType = "disabled_sensor"
-        self.writeLog(sensorLogType, enabledText + name)
+        self.writeLog("sensor,start," + sensorName, name)
         self.checkIntruderAlert()
 
     def sensorStopAlert(self, sensorName):
@@ -123,6 +120,7 @@ class DoorSensor():
         self.settings['sensors'][str(sensorName)]['online'] = True
         self.writeNewSettingsToFile()
         self.updateUI('settingsChanged', self.getSensorsArmed())
+        self.writeLog("sensor,stop," + sensorName, name)
 
     def sensorError(self, sensorName):
         name = self.settings['sensors'][str(sensorName)]['name']
@@ -191,10 +189,11 @@ class DoorSensor():
             mytimezone = pytz.utc
 
         myTimeLog = datetime.now(tz=mytimezone).strftime("%Y-%m-%d %H:%M:%S")
+        logmsg = '({0}) [{1}] {2}\n'.format(logType, myTimeLog, message)
         with open(self.logfile, "a") as myfile:
-            myfile.write('({0}) [{1}] {2}\n'.format(
-                logType, myTimeLog, message))
-        self.updateUI('sensorsLog', self.getSensorsLog(1))
+            myfile.write(logmsg)
+        self.updateUI('sensorsLog', self.getSensorsLog(
+            self.limit, self.logtypes))
 
     def intruderAlert(self):
         ''' This method is called when an intruder is detected. It calls
@@ -233,7 +232,8 @@ class DoorSensor():
                     proc.wait()
                     self.writeLog("alarm", "Call to " +
                                   phone_number + " endend")
-                    print("{0}Call Ended{1}".format(bcolors.FADE, bcolors.ENDC))
+                    print("{0}Call Ended{1}".format(
+                        bcolors.FADE, bcolors.ENDC))
 
     def sendMail(self):
         ''' This method sends an email to all recipients in the json settings file. '''
@@ -244,7 +244,8 @@ class DoorSensor():
             smtp_port = int(self.settings['mail']['smtpPort'])
 
             bodyMsg = self.settings['mail']['messageBody']
-            LogsTriggered = self.getSensorsLog(fromtext='Alarm activated')['log']
+            LogsTriggered = self.getSensorsLog(
+                fromtext='Alarm activated')['log']
             for logTriggered in LogsTriggered.reversed():
                 bodyMsg += '<br>' + logTriggered
             msg = MIMEText(bodyMsg, 'html')
@@ -299,7 +300,8 @@ class DoorSensor():
         sensorsArmed = {}
         sensors = self.settings['sensors']
         # orderedSensors = OrderedDict(sorted(sensors.items(), key=lambda x: x['name']))
-        orderedSensors = OrderedDict(sorted(sensors.items(), key=lambda k_v: k_v[1]['name']))
+        orderedSensors = OrderedDict(
+            sorted(sensors.items(), key=lambda k_v: k_v[1]['name']))
         sensorsArmed['sensors'] = orderedSensors
         sensorsArmed['triggered'] = self.alarmTriggered
         sensorsArmed['alarmArmed'] = self.settings['settings']['alarmArmed']
@@ -308,6 +310,28 @@ class DoorSensor():
     def getTriggeredStatus(self):
         ''' Returns the status of the alert for the UI '''
         return {"alert": self.alarmTriggered}
+
+    def _convert_timedelta(self, duration):
+        days, seconds = duration.days, duration.seconds
+        hours = days * 24 + seconds // 3600
+        minutes = (seconds % 3600) // 60
+        seconds = (seconds % 60)
+        diffText = ""
+        if days > 0:
+            diffText = "{days} days, {hours} hour, {minutes} min, {seconds} sec"
+        elif hours > 0:
+            diffText = "{hours} hour, {minutes} min, {seconds} sec"
+        elif minutes > 0:
+            diffText = "{minutes} min, {seconds} sec"
+        else:
+            diffText = "{seconds} sec"
+        diffText = diffText.format(
+            days=days, hours=hours, minutes=minutes, seconds=seconds)
+        return diffText
+
+    def setLogFilters(self, limit, logtypes):
+        self.limit = limit
+        self.logtypes = logtypes
 
     def getSensorsLog(self, limit=100, selectTypes='all', getFormat='text', fromtext=None):
         ''' Returns the last n lines if the log file. 
@@ -319,6 +343,7 @@ class DoorSensor():
         logTypes = []
         with open(self.logfile, "r") as f:
             lines = f.readlines()
+        asdf = {}
         for line in lines:
             logType = ""
             logTime = ""
@@ -342,23 +367,43 @@ class DoorSensor():
                     txtmatch = re.match(r'.*{0}.*'.format(fromtext), logText)
                     if txtmatch:
                         txtlimit = 0
-                if getFormat == 'json':
-                    logTypes.append({
-                        'type': logType,
-                        'event': logText,
-                        'time': logTime
-                    })
-                else:
-                    logTypes.append('[{0}] {1}'.format(logTime, logText))
+                add = True
+                if 'sensor' in logType:
+                    try:
+                        stype, status, uuid = logType.split(',')
+                        if status == 'start':
+                            asdf[uuid] = {
+                                'start': logTime,
+                                'ind': len(logTypes)
+                            }
+                        elif status == 'stop':
+                            info = asdf.pop(uuid, None)
+                            starttime = datetime.strptime(
+                                info['start'], "%Y-%m-%d %H:%M:%S")
+                            endtime = datetime.strptime(
+                                logTime, "%Y-%m-%d %H:%M:%S")
+                            timediff = self._convert_timedelta(
+                                endtime - starttime)
+                            logTypes[info['ind']] = '[{0}] ({1}) {2}'.format(
+                                logTime, timediff, logText)
+                            add = False
+                    except Exception:
+                        pass
+                if add:
+                    if getFormat == 'json':
+                        logTypes.append({
+                            'type': logType,
+                            'event': logText,
+                            'time': logTime
+                        })
+                    else:
+                        logTypes.append('[{0}] {1}'.format(logTime, logText))
+
         return {"log": logTypes[-limit:]}
 
     def getSerenePin(self):
         ''' Returns the output pin for the serene '''
         return {'serenePin': self.settings['serene']['pin']}
-
-    # def getPortUI(self):
-    #     ''' Returns the port for the UI '''
-    #     return self.settings['ui']['port']
 
     def getSereneSettings(self):
         return self.settings['serene']
@@ -407,11 +452,6 @@ class DoorSensor():
             self.startstopMQTT()
             self.sensors.reload('MQTT', message)
 
-    # def setSensorName(self, sensor, name):
-        # ''' Changes the Sensor Name '''
-        # self.settings['sensors'][str(sensor)]['name'] = name
-        # self.writeNewSettingsToFile()
-
     def setSensorState(self, sensor, state):
         ''' Activate or Deactivate a sensor '''
         self.settings['sensors'][str(sensor)]['enabled'] = state
@@ -424,12 +464,6 @@ class DoorSensor():
         self.writeLog("user_action", "{0} sensor: {1}".format(
             logState, logSensorName))
         self.writeNewSettingsToFile()
-
-    # def setSensorPin(self, pin, newpin):
-        # ''' Changes the Sensor Pin '''
-        # self.settings['sensors'][str(newpin)] = self.settings['sensors'][str(pin)]
-        # del self.settings['sensors'][str(pin)]
-        # self.writeNewSettingsToFile()
 
     def addSensor(self, sensorValues):
         ''' Add a new sensor '''
@@ -453,11 +487,3 @@ class DoorSensor():
         self.sensors.del_sensor(sensorName)
         del self.settings['sensors'][str(sensorName)]
         self.writeNewSettingsToFile()
-
-    # def check_auth(self, username, password):
-    #     """This function is called to check if a
-    #     username / password combination is valid.
-    #     """
-    #     myuser = self.settings['ui']['username']
-    #     mypass = self.settings['ui']['password']
-    #     return username == myuser and password == mypass
