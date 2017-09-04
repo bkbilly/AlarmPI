@@ -28,14 +28,24 @@ It can also be used with IFTTT using the Webhooks module like this:
 >My personal favourite is to control it with Google Assistant.
 
 
+### Home-Assistant
+It is also controlled with MQTT commands with the Home-Assistant component: 'MQTT Alarm Control Panel'.
+On Home-Assistant the configuration is like so:
+```yaml
+alarm_control_panel:
+  - platform: mqtt
+    name: "AlarmPI"
+    state_topic: "home/alarm"        # The State Topic from AlarmPI
+    command_topic: "home/alarm/set"  # The Command Topic from AlarmPI
+    payload_arm_home: "ARM_HOME"     # This is not used
+    payload_arm_away: "ARM_AWAY"
+```
+
+
 ## Installation
 With this command on your terminal you can install and update the application with my latest commit.
 ```bash
 bash <(curl -s "https://raw.githubusercontent.com/bkbilly/AlarmPI/master/install.sh")
-```
-You can chose a release with this command by replacing the v2.7.
-```bash
-bash <(curl -s "https://raw.githubusercontent.com/bkbilly/AlarmPI/v2.7/install.sh")
 ```
 
 ## SipCall (VoIP)
