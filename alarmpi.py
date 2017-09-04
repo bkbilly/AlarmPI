@@ -236,6 +236,7 @@ def getSensorsLog():
         logformat = request.args.get('format')
     user = flask_login.current_user.id
     sensorClass = users[user]['obj']
+    sensorClass.setLogFilters(limit, logtype)
     return json.dumps(sensorClass.getSensorsLog(limit, logtype, logformat))
 
 
