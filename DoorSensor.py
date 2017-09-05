@@ -401,10 +401,6 @@ class DoorSensor():
 
         return {"log": logTypes[-limit:]}
 
-    def getSerenePin(self):
-        ''' Returns the output pin for the serene '''
-        return {'serenePin': self.settings['serene']['pin']}
-
     def getSereneSettings(self):
         return self.settings['serene']
 
