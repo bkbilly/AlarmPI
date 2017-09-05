@@ -92,7 +92,7 @@ class AlarmPiServer(object):
 
         @self.login_manager.unauthorized_handler
         def unauthorized_handler():
-            # return redirect('/login')
+            return redirect('/login')
             return Response(
                 'Could not verify your access level for that URL.', 401,
                 {'WWWAuthenticate': 'Basic realm="Login Required"'}
@@ -160,8 +160,6 @@ class AlarmPiServer(object):
         def socketiofile():
             return send_from_directory(self.webDirectory, 'socket.io.js')
 
-        # Get the required data from the AlarmPI
-
         @self.app.route('/getSensors.json')
         @flask_login.login_required
         def getSensors():
@@ -197,13 +195,6 @@ class AlarmPiServer(object):
             sensorClass.setLogFilters(limit, logtype)
             return json.dumps(sensorClass.getSensorsLog(limit, logtype, logformat))
 
-        @self.app.route('/serenePin.json')
-        @flask_login.login_required
-        def serenePin():
-            user = flask_login.current_user.id
-            sensorClass = self.users[user]['obj']
-            return json.dumps(sensorClass.getSerenePin())
-
         @self.app.route('/getSereneSettings.json')
         @flask_login.login_required
         def getSereneSettings():
@@ -229,28 +220,6 @@ class AlarmPiServer(object):
                 "ui": uisettings,
                 "mqtt": sensorClass.getMQTTSettings()
             })
-
-        # @self.app.route('/getMailSettings.json')
-        # @flask_login.login_required
-        # def getMailSettings():
-        #     return json.dumps(sensorClass.getMailSettings())
-
-        # @self.app.route('/getVoipSettings.json')
-        # @flask_login.login_required
-        # def getVoipSettings():
-        #     return json.dumps(sensorClass.getVoipSettings())
-
-        # @self.app.route('/getUISettings.json')
-        # @flask_login.login_required
-        # def getUISettings():
-        #     return json.dumps(sensorClass.getUISettings())
-
-        # @self.app.route('/getMQTTSettings.json')
-        # @flask_login.login_required
-        # def getMQTTSettings():
-        #     return json.dumps(sensorClass.getMQTTSettings())
-
-        # Change settings to the AlarmPI
 
         @self.app.route('/activateAlarmOnline')
         @flask_login.login_required
@@ -288,12 +257,6 @@ class AlarmPiServer(object):
                                sensorClass.getSensorsArmed(), room=user)
             return json.dumps("done")
 
-        # @self.socketio.on('setSerenePin')
-        # @flask_login.login_required
-        # def setSerenePin(message):
-        #     self.users[flask_login.current_user.id]['obj'].setSerenePin(str(message['pin']))
-        #     self.socketio.emit('sensorsChanged', room=user)
-
         @self.socketio.on('setSensorState')
         @flask_login.login_required
         def setSensorState(message):
@@ -302,20 +265,6 @@ class AlarmPiServer(object):
             sensorClass.setSensorState(message['sensor'], message['enabled'])
             self.socketio.emit('settingsChanged',
                                sensorClass.getSensorsArmed(), room=user)
-
-        # @self.socketio.on('setSensorName')
-        # @flask_login.login_required
-        # def setSensorName(message):
-        #     self.users[flask_login.current_user.id]['obj'].setSensorName(message['sensor'], message['name'])
-        #     self.socketio.emit('settingsChanged', self.users[flask_login.current_user.id]['obj'].getSensorsArmed(), room=user)
-
-        # @self.socketio.on('setSensorPin')
-        # @flask_login.login_required
-        # def setSensorPin(message):
-        #     user = flask_login.current_user.id
-        #     sensorClass = self.users[user]['obj']
-        #     sensorClass.setSensorPin(str(message['sensor']), str(message['newpin']))
-        #     self.socketio.emit('sensorsChanged', room=user)
 
         @self.socketio.on('activateAlarm')
         @flask_login.login_required
@@ -466,10 +415,6 @@ if __name__ == '__main__':
     print("\n{0}============= AlarmPI Has started! ============={1}".format(
         bcolors.HEADER, bcolors.ENDC))
 
-    # serverfile, self.serverJson, self.users = setServerConfig('server.json')
-    # self.app, self.socketio, self.login_manager = create_app()
-    # startMyApp(self.socketio)
-    # startServer()
     # q = Queue()
     # p = Process(target=startServer, args=[q, ])
     # p.start()

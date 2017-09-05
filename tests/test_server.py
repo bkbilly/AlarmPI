@@ -38,7 +38,6 @@ class FlaskBookshelfTests(unittest.TestCase):
         )
         mydata = json.loads(response.data.decode('ascii'))
 
-        # self.assertEquals(mydata, 'James')
         self.assertEqual(response.status_code, 200)
         self.assertTrue('sensors' in mydata)
         self.assertTrue('triggered' in mydata)
@@ -46,15 +45,17 @@ class FlaskBookshelfTests(unittest.TestCase):
 
     def test_logs(self):
         response = self.client.get(
-            '/getSensors.json',
+            '/getSensorsLog.json',
             headers=self.headers,
             follow_redirects=True
         )
-        mydata = json.loads(response.data.decode('ascii'))
-
-        # self.assertEquals(mydata, 'James')
         self.assertEqual(response.status_code, 200)
-        self.assertTrue('sensors' in mydata)
-        self.assertTrue('triggered' in mydata)
-        self.assertTrue('alarmArmed' in mydata)
 
+# getAlarmStatus.json
+# getSensorsLog.json
+# getSereneSettings.json
+# getAllSettings.json
+# activateAlarmOnline
+# deactivateAlarmOnline
+# setSensorStateOnline
+# addSensor
