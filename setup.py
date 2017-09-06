@@ -13,7 +13,7 @@ REQUIRES = [
 
 setup(
     name='AlarmPI',
-    version='1.5',
+    version='2.9-dev',
     description='Home Security System',
     author='bkbilly',
     author_email='bkbilly@hotmail.com',
