@@ -1,4 +1,4 @@
-# AlarmPI
+# AlarmPI [![Build Status](https://travis-ci.org/bkbilly/AlarmPI.svg?branch=master)](https://travis-ci.org/bkbilly/AlarmPI) [![Coverage Status](https://coveralls.io/repos/github/bkbilly/AlarmPI/badge.svg?branch=master)](https://coveralls.io/github/bkbilly/AlarmPI?branch=master)
 
 AlarmPI is a home security system based on Raspberry PI. It supports wired sensors (PIR, Magnetic etc.) and wireless through MQTT or Hikvision. It is controlled with a Web UI, a Android Application, or through HTTP & MQTT messages. When the alarm detects movement, it supports the following events:
  * Enables the Serene
@@ -114,3 +114,9 @@ To test it, execute this replacing the (myserver, myusername, mypassword, mynumb
 3. Commit your changes: `git commit -am 'Add some feature'`
 4. Push to the branch: `git push origin my-new-feature`
 5. Submit a pull request :D
+
+
+.. |Build Status| image:: https://travis-ci.org/bkbilly/AlarmPI.svg?branch=master
+   :target: https://travis-ci.org/bkbilly/AlarmPI
+.. |Coverage Status| image:: https://coveralls.io/repos/github/bkbilly/AlarmPI/badge.svg?branch=master
+   :target: https://coveralls.io/github/bkbilly/AlarmPI?branch=master
