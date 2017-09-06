@@ -343,7 +343,7 @@ class DoorSensor():
         logTypes = []
         with open(self.logfile, "r") as f:
             lines = f.readlines()
-        asdf = {}
+        startedSensors = {}
         for line in lines:
             logType = ""
             logTime = ""
@@ -372,12 +372,12 @@ class DoorSensor():
                     try:
                         stype, status, uuid = logType.split(',')
                         if status == 'start':
-                            asdf[uuid] = {
+                            startedSensors[uuid] = {
                                 'start': logTime,
                                 'ind': len(logTypes)
                             }
                         elif status == 'stop':
-                            info = asdf.pop(uuid, None)
+                            info = startedSensors.pop(uuid, None)
                             starttime = datetime.strptime(
                                 info['start'], "%Y-%m-%d %H:%M:%S")
                             endtime = datetime.strptime(
@@ -400,10 +400,6 @@ class DoorSensor():
                         logTypes.append('[{0}] {1}'.format(logTime, logText))
 
         return {"log": logTypes[-limit:]}
-
-    def getSerenePin(self):
-        ''' Returns the output pin for the serene '''
-        return {'serenePin': self.settings['serene']['pin']}
 
     def getSereneSettings(self):
         return self.settings['serene']

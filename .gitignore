@@ -3,3 +3,5 @@
 play.wav
 settings.json
 server.json
+.tox
+AlarmPI.egg-info
