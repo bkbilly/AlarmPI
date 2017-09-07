@@ -81,14 +81,13 @@ class sensorGPIO():
     def _checkInputPinState(self, inputPin):
         nowState = GPIO.input(self.pin)
         if nowState != self.gpioState:
-            # print("Pin: {0} changed state to: {1}".format(self.pin, str(nowState)))
             if nowState == 1:
                 self._notify_alert()
             else:
                 self._notify_alert_stop()
         else:
-            print("{0}GPIO {2}: Wrong state change. Ignoring!!!{1}".format(
-                bcolors.STRIKE, bcolors.ENDC, str(inputPin)))
+            print("{0}GPIO {2}: Wrong state change. Ignoring!!!{1}"
+                  .format(bcolors.STRIKE, bcolors.ENDC, str(inputPin)))
 
     def forceNotify(self):
         # if GPIO.input(self.pin) == 1:
@@ -154,18 +153,22 @@ class sensorHikvision():
         ip = self.sensor['ip']
         username = self.sensor['user']
         password = self.sensor['pass']
-        self.threadRunforever = threading.Thread(target=self.runInBackground, args=[
-                                                 self.sensor, ip, username, password])
+        self.threadRunforever = threading.Thread(target=self.runInBackground,
+                                                 args=[self.sensor,
+                                                       ip,
+                                                       username,
+                                                       password])
         self.threadRunforever.daemon = True
         self.threadRunforever.start()
         self._notify_alert_stop()
 
     def runInBackground(self, sensor, ip, username, password):
         self.runforever = True
+        streamURL = 'http://' + ip + '/ISAPI/Event/notification/alertStream'
         authorization = requests.auth.HTTPBasicAuth(username, password)
         while self.runforever:
             try:
-                response = requests.get('http://' + ip + '/ISAPI/Event/notification/alertStream',
+                response = requests.get(streamURL,
                                         auth=authorization,
                                         timeout=5,
                                         stream=True)
@@ -274,7 +277,7 @@ class sensorMQTT():
                 mqttPort = self.mqttsettings['port']
                 self.mqttclient.connect(mqttHost, mqttPort, 60)
                 self.mqttclient.loop_start()
-            except Exception as e:
+            except Exception:
                 self._notify_error()
                 # print(bcolors.FAIL, 'MQTT:', e, bcolors.ENDC)
                 pass
@@ -283,7 +286,6 @@ class sensorMQTT():
             self.mqttclient.loop_stop(force=False)
 
     def on_connect(self, mqttclient, userdata, flags, rc):
-        # print(bcolors.WARNING, "Sensor connected to MQTT with result code " + str(rc), bcolors.ENDC)
         mqttclient.subscribe(self.sensor['state_topic'])
 
     def on_message(self, mqttclient, userdata, msg):
@@ -346,8 +348,12 @@ class Sensor():
             if sensor not in self.allSensors:
                 sensorType = sensorvalues['type']
                 sensorName = sensorvalues['name']
-                print(" {0}{2} {3} sensor with id: {4}{1}".format(
-                    bcolors.OKBLUE, bcolors.ENDC, sensorType, sensorName, sensor))
+                print(" {0}{2} {3} sensor with id: {4}{1}"
+                      .format(bcolors.OKBLUE,
+                              bcolors.ENDC,
+                              sensorType,
+                              sensorName,
+                              sensor))
                 if sensorType == 'GPIO':
                     sensorobject = sensorGPIO(sensor)
                     sensorsettings = None
@@ -379,7 +385,8 @@ class Sensor():
 
     def reload(self, sensortype=None, settings=None):
         for sensor in self.allSensors:
-            if sensortype is None or sensortype == self.allSensors[sensor]['values']['type']:
+            if (sensortype is None or
+                    sensortype == self.allSensors[sensor]['values']['type']):
                 # print(self.allSensors[sensor]['values']['name'])
                 self.allSensors[sensor]['obj'].reload(settings)
 

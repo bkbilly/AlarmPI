@@ -28,8 +28,8 @@ class DoorSensor():
     '''
 
     def __init__(self, jsonfile, logfile, sipcallfile):
-        print("{0}------------ INIT FOR DOOR SENSOR CLASS! ----------------{1}".format(
-            bcolors.HEADER, bcolors.ENDC))
+        print("{0}------------ INIT FOR DOOR SENSOR CLASS! ----------------{1}"
+              .format(bcolors.HEADER, bcolors.ENDC))
         # Global Variables
         self.jsonfile = jsonfile
         self.logfile = logfile
@@ -143,10 +143,13 @@ class DoorSensor():
         self.updateUI('settingsChanged', self.getSensorsArmed())
 
     def checkIntruderAlert(self):
-        # Write Alerted Sensors Log and call IntruderAlert when alarm is activated
-        if self.settings['settings']['alarmArmed'] is True and self.alarmTriggered is False:
+        ''' Write Alerted Sensors Log and call IntruderAlert
+             when alarm is activated'''
+        if (self.settings['settings']['alarmArmed'] is True and
+                self.alarmTriggered is False):
             for sensor, sensorvalue in self.settings['sensors'].items():
-                if sensorvalue['alert'] is True and sensorvalue['enabled'] is True:
+                if (sensorvalue['alert'] is True and
+                        sensorvalue['enabled'] is True):
                     self.alarmTriggered = True
                     threadIntruderAlert = threading.Thread(
                         target=self.intruderAlert)
@@ -223,7 +226,9 @@ class DoorSensor():
                 phone_number = str(phone_number)
                 if self.alarmTriggered is True:
                     self.writeLog("alarm", "Calling " + phone_number)
-                    cmd = self.sipcallfile, '-sd', sip_domain, '-su', sip_user, '-sp', sip_password, '-pn', phone_number, '-s', '1', '-mr', sip_repeat
+                    cmd = (self.sipcallfile, '-sd', sip_domain,
+                           '-su', sip_user, '-sp', sip_password,
+                           '-pn', phone_number, '-s', '1', '-mr', sip_repeat)
                     print("{0}Voip command: {2}{1}".format(
                         bcolors.FADE, bcolors.ENDC, " ".join(cmd)))
                     proc = subprocess.Popen(cmd, stderr=subprocess.PIPE)
@@ -236,7 +241,8 @@ class DoorSensor():
                         bcolors.FADE, bcolors.ENDC))
 
     def sendMail(self):
-        ''' This method sends an email to all recipients in the json settings file. '''
+        ''' This method sends an email to all recipients
+            in the json settings file. '''
         if self.settings['mail']['enable'] is True:
             mail_user = self.settings['mail']['username']
             mail_pwd = self.settings['mail']['password']
@@ -296,10 +302,10 @@ class DoorSensor():
         self.writeNewSettingsToFile()
 
     def getSensorsArmed(self):
-        ''' Returns the sensors and alarm status as a json to use it to the UI '''
+        ''' Returns the sensors and alarm status
+            as a json to use it to the UI '''
         sensorsArmed = {}
         sensors = self.settings['sensors']
-        # orderedSensors = OrderedDict(sorted(sensors.items(), key=lambda x: x['name']))
         orderedSensors = OrderedDict(
             sorted(sensors.items(), key=lambda k_v: k_v[1]['name']))
         sensorsArmed['sensors'] = orderedSensors
@@ -316,28 +322,30 @@ class DoorSensor():
         hours = days * 24 + seconds // 3600
         minutes = (seconds % 3600) // 60
         seconds = (seconds % 60)
-        diffText = ""
+        diffTxt = ""
         if days > 0:
-            diffText = "{days} days, {hours} hour, {minutes} min, {seconds} sec"
+            diffTxt = "{days} days, {hours} hour, {minutes} min, {seconds} sec"
         elif hours > 0:
-            diffText = "{hours} hour, {minutes} min, {seconds} sec"
+            diffTxt = "{hours} hour, {minutes} min, {seconds} sec"
         elif minutes > 0:
-            diffText = "{minutes} min, {seconds} sec"
+            diffTxt = "{minutes} min, {seconds} sec"
         else:
-            diffText = "{seconds} sec"
-        diffText = diffText.format(
+            diffTxt = "{seconds} sec"
+        diffTxt = diffTxt.format(
             days=days, hours=hours, minutes=minutes, seconds=seconds)
-        return diffText
+        return diffTxt
 
     def setLogFilters(self, limit, logtypes):
         self.limit = limit
         self.logtypes = logtypes
 
-    def getSensorsLog(self, limit=100, selectTypes='all', getFormat='text', fromtext=None):
-        ''' Returns the last n lines if the log file. 
+    def getSensorsLog(self, limit=100, selectTypes='all',
+                      getFormat='text', fromtext=None):
+        ''' Returns the last n lines if the log file.
         If selectTypes is specified, then it returns only this type of logs.
-        Available types: user_action, disabled_sensor, enabled_sensor, system, alarm
-        If the getFormat is specified as json, then it returns it in a 
+        Available types: user_action, disabled_sensor,
+                         enabled_sensor, system, alarm
+        If the getFormat is specified as json, then it returns it in a
         json format (programmer friendly) '''
         txtlimit = 0
         logTypes = []
