@@ -4,16 +4,15 @@ import json
 import os
 import sys
 
-from flask import Flask, send_from_directory, request, Response, redirect, url_for
-from flask_socketio import SocketIO, join_room, leave_room
+from flask import Flask, send_from_directory, request, Response, redirect
+from flask_socketio import SocketIO, join_room
 import flask_login
-from functools import wraps
 from distutils.util import strtobool
 from copy import deepcopy
 
 # import time
 # import subprocess
-from multiprocessing import Process, Queue
+# from multiprocessing import Process, Queue
 
 from DoorSensor import DoorSensor
 from colors import bcolors
@@ -37,8 +36,8 @@ class AlarmPiServer(object):
             os.path.join(self.wd, "voip"), "sipcall")
 
     def setServerConfig(self, jsonfile):
-        serverfile = os.path.join(self.wd, jsonfile)
-        with open(serverfile) as data_file:
+        self.serverfile = os.path.join(self.wd, jsonfile)
+        with open(self.serverfile) as data_file:
             self.serverJson = json.load(data_file)
         self.users = deepcopy(self.serverJson['users'])
 
@@ -193,7 +192,8 @@ class AlarmPiServer(object):
             user = flask_login.current_user.id
             sensorClass = self.users[user]['obj']
             sensorClass.setLogFilters(limit, logtype)
-            return json.dumps(sensorClass.getSensorsLog(limit, logtype, logformat))
+            returnedLogs = sensorClass.getSensorsLog(limit, logtype, logformat)
+            return json.dumps(returnedLogs)
 
         @self.app.route('/getSereneSettings.json')
         @flask_login.login_required
@@ -346,7 +346,7 @@ class AlarmPiServer(object):
             self.serverJson['users'][user]['pw'] = message['password']
             self.serverJson['ui']['port'] = message['port']
             self.serverJson['ui']['https'] = message['https']
-            with open(serverfile, 'w') as outfile:
+            with open(self.serverfile, 'w') as outfile:
                 json.dump(self.serverJson, outfile, sort_keys=True,
                           indent=4, separators=(',', ': '))
             print("You might want to restart...")
@@ -398,8 +398,9 @@ class AlarmPiServer(object):
             context = (self.certcrtfile, self.certkeyfile)
         else:
             context = None
-        self.socketio.run(
-            self.app, host="", port=self.serverJson['ui']['port'], ssl_context=context)
+        self.socketio.run(self.app, host="",
+                          port=self.serverJson['ui']['port'],
+                          ssl_context=context)
 
 
 # Run
@@ -412,18 +413,18 @@ if __name__ == '__main__':
     myserver.create_app()
     myserver.startMyApp()
     myserver.startServer()
-    print("\n{0}============= AlarmPI Has started! ============={1}".format(
-        bcolors.HEADER, bcolors.ENDC))
+    print("\n{0}============= AlarmPI Has started! ============={1}"
+          .format(bcolors.HEADER, bcolors.ENDC))
 
     # q = Queue()
     # p = Process(target=startServer, args=[q, ])
     # p.start()
-    # while True:  # wathing queue, if there is no call than sleep, otherwise break
+    # while True:  # wathing queue
     #     if q.empty():
     #         time.sleep(1)
     #     else:
     #         break
     # subprocess.call('service alarmpi stop', shell=True)
-    # p.terminate()  # terminate flaskapp and then restart the self.app on subprocess
+    # p.terminate()  # terminate flaskapp and then restart
     # args = [sys.executable] + [sys.argv[0]]
     # subprocess.call(args)
