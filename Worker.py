@@ -17,7 +17,7 @@ import paho.mqtt.client as mqtt
 from collections import OrderedDict
 
 
-class DoorSensor():
+class Worker():
 
     """ This class runs on the background using GPIO Events Changes.
     It uses a json file to store the settings and a log file to store the logs.
@@ -28,7 +28,7 @@ class DoorSensor():
     """
 
     def __init__(self, jsonfile, logfile, sipcallfile):
-        """ Init for the DoorSensor class """
+        """ Init for the Worker class """
 
         print("{0}------------ INIT FOR DOOR SENSOR CLASS! ----------------{1}"
               .format(bcolors.HEADER, bcolors.ENDC))
