@@ -89,13 +89,6 @@ class sensorGPIO():
             print("{0}GPIO {2}: Wrong state change. Ignoring!!!{1}"
                   .format(bcolors.STRIKE, bcolors.ENDC, str(inputPin)))
 
-    def forceNotify(self):
-        # if GPIO.input(self.pin) == 1:
-        #     self._notify_alert()
-        # else:
-        #     self._notify_alert_stop()
-        pass
-
     # ------------------------------
     def on_alert(self, callback):
         self._event_alert.append(callback)
@@ -192,10 +185,6 @@ class sensorHikvision():
     def del_sensor(self):
         self.runforever = False
 
-    def forceNotify(self):
-        # self._notify_alert_stop()
-        pass
-
     # ------------------------------
     def on_alert(self, callback):
         self._event_alert.append(callback)
@@ -262,10 +251,6 @@ class sensorMQTT():
     def del_sensor(self):
         self.mqttclient.disconnect()
         self.mqttclient.loop_stop(force=False)
-
-    def forceNotify(self):
-        # self._notify_alert_stop()
-        pass
 
     def reload(self, settings=None):
         self.mqttsettings = settings
@@ -377,7 +362,6 @@ class Sensor():
                 self.allSensors[sensor]['obj'].add_sensor(
                     self.allSensors[sensor]['values'],
                     self.allSensors[sensor]['settings'])
-            self.allSensors[sensor]['obj'].forceNotify()
 
     def del_sensor(self, sensor):
         self.allSensors[sensor]['obj'].del_sensor()

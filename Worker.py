@@ -522,6 +522,16 @@ class Worker():
             logState, logSensorName))
         self.writeNewSettingsToFile()
 
+    def setSensorsZone(self, zones):
+        for sensor, sensorvalue in self.settings['sensors'].items():
+            sensorZones = sensorvalue.get('zones', [])
+            if not set(sensorZones).isdisjoint(zones):
+                sensorvalue['enabled'] = True
+            else:
+                sensorvalue['enabled'] = False
+        self.updateUI('settingsChanged', self.getSensorsArmed())
+        self.writeNewSettingsToFile()
+
     def addSensor(self, sensorValues):
         """ Add a new sensor """
         print("{0}New Sensor: {2}{1}".format(

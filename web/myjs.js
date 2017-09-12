@@ -166,11 +166,13 @@ function changeSensorState(checkbox, sensor){
 function changeSensorSettings(sensor, type){
 	if (type === 'newSensor') {
 		var currentName = ""
+		var zones = ""
 		$("#sensorType").show()
 		$("#delSensorBTN").hide();
 		$("#inputName").val('');
 	} else if (type === 'oldSensor') {
 		var currentName = allproperties['sensors'][sensor]['name'];
+		var zones = allproperties['sensors'][sensor]['zones'];
 		$("#sensorType").val(allproperties['sensors'][sensor]['type']).change();
 		$("#sensorType").hide()
 		$("#delSensorBTN").attr("onclick","deleteSensor('"+ sensor +"')");
@@ -190,6 +192,7 @@ function changeSensorSettings(sensor, type){
 		}
 	$("#okButton").attr("onclick","saveConfigSettings('"+ type+"','"+sensor+"','"+currentName+"')");
 	$("#inputName").val(currentName);
+	$("#inputZones").val(zones);
 	$("#myModal").show();
 }
 
@@ -205,9 +208,10 @@ selectSensorType = function(Dd) {
 
 function saveConfigSettings(type, sensor, currentName){
 	var newname = $("#inputName").val();
+	var zones = $("#inputZones").val().split(/[\s,]+/);
 	var sensorType = $("#sensorType").prop("value");
 	var sensorValues = {}
-	sensorValues[sensor] = {'type': sensorType, 'name': newname}
+	sensorValues[sensor] = {'type': sensorType, 'name': newname, 'zones': zones}
 	$('#inputDiv'+sensorType+' [id^="'+sensorType+'-"]').each(function(){
 		var key = this.id.replace(sensorType+'-', '');
 		var value = $(this).val();
