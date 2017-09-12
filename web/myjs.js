@@ -131,6 +131,8 @@ function refreshStatus(data){
 		$("#alertStatus").addClass("activeAlarm");
 	} else if (data.triggered === false){
 		$("#alertStatus").removeClass("activeAlarm");
+		document.getElementById('audioalert').pause()
+		document.getElementById('audioalert').currentTime = 0
 	}
 
 }
@@ -141,6 +143,7 @@ function setAlarmStatus(data){
 	hasActiveClass = $("#alertStatus").hasClass("activeAlarm")
 	if (data.alert === true && hasActiveClass === false){
 		$("#alertStatus").addClass("activeAlarm");
+		document.getElementById('audioalert').play()
 	} else if (data.alert === false && hasActiveClass === true){
 		$("#alertStatus").removeClass("activeAlarm");
 	}

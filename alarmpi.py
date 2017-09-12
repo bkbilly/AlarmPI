@@ -159,6 +159,11 @@ class AlarmPiServer(object):
         def socketiofile():
             return send_from_directory(self.webDirectory, 'socket.io.js')
 
+        @self.app.route('/play_alert.mp3')
+        @flask_login.login_required
+        def play_alert():
+            return send_from_directory(self.webDirectory, 'play_alert.mp3')
+
         @self.app.route('/getSensors.json')
         @flask_login.login_required
         def getSensors():
@@ -417,7 +422,7 @@ class AlarmPiServer(object):
 
 if __name__ == '__main__':
     log = logging.getLogger('werkzeug')
-    log.setLevel(logging.ERROR)
+    # log.setLevel(logging.ERROR)
 
     if len(sys.argv) > 1:
         if ".pid" in sys.argv[1]:
