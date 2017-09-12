@@ -403,16 +403,16 @@ class Worker():
             try:
                 mymatch = re.match(r'^\((.*)\) \[(.*)\] (.*)', line)
                 if mymatch:
-                    logType = mymatch.group(1)
+                    logType = mymatch.group(1).split(',')
                     logTime = mymatch.group(2)
                     logText = mymatch.group(3)
             except Exception:
                 mymatch = re.match(r'^\[(.*)\] (.*)', line)
                 if mymatch:
-                    logType = "unknown"
+                    logType = ["unknown"]
                     logTime = mymatch.group(1)
                     logText = mymatch.group(2)
-            if (logType in selectTypes or 'all' in selectTypes):
+            if (logType[0] in selectTypes or 'all' in selectTypes):
                 if fromtext is not None:
                     txtlimit += 1
                     limit = txtlimit
@@ -420,9 +420,10 @@ class Worker():
                     if txtmatch:
                         txtlimit = 0
                 add = True
-                if 'sensor' in logType:
+                if 'sensor' in logType[0]:
                     try:
-                        stype, status, uuid = logType.split(',')
+                        # stype, status, uuid = logType.split(',')
+                        status, uuid = logType[1], logType[2]
                         if status == 'start':
                             startedSensors[uuid] = {
                                 'start': logTime,
