@@ -509,15 +509,15 @@ class Worker():
             self.startstopMQTT()
             self.sensors.reload('MQTT', message)
 
-    def setSensorState(self, sensor, state):
+    def setSensorState(self, sensorUUID, state):
         """ Activate or Deactivate a sensor """
-        self.settings['sensors'][str(sensor)]['enabled'] = state
+        self.settings['sensors'][sensorUUID]['enabled'] = state
         self.writeNewSettingsToFile()
 
         logState = "Deactivated"
         if state is True:
             logState = "Activated"
-        logSensorName = self.settings['sensors'][str(sensor)]['name']
+        logSensorName = self.settings['sensors'][sensorUUID]['name']
         self.writeLog("user_action", "{0} sensor: {1}".format(
             logState, logSensorName))
         self.writeNewSettingsToFile()

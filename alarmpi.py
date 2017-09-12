@@ -106,7 +106,6 @@ class AlarmPiServer(object):
         #     if func is None:
         #         raise RuntimeError('Not running with the Werkzeug Server')
         #     func()
-
         # @self.app.route('/restart')
         # @flask_login.login_required
         # def restart():
@@ -399,18 +398,20 @@ class AlarmPiServer(object):
 
     def startServer(self):
         """ Start the Flask App """
-
-        if len(sys.argv) > 1:
-            if ".pid" in sys.argv[1]:
-                with open(sys.argv[1], "w") as f:
-                    f.write(str(os.getpid()))
         if self.serverJson['ui']['https'] is True:
-            context = (self.certcrtfile, self.certkeyfile)
-            self.socketio.run(self.app, host="",
-                              port=self.serverJson['ui']['port'],
-                              ssl_context=context)
+            try:
+                self.socketio.run(self.app, host="0.0.0.0",
+                                  port=self.serverJson['ui']['port'],
+                                  certfile=self.certcrtfile,
+                                  keyfile=self.certkeyfile)
+            except Exception:
+                context = (self.certcrtfile, self.certkeyfile)
+                self.socketio.run(self.app, host="0.0.0.0",
+                                  port=self.serverJson['ui']['port'],
+                                  ssl_context=context)
+
         else:
-            self.socketio.run(self.app, host="",
+            self.socketio.run(self.app, host="0.0.0.0",
                               port=self.serverJson['ui']['port'])
 
 
@@ -418,6 +419,10 @@ if __name__ == '__main__':
     log = logging.getLogger('werkzeug')
     log.setLevel(logging.ERROR)
 
+    if len(sys.argv) > 1:
+        if ".pid" in sys.argv[1]:
+            with open(sys.argv[1], "w") as f:
+                f.write(str(os.getpid()))
     myserver = AlarmPiServer()
     myserver.setServerConfig('server.json')
     myserver.create_app()
