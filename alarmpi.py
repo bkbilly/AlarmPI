@@ -11,7 +11,7 @@ from distutils.util import strtobool
 from copy import deepcopy
 import logging
 
-from DoorSensor import DoorSensor
+from Worker import Worker
 
 
 class User(flask_login.UserMixin):
@@ -20,7 +20,7 @@ class User(flask_login.UserMixin):
 
 class AlarmPiServer(object):
     """Initialize the AlarmPI Server by defying the files to use,
-    the RESTful Services and calling the class (DoorSensor)"""
+    the RESTful Services and calling the class (Worker)"""
 
     def __init__(self):
         """ Initialize the global variables for AlarmPIServer """
@@ -41,7 +41,7 @@ class AlarmPiServer(object):
 
     def create_app(self):
         """ Define the RESTfull Services and call the
-            accordingly method in the DoorSensor class """
+            accordingly method in the Worker class """
 
         # some_queue = None
         self.app = Flask(__name__, static_url_path='')
@@ -372,11 +372,11 @@ class AlarmPiServer(object):
         return self.app
 
     def startMyApp(self):
-        """ Call the DoorSensor class for each user """
+        """ Call the Worker class for each user """
 
         mysocket = self.socketio
         for user, properties in self.users.items():
-            class myDoorSensor(DoorSensor):
+            class myWorker(Worker):
                 myuser = user
 
                 def updateUI(self, event, data):
@@ -384,7 +384,7 @@ class AlarmPiServer(object):
                     mysocket.emit(event, data, room=self.myuser)
             jsonfile = os.path.join(self.wd, properties['settings'])
             logfile = os.path.join(self.wd, properties['logfile'])
-            self.users[user]['obj'] = myDoorSensor(
+            self.users[user]['obj'] = myWorker(
                 jsonfile, logfile, self.sipcallfile)
 
     def startServer(self):
