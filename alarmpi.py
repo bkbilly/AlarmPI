@@ -9,15 +9,9 @@ from flask_socketio import SocketIO, join_room
 import flask_login
 from distutils.util import strtobool
 from copy import deepcopy
-
-# import time
-# import subprocess
-# from multiprocessing import Process, Queue
+import logging
 
 from DoorSensor import DoorSensor
-from colors import bcolors
-
-import logging
 
 
 class User(flask_login.UserMixin):
@@ -25,9 +19,11 @@ class User(flask_login.UserMixin):
 
 
 class AlarmPiServer(object):
-    """docstring for AlarmPI"""
+    """Initialize the AlarmPI Server by defying the files to use,
+    the RESTful Services and calling the class (DoorSensor)"""
 
     def __init__(self):
+        """ Initialize the global variables for AlarmPIServer """
         self.wd = os.path.dirname(os.path.realpath(__file__))
         self.certkeyfile = os.path.join(self.wd, 'my.cert.key')
         self.certcrtfile = os.path.join(self.wd, 'my.cert.crt')
@@ -36,12 +32,17 @@ class AlarmPiServer(object):
             os.path.join(self.wd, "voip"), "sipcall")
 
     def setServerConfig(self, jsonfile):
+        """ Set the server file to use and initialize the users """
+
         self.serverfile = os.path.join(self.wd, jsonfile)
         with open(self.serverfile) as data_file:
             self.serverJson = json.load(data_file)
         self.users = deepcopy(self.serverJson['users'])
 
     def create_app(self):
+        """ Define the RESTfull Services and call the
+            accordingly method in the DoorSensor class """
+
         # some_queue = None
         self.app = Flask(__name__, static_url_path='')
         self.app.secret_key = 'super secret string'
@@ -371,39 +372,38 @@ class AlarmPiServer(object):
         return self.app
 
     def startMyApp(self):
+        """ Call the DoorSensor class for each user """
+
         mysocket = self.socketio
         for user, properties in self.users.items():
             class myDoorSensor(DoorSensor):
                 myuser = user
 
                 def updateUI(self, event, data):
-                    ''' Send changes to the UI '''
+                    """ Send changes to the UI """
                     mysocket.emit(event, data, room=self.myuser)
             jsonfile = os.path.join(self.wd, properties['settings'])
             logfile = os.path.join(self.wd, properties['logfile'])
             self.users[user]['obj'] = myDoorSensor(
                 jsonfile, logfile, self.sipcallfile)
 
-    # def startServer(queue):
-
     def startServer(self):
-        # global some_queue
-        # some_queue = queue
-        # Save the PID to a file
+        """ Start the Flask App """
+
         if len(sys.argv) > 1:
             if ".pid" in sys.argv[1]:
                 with open(sys.argv[1], "w") as f:
                     f.write(str(os.getpid()))
         if self.serverJson['ui']['https'] is True:
             context = (self.certcrtfile, self.certkeyfile)
+            self.socketio.run(self.app, host="",
+                              port=self.serverJson['ui']['port'],
+                              ssl_context=context)
         else:
-            context = None
-        self.socketio.run(self.app, host="",
-                          port=self.serverJson['ui']['port'],
-                          ssl_context=context)
+            self.socketio.run(self.app, host="",
+                              port=self.serverJson['ui']['port'])
 
 
-# Run
 if __name__ == '__main__':
     log = logging.getLogger('werkzeug')
     log.setLevel(logging.ERROR)
@@ -413,18 +413,3 @@ if __name__ == '__main__':
     myserver.create_app()
     myserver.startMyApp()
     myserver.startServer()
-    print("\n{0}============= AlarmPI Has started! ============={1}"
-          .format(bcolors.HEADER, bcolors.ENDC))
-
-    # q = Queue()
-    # p = Process(target=startServer, args=[q, ])
-    # p.start()
-    # while True:  # wathing queue
-    #     if q.empty():
-    #         time.sleep(1)
-    #     else:
-    #         break
-    # subprocess.call('service alarmpi stop', shell=True)
-    # p.terminate()  # terminate flaskapp and then restart
-    # args = [sys.executable] + [sys.argv[0]]
-    # subprocess.call(args)
