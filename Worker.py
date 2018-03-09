@@ -526,6 +526,7 @@ class Worker():
     def setSensorsZone(self, zones):
         for sensor, sensorvalue in self.settings['sensors'].items():
             sensorZones = sensorvalue.get('zones', [])
+            sensorZones = [item.lower() for item in sensorZones]
             if not set(sensorZones).isdisjoint(zones):
                 sensorvalue['enabled'] = True
             else:

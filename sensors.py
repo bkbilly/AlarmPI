@@ -163,7 +163,7 @@ class sensorHikvision():
             try:
                 response = requests.get(streamURL,
                                         auth=authorization,
-                                        timeout=5,
+                                        timeout=15,
                                         stream=True)
                 if not self.online:
                     self._notify_error_stop()
@@ -176,6 +176,7 @@ class sensorHikvision():
                                 if not self.hasBeenNotified:
                                     self._notify_alert()
             except Exception as e:
+                print(e)
                 if self.online:
                     self._notify_error()
                 print("{0}Hikvision: {2}{1}".format(
