@@ -236,14 +236,16 @@ class AlarmPiServer(object):
                                sensorClass.getSensorsArmed(), room=user)
             return json.dumps("done")
 
-        @self.app.route('/setZone', methods=['GET', 'POST'])
+        @self.app.route('/activateAlarmZone', methods=['GET', 'POST'])
         @flask_login.login_required
-        def setZone():
-            zones = request.args.get('zones').split(',')
+        def activateAlarmZone():
+            zones = request.args.get('zones').lower().split(',')
             user = flask_login.current_user.id
             sensorClass = self.users[user]['obj']
             sensorClass.setSensorsZone(zones)
-            # sensorClass.activateAlarm()
+            sensorClass.activateAlarm()
+            self.socketio.emit('settingsChanged',
+                               sensorClass.getSensorsArmed(), room=user)
             return json.dumps("done")
 
         @self.app.route('/deactivateAlarmOnline')
