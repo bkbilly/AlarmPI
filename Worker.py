@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from sensors import Sensor, outputGPIO
+from logs import Logs
 from colors import bcolors
 from datetime import datetime
 import pytz
@@ -46,10 +47,10 @@ class Worker():
         self.kill_now = False
 
         # Init Alarm
+        mylogs = Logs(self.logfile)
+        self.getSensorsLog = mylogs.getSensorsLog
         self.writeLog("system", "Alarm Booted")
-        threadTrimLogFile = threading.Thread(target=self.trimLogFile)
-        threadTrimLogFile.daemon = True
-        threadTrimLogFile.start()
+        mylogs.startTrimThread()
 
         # Event Listeners
         self.sensors = Sensor()
@@ -182,18 +183,6 @@ class Worker():
                     threadIntruderAlert.daemon = True
                     threadIntruderAlert.start()
 
-    def trimLogFile(self):
-        """ Trims the log file in an interval of 24 hours to 1000 lines """
-
-        lines = 1000  # Number of lines of logs to keep
-        repeat_every_n_sec = 86400  # 24 Hours
-        while True:
-            with open(self.logfile, 'r') as f:
-                data = f.readlines()
-            with open(self.logfile, 'w') as f:
-                f.writelines(data[-lines:])
-            time.sleep(repeat_every_n_sec)
-
     def ReadSettings(self):
         """ Reads the json settings file and returns it """
 
@@ -226,7 +215,7 @@ class Worker():
         with open(self.logfile, "a") as myfile:
             myfile.write(logmsg)
         self.updateUI('sensorsLog', self.getSensorsLog(
-            self.limit, self.logtypes))
+            self.limit, selectTypes=self.logtypes))
 
     def intruderAlert(self):
         """ This method is called when an intruder is detected. It calls
@@ -284,7 +273,7 @@ class Worker():
 
             bodyMsg = self.settings['mail']['messageBody']
             LogsTriggered = self.getSensorsLog(
-                fromtext='Alarm activated')['log']
+                fromText='Alarm activated')['log']
             for logTriggered in LogsTriggered.reversed():
                 bodyMsg += '<br>' + logTriggered
             msg = MIMEText(bodyMsg, 'html')
@@ -356,103 +345,11 @@ class Worker():
 
         return {"alert": self.alarmTriggered}
 
-    def _convert_timedelta(self, duration):
-        """ Converts a time difference into human readable format """
-
-        days, seconds = duration.days, duration.seconds
-        hours = days * 24 + seconds // 3600
-        minutes = (seconds % 3600) // 60
-        seconds = (seconds % 60)
-        diffTxt = ""
-        if days > 0:
-            diffTxt = "{days} days, {hours} hour, {minutes} min, {seconds} sec"
-        elif hours > 0:
-            diffTxt = "{hours} hour, {minutes} min, {seconds} sec"
-        elif minutes > 0:
-            diffTxt = "{minutes} min, {seconds} sec"
-        else:
-            diffTxt = "{seconds} sec"
-        diffTxt = diffTxt.format(
-            days=days, hours=hours, minutes=minutes, seconds=seconds)
-        return diffTxt
-
     def setLogFilters(self, limit, logtypes):
         """ Sets the global filters for the getSensorsLog method """
 
         self.limit = limit
         self.logtypes = logtypes
-
-    def getSensorsLog(self, limit=100, selectTypes='all',
-                      getFormat='text', fromtext=None):
-        """ Returns the last n lines if the log file.
-        If selectTypes is specified, then it returns only this type of logs.
-        Available types: user_action, disabled_sensor,
-                         enabled_sensor, system, alarm
-        If the getFormat is specified as json, then it returns it in a
-        json format (programmer friendly)
-        """
-        txtlimit = 0
-        logTypes = []
-        with open(self.logfile, "r") as f:
-            lines = f.readlines()
-        startedSensors = {}
-        for line in lines:
-            logType = ""
-            logTime = ""
-            logText = ""
-            try:
-                mymatch = re.match(r'^\((.*)\) \[(.*)\] (.*)', line)
-                if mymatch:
-                    logType = mymatch.group(1).split(',')
-                    logTime = mymatch.group(2)
-                    logText = mymatch.group(3)
-            except Exception:
-                mymatch = re.match(r'^\[(.*)\] (.*)', line)
-                if mymatch:
-                    logType = ["unknown"]
-                    logTime = mymatch.group(1)
-                    logText = mymatch.group(2)
-            if (logType[0] in selectTypes or 'all' in selectTypes):
-                if fromtext is not None:
-                    txtlimit += 1
-                    limit = txtlimit
-                    txtmatch = re.match(r'.*{0}.*'.format(fromtext), logText)
-                    if txtmatch:
-                        txtlimit = 0
-                add = True
-                if 'sensor' in logType[0]:
-                    try:
-                        # stype, status, uuid = logType.split(',')
-                        status, uuid = logType[1], logType[2]
-                        if status == 'start':
-                            startedSensors[uuid] = {
-                                'start': logTime,
-                                'ind': len(logTypes)
-                            }
-                        elif status == 'stop':
-                            info = startedSensors.pop(uuid, None)
-                            starttime = datetime.strptime(
-                                info['start'], "%Y-%m-%d %H:%M:%S")
-                            endtime = datetime.strptime(
-                                logTime, "%Y-%m-%d %H:%M:%S")
-                            timediff = self._convert_timedelta(
-                                endtime - starttime)
-                            logTypes[info['ind']] = '[{0}] ({1}) {2}'.format(
-                                logTime, timediff, logText)
-                            add = False
-                    except Exception:
-                        pass
-                if add:
-                    if getFormat == 'json':
-                        logTypes.append({
-                            'type': logType,
-                            'event': logText,
-                            'time': logTime
-                        })
-                    else:
-                        logTypes.append('[{0}] {1}'.format(logTime, logText))
-
-        return {"log": logTypes[-limit:]}
 
     def getSereneSettings(self):
         """ Gets the Serene Settings """
