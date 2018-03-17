@@ -2,6 +2,7 @@
 
 from sensors import Sensor, outputGPIO
 from logs import Logs
+from notifier import Notify
 from colors import bcolors
 from datetime import datetime
 import pytz
@@ -28,7 +29,7 @@ class Worker():
     the main application.
     """
 
-    def __init__(self, jsonfile, logfile, sipcallfile):
+    def __init__(self, jsonfile, logfile, sipcallfile, optsUpdateUI=None):
         """ Init for the Worker class """
 
         print("{0}------------ INIT FOR DOOR SENSOR CLASS! ----------------{1}"
@@ -47,6 +48,8 @@ class Worker():
         self.kill_now = False
 
         # Init Alarm
+        mynotify = Notify(optsUpdateUI)
+        self.updateUI = mynotify.updateUI
         mylogs = Logs(self.logfile)
         self.getSensorsLog = mylogs.getSensorsLog
         self.writeLog("system", "Alarm Booted")
@@ -197,9 +200,6 @@ class Worker():
             json.dump(self.settings, outfile, sort_keys=True,
                       indent=4, separators=(',', ': '))
 
-    def updateUI(self, event, data):
-        """ Override this method to send changes to the UI """
-        pass
 
     def writeLog(self, logType, message):
         """ Write log events into a file and send the last to UI.
