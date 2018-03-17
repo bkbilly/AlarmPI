@@ -181,23 +181,19 @@ class AlarmPiServer(object):
         @self.app.route('/getSensorsLog.json', methods=['Get', 'POST'])
         @flask_login.login_required
         def getSensorsLog():
-            limit = 10
-            logtype = 'all'
-            logformat = 'text'
-            requestLimit = request.args.get('limit')
-            requestType = request.args.get('type')
-            requestFormat = request.args.get('format')
-            if requestLimit is not None:
-                if requestLimit.isdigit():
-                    limit = int(request.args.get('limit'))
-            if requestType is not None:
-                logtype = request.args.get('type').split(',')
-            if requestFormat is not None:
-                logformat = request.args.get('format')
             user = flask_login.current_user.id
             sensorClass = self.users[user]['obj']
-            sensorClass.setLogFilters(limit, logtype)
-            returnedLogs = sensorClass.getSensorsLog(limit, logtype, logformat)
+            sensorClass.setLogFilters(
+                request.args.get('limit'),
+                request.args.get('type'))
+            returnedLogs = sensorClass.getSensorsLog(
+                limit=request.args.get('limit'),
+                fromText=request.args.get('fromText'),
+                selectTypes=request.args.get('type'),
+                filterText=request.args.get('filterText'),
+                getFormat=request.args.get('format'),
+                combineSensors=request.args.get('combineSensors')
+            )
             return json.dumps(returnedLogs)
 
         @self.app.route('/getSereneSettings.json')
