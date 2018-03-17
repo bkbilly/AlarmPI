@@ -388,16 +388,16 @@ class AlarmPiServer(object):
 
         mysocket = self.socketio
         for user, properties in self.users.items():
-            class myWorker(Worker):
-                myuser = user
-
-                def updateUI(self, event, data):
-                    """ Send changes to the UI """
-                    mysocket.emit(event, data, room=self.myuser)
             jsonfile = os.path.join(self.wd, properties['settings'])
             logfile = os.path.join(self.wd, properties['logfile'])
-            self.users[user]['obj'] = myWorker(
-                jsonfile, logfile, self.sipcallfile)
+            optsUpdateUI = {'obj': mysocket.emit, 'room': user}
+            self.users[user]['obj'] = Worker(
+                jsonfile,
+                logfile,
+                self.sipcallfile,
+                optsUpdateUI
+            )
+
 
     def startServer(self):
         """ Start the Flask App """
