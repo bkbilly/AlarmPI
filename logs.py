@@ -140,7 +140,7 @@ class Logs():
                                 timediff = self._convert_timedelta(endtime - starttime)
                                 tmplogs[info['ind']]['timediff'] = timediff
                                 tmplogs[info['ind']]['timeend'] = log['time']
-                        except Exception, e:
+                        except Exception as e:
                             print(e)
                             print(info)
                             print(log)
