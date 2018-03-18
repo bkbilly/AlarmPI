@@ -41,10 +41,6 @@
                 top: 0px;
                 right: 20px;
         }
-        #settingsSphereText {
-                font-size: xx-large;
-                margin-top: 10px;
-        }
         .sphere {
                 margin: 5px 0 0 10px;
                 height: 50px;
@@ -56,22 +52,23 @@
                 margin-left: 0;
         }
 
-        #sensorLog{
+        #systemLog {
                 border-radius: 20px;
                 background-color: rgba(50, 50, 50, 0.7);;
-        }
-        td{
-                display: block;
         }
         .settingsModalContent {
                 width: auto;
                 margin: 3% 10px;
         }
-        table {
-                width: 100%;
+
+        .sensorModalContent {
+                width: auto;
+                margin: 3% 10px;
         }
-        .settingsContent input {
-                width: 100%;
+
+
+        td{
+                display: block;
         }
 
 }
@@ -91,20 +88,16 @@
         }
 
         #settingsSphere {
-                cursor: pointer;
                 background-color: #666;
+                cursor: pointer;
                 width: 40px;
                 height: 40px;
                 top: 140px;
                 left: 190px;
         }
-        #settingsSphereText {
-                font-size: xx-large;
-                margin-top: 10px;
-        }
 
         /* List */
-        #sensorLog{
+        #systemLog {
                 border-radius: 20px;
                 background-color: rgba(50, 50, 50, 0.7);;
                 position: absolute;
@@ -134,14 +127,11 @@
                 width: 80%;
                 margin: 3% auto; 
         }
-        
-        table {
-                width: 100%;
-        }
-        .settingsContent input {
-                width: 100%;
-        }
 
+        .sensorModalContent {
+                width: 50%;
+                margin: 3% auto; 
+        }
 }
 @media all and (min-width: 1400px){
         /* ----------- Ultra ----------- */
@@ -157,20 +147,16 @@
         }
 
         #settingsSphere {
-                cursor: pointer;
                 background-color: #666;
+                cursor: pointer;
                 width: 40px;
                 height: 40px;
                 top: 22px;
                 left: 350px;
         }
-        #settingsSphereText {
-                font-size: xx-large;
-                margin-top: 10px;
-        }
 
         /* List */
-        #sensorLog{
+        #systemLog {
                 border-radius: 20px;
                 background-color: rgba(50, 50, 50, 0.7);;
                 position: absolute;
@@ -196,22 +182,22 @@
                 margin-left: 500px;
                 text-align: center;
         }
+
         .settingsModalContent {
                 width: 80%;
                 margin: 3% auto; 
         }
-        table {
-                width: 100%;
+
+        .sensorModalContent {
+                width: 50%;
+                margin: 3% auto; 
         }
-        .settingsContent input {
-                width: 100%;
-        }
+
         .sensordiv {
                 width: 40%;
                 margin: 10px 20px;
                 display: inline-block;
         }
-
 
 }
 
@@ -219,11 +205,22 @@
 
 
 
-
-
 /* ----------- STATIC ----------- */
-/* sensor */
 
+table {
+        width: 100%;
+}
+.settingsContent input {
+        width: 100%;
+}
+#settingsSphereText {
+        font-size: xx-large;
+        margin-top: 10px;
+}
+
+
+
+/* sensor */
 .sensortext {
         text-align: center;
         padding: 10px;

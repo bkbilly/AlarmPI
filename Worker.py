@@ -48,8 +48,9 @@ class Worker():
         self.kill_now = False
 
         # Init Alarm
-        mynotify = Notify(optsUpdateUI)
-        self.updateUI = mynotify.updateUI
+        self.mynotify = Notify(self.settings)
+        self.mynotify.setupUpdateUI(optsUpdateUI)
+        self.mynotify.setupSendStateMQTT(self.mqttclient.publish)
         mylogs = Logs(self.logfile)
         self.getSensorsLog = mylogs.getSensorsLog
         self.writeLog("system", "Alarm Booted")
@@ -67,19 +68,8 @@ class Worker():
 
         # Init MQTT Messages
         self.startstopMQTT()
-        self.sendStateMQTT()
+        self.mynotify.sendStateMQTT(self.getTriggeredStatus())
 
-    def sendStateMQTT(self):
-        """ Send to the MQTT server the state of the alarm
-            (disarmed, triggered, armed_away) """
-
-        stateTopic = self.settings['mqtt']['state_topic']
-        state = 'disarmed'
-        if self.alarmTriggered:
-            state = 'triggered'
-        elif self.settings['settings']['alarmArmed']:
-            state = 'armed_away'
-        self.mqttclient.publish(stateTopic, state, retain=True, qos=2)
 
     def startstopMQTT(self):
         """ Start or Stop the MQTT connection based on the settings """
@@ -124,10 +114,10 @@ class Worker():
             bcolors.OKGREEN, bcolors.ENDC, name))
         self.settings['sensors'][sensorUUID]['alert'] = True
         self.settings['sensors'][sensorUUID]['online'] = True
-        self.writeNewSettingsToFile()
+        self.writeNewSettingsToFile(self.settings)
         stateTopic = 'home/sensor/' + name
-        self.mqttclient.publish(stateTopic, 'on', retain=False, qos=0)
-        self.updateUI('settingsChanged', self.getSensorsArmed())
+        self.mynotify.sendSensorMQTT(stateTopic, 'on')
+        self.mynotify.updateUI('settingsChanged', self.getSensorsArmed())
         self.writeLog("sensor,start," + sensorUUID, name)
         self.checkIntruderAlert()
 
@@ -139,10 +129,10 @@ class Worker():
             bcolors.OKGREEN, bcolors.ENDC, name))
         self.settings['sensors'][sensorUUID]['alert'] = False
         self.settings['sensors'][sensorUUID]['online'] = True
-        self.writeNewSettingsToFile()
+        self.writeNewSettingsToFile(self.settings)
         stateTopic = 'home/sensor/' + name
-        self.mqttclient.publish(stateTopic, 'off', retain=False, qos=0)
-        self.updateUI('settingsChanged', self.getSensorsArmed())
+        self.mynotify.sendSensorMQTT(stateTopic, 'off')
+        self.mynotify.updateUI('settingsChanged', self.getSensorsArmed())
         self.writeLog("sensor,stop," + sensorUUID, name)
 
     def sensorError(self, sensorUUID):
@@ -155,9 +145,9 @@ class Worker():
         name = self.settings['sensors'][sensorUUID]['name']
         self.settings['sensors'][sensorUUID]['alert'] = True
         self.settings['sensors'][sensorUUID]['online'] = False
-        self.writeNewSettingsToFile()
+        self.writeNewSettingsToFile(self.settings)
         self.writeLog("error", "Lost connection to: " + name)
-        self.updateUI('settingsChanged', self.getSensorsArmed())
+        self.mynotify.updateUI('settingsChanged', self.getSensorsArmed())
 
     def sensorStopError(self, sensorUUID):
         """ On Sensor Stop Error, write logs """
@@ -167,9 +157,9 @@ class Worker():
             bcolors.FAIL, bcolors.ENDC, name))
         name = self.settings['sensors'][sensorUUID]['name']
         self.settings['sensors'][sensorUUID]['online'] = True
-        self.writeNewSettingsToFile()
+        self.writeNewSettingsToFile(self.settings)
         self.writeLog("error", "Restored connection to: " + name)
-        self.updateUI('settingsChanged', self.getSensorsArmed())
+        self.mynotify.updateUI('settingsChanged', self.getSensorsArmed())
 
     def checkIntruderAlert(self):
         """ Checks if the alarm is armed and if it finds an active
@@ -193,11 +183,11 @@ class Worker():
             settings = json.load(data_file)
         return settings
 
-    def writeNewSettingsToFile(self):
+    def writeNewSettingsToFile(self, settings):
         """ Write the new settings to the json file """
-
+        self.mynotify.updateSettings(settings)
         with open(self.jsonfile, 'w') as outfile:
-            json.dump(self.settings, outfile, sort_keys=True,
+            json.dump(settings, outfile, sort_keys=True,
                       indent=4, separators=(',', ': '))
 
 
@@ -214,7 +204,7 @@ class Worker():
         logmsg = '({0}) [{1}] {2}\n'.format(logType, myTimeLog, message)
         with open(self.logfile, "a") as myfile:
             myfile.write(logmsg)
-        self.updateUI('sensorsLog', self.getSensorsLog(
+        self.mynotify.updateUI('sensorsLog', self.getSensorsLog(
             self.limit, selectTypes=self.logtypes))
 
     def intruderAlert(self):
@@ -224,8 +214,8 @@ class Worker():
         """
         self.writeLog("alarm", "Intruder Alert")
         self.enableSerene()
-        self.sendStateMQTT()
-        self.updateUI('alarmStatus', self.getTriggeredStatus())
+        self.mynotify.sendStateMQTT(self.getTriggeredStatus())
+        self.mynotify.updateUI('alarmStatus', self.getTriggeredStatus())
         threadSendMail = threading.Thread(target=self.sendMail)
         threadSendMail.daemon = True
         threadSendMail.start()
@@ -312,9 +302,9 @@ class Worker():
 
         self.writeLog("user_action", "Alarm activated")
         self.settings['settings']['alarmArmed'] = True
-        self.sendStateMQTT()
-        self.updateUI('settingsChanged', self.getSensorsArmed())
-        self.writeNewSettingsToFile()
+        self.mynotify.sendStateMQTT(self.getTriggeredStatus())
+        self.mynotify.updateUI('settingsChanged', self.getSensorsArmed())
+        self.writeNewSettingsToFile(self.settings)
 
     def deactivateAlarm(self):
         """ Deactivates the alarm """
@@ -323,9 +313,9 @@ class Worker():
         self.writeLog("user_action", "Alarm deactivated")
         self.settings['settings']['alarmArmed'] = False
         self.stopSerene()
-        self.sendStateMQTT()
-        self.updateUI('settingsChanged', self.getSensorsArmed())
-        self.writeNewSettingsToFile()
+        self.mynotify.sendStateMQTT(self.getTriggeredStatus())
+        self.mynotify.updateUI('settingsChanged', self.getSensorsArmed())
+        self.writeNewSettingsToFile(self.settings)
 
     def getSensorsArmed(self):
         """ Returns the sensors and alarm status
@@ -375,42 +365,42 @@ class Worker():
         if self.settings['serene'] != message:
             self.settings['serene'] = message
             self.writeLog("user_action", "Settings for Serene changed")
-            self.writeNewSettingsToFile()
+            self.writeNewSettingsToFile(self.settings)
 
     def setMailSettings(self, message):
         """ Set Mail Settings """
         if self.settings['mail'] != message:
             self.settings['mail'] = message
             self.writeLog("user_action", "Settings for Mail changed")
-            self.writeNewSettingsToFile()
+            self.writeNewSettingsToFile(self.settings)
 
     def setVoipSettings(self, message):
         """ Set Voip Settings """
         if self.settings['voip'] != message:
             self.settings['voip'] = message
             self.writeLog("user_action", "Settings for VoIP changed")
-            self.writeNewSettingsToFile()
+            self.writeNewSettingsToFile(self.settings)
 
     def setTimezoneSettings(self, message):
         """ Set the Timezone """
         if self.settings['settings']['timezone'] != message:
             self.settings['settings']['timezone'] = message
             self.writeLog("user_action", "Settings for UI changed")
-            self.writeNewSettingsToFile()
+            self.writeNewSettingsToFile(self.settings)
 
     def setMQTTSettings(self, message):
         """ Set MQTT Settings """
         if self.settings['mqtt'] != message:
             self.settings['mqtt'] = message
             self.writeLog("user_action", "Settings for MQTT changed")
-            self.writeNewSettingsToFile()
+            self.writeNewSettingsToFile(self.settings)
             self.startstopMQTT()
             self.sensors.reload('MQTT', message)
 
     def setSensorState(self, sensorUUID, state):
         """ Activate or Deactivate a sensor """
         self.settings['sensors'][sensorUUID]['enabled'] = state
-        self.writeNewSettingsToFile()
+        self.writeNewSettingsToFile(self.settings)
 
         logState = "Deactivated"
         if state is True:
@@ -418,7 +408,7 @@ class Worker():
         logSensorName = self.settings['sensors'][sensorUUID]['name']
         self.writeLog("user_action", "{0} sensor: {1}".format(
             logState, logSensorName))
-        self.writeNewSettingsToFile()
+        self.writeNewSettingsToFile(self.settings)
 
     def setSensorsZone(self, zones):
         for sensor, sensorvalue in self.settings['sensors'].items():
@@ -428,8 +418,8 @@ class Worker():
                 sensorvalue['enabled'] = True
             else:
                 sensorvalue['enabled'] = False
-        self.updateUI('settingsChanged', self.getSensorsArmed())
-        self.writeNewSettingsToFile()
+        self.mynotify.updateUI('settingsChanged', self.getSensorsArmed())
+        self.writeNewSettingsToFile(self.settings)
 
     def addSensor(self, sensorValues):
         """ Add a new sensor """
@@ -445,11 +435,11 @@ class Worker():
         else:
             self.sensors.del_sensor(key)
         self.settings['sensors'].update(sensorValues)
-        self.writeNewSettingsToFile()
+        self.writeNewSettingsToFile(self.settings)
         self.sensors.add_sensors(self.settings)
 
     def delSensor(self, sensorUUID):
         """ Delete a sensor """
         self.sensors.del_sensor(sensorUUID)
         del self.settings['sensors'][sensorUUID]
-        self.writeNewSettingsToFile()
+        self.writeNewSettingsToFile(self.settings)

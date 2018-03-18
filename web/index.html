@@ -28,23 +28,36 @@
 	<audio id="audioalert" loop>
 		<source src="play_alert.mp3" type="audio/mpeg">
 	</audio>
-	<div id="myModal" class="modal">
-		<div class="modal-content">
+	<div id="sensorModal" class="modal">
+		<div class="modal-content sensorModalContent">
 			<span class="close" onclick="closeConfigWindow()">x</span><br>
-			<input type="text" id="inputName" placeholder="Select new name"><br>
-			<input type="text" id="inputZones" placeholder="Zones"><br>
+			<div class="settingsContent">
+				<table>
+					<tr>
+						<td>
+							<label for="inputName">Select new name</label><br>
+							<input type="text" id="inputName" placeholder="Select new name"><br>
+						</td>
+						<td>
+							<label for="inputZones">Zones</label><br>
+							<input type="text" id="inputZones" placeholder="Zones"><br>
+						</td>
+					</tr>
+				</table>
+			</div>
 			<select id="sensorType" onchange="selectSensorType($(this));">
 				<option value="GPIO" selected>GPIO</option>
 				<option value="Hikvision">Hikvision</option>
 				<option value="MQTT">MQTT</option>
 			</select><br>
+
 			<div id="inputDivGPIO">
 				<label for="GPIO-pin">BCM Pin:</label>
 				<select id="GPIO-pin" class="pinSelect">
 					<option value="" disabled selected></option></select>
 				<br>
 			</div>
-			<div id="inputDivHikvision">
+			<div id="inputDivHikvision" class="settingsContent">
 				<label for="Hikvision-ip">IP Address</label><br>
 				<input type="text" id="Hikvision-ip" placeholder="Enter IP Address of camera"><br>
 				<label for="Hikvision-user">Username</label><br>
@@ -52,7 +65,7 @@
 				<label for="Hikvision-pass">Password</label><br>
 				<input type="password" id="Hikvision-pass" placeholder="Enter Password"><br>
 			</div>
-			<div id="inputDivMQTT">
+			<div id="inputDivMQTT" class="settingsContent">
 				<label for="MQTT-state_topic">State Topic</label><br>
 				<input type="text" id="MQTT-state_topic" placeholder="Enter State Topic"><br>
 				<label for="MQTT-message_alert">Message Alert</label><br>
@@ -63,6 +76,10 @@
 			<button class="button delbutton" id="delSensorBTN">Delete</button><br>
 			<button class="button" id="okButton">OK</button>
 			<button class="button" onclick="closeConfigWindow()">Cancel</button>
+			<div id="logs">
+				<ul id="sensorListLog">
+				</ul>
+			</div>
 		</div>
 	</div>
 	<div id="settingsModal" class="modal">
@@ -230,7 +247,7 @@
 			</div>
 		</div>
 		<div id="sensors" class="smallSensors"></div>
-		<div id="sensorLog">
+		<div id="systemLog">
 			<div id="logSettings">
 				<select id="logtype">
 						<option value="all" selected="selected">Show all Logs</option>
@@ -249,7 +266,7 @@
 						<option value="200">200</option>
 				</select>
 			</div>
-			<ul id="sensorListLog">
+			<ul id="systemListLog">
 			</ul>
 		</div>
 		

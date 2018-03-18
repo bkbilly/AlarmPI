@@ -183,9 +183,10 @@ class AlarmPiServer(object):
         def getSensorsLog():
             user = flask_login.current_user.id
             sensorClass = self.users[user]['obj']
-            sensorClass.setLogFilters(
-                request.args.get('limit'),
-                request.args.get('type'))
+            if request.args.get('saveLimit') == 'True':
+                sensorClass.setLogFilters(
+                    request.args.get('limit'),
+                    request.args.get('type'))
             returnedLogs = sensorClass.getSensorsLog(
                 limit=request.args.get('limit'),
                 fromText=request.args.get('fromText'),

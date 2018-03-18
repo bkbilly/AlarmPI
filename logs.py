@@ -161,12 +161,13 @@ class Logs():
             logs = logs[-index:]
 
         # Filter by Types (e.g. sensor, user_action, ...)
-        if ('all' not in selectTypes and None not in selectTypes):
-            tmplogs = []
-            for log in logs:
-                if (log['type'][0].lower() in selectTypes):
-                    tmplogs.append(log)
-            logs = tmplogs
+        if (selectTypes is not None):
+            if ('all' not in selectTypes):
+                tmplogs = []
+                for log in logs:
+                    if (log['type'][0].lower() in selectTypes):
+                        tmplogs.append(log)
+                logs = tmplogs
 
         # Filter by text (e.g. pir, ...)
         if (filterText not in (None, 'all')):

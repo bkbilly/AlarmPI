@@ -27,7 +27,7 @@ var sensorHTMLTemplate = '<div class="sensordiv" id="sensordiv{sensor}">\
 
 
 $( document ).ready(function() {
-	var modal = document.getElementById('myModal');
+	var modal = document.getElementById('sensorModal');
 	var modal2 = document.getElementById('settingsModal');
 	window.onclick = function(event) {
 		if (event.target == modal || event.target == modal2) {
@@ -96,7 +96,7 @@ function startAgain(){
 function refreshLogs(){
 	loglimit = $("#loglimit").val();
 	logtype = $("#logtype").val();
-	$.getJSON("getSensorsLog.json?limit="+loglimit+"&type="+logtype).done(function(data){
+	$.getJSON("getSensorsLog.json?saveLimit=True&limit="+loglimit+"&type="+logtype).done(function(data){
 		addSensorLog(data);
 	});
 }
@@ -151,9 +151,9 @@ function setAlarmStatus(data){
 
 
 function addSensorLog(msg){
-	$("#sensorListLog").empty();
+	$("#systemListLog").empty();
 	$.each(msg.log, function(i, tmplog){
-		$("#sensorListLog").prepend("<li>"+tmplog+"</li>");
+		$("#systemListLog").prepend("<li>"+tmplog+"</li>");
 	});
 }
 
@@ -167,6 +167,7 @@ function changeSensorState(checkbox, sensor){
 }
 
 function changeSensorSettings(sensor, type){
+	$("#sensorListLog").empty();
 	if (type === 'newSensor') {
 		var currentName = ""
 		var zones = ""
@@ -180,6 +181,11 @@ function changeSensorSettings(sensor, type){
 		$("#sensorType").hide()
 		$("#delSensorBTN").attr("onclick","deleteSensor('"+ sensor +"')");
 		$("#delSensorBTN").show();
+		$.getJSON("/getSensorsLog.json?limit=100&type=sensor&filterText=" + currentName).done(function(data){
+			$.each(data.log, function(i, tmplog){
+				$("#sensorListLog").prepend("<li>"+tmplog+"</li>");
+			});
+		});
 	}
 	
 	selectSensorType($("#sensorType"));
@@ -196,7 +202,7 @@ function changeSensorSettings(sensor, type){
 	$("#okButton").attr("onclick","saveConfigSettings('"+ type+"','"+sensor+"','"+currentName+"')");
 	$("#inputName").val(currentName);
 	$("#inputZones").val(zones);
-	$("#myModal").show();
+	$("#sensorModal").show();
 }
 
 selectSensorType = function(Dd) {
@@ -250,12 +256,12 @@ function ArmDisarmAlarm(){
 
 function openConfigWindow(){
 	document.body.style.overflowY = "hidden";
-	$("#myModal").show();
+	$("#sensorModal").show();
 }
 
 function closeConfigWindow(){
 	document.body.style.overflowY = "auto";
-	$("#myModal").hide();
+	$("#sensorModal").hide();
 	$("#settingsModal").hide();
 }
 
