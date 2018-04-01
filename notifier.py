@@ -23,15 +23,15 @@ class Notify():
         self.optsMQTTpublish = optsMQTTpublish
         return self.sendStateMQTT
 
-    def sendStateMQTT(self, alarmTriggered):
+    def sendStateMQTT(self):
         """ Send to the MQTT server the state of the alarm
             (disarmed, triggered, armed_away) """
 
         stateTopic = self.settings['mqtt']['state_topic']
         state = 'disarmed'
-        if alarmTriggered:
+        if self.settings['settings']['alarmArmed']:
             state = 'triggered'
-        elif settings['settings']['alarmArmed']:
+        elif self.settings['settings']['alarmArmed']:
             state = 'armed_away'
         self.optsMQTTpublish(stateTopic, state, retain=True, qos=2)
 

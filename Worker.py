@@ -68,7 +68,7 @@ class Worker():
 
         # Init MQTT Messages
         self.startstopMQTT()
-        self.mynotify.sendStateMQTT(self.getTriggeredStatus())
+        self.mynotify.sendStateMQTT()
 
 
     def startstopMQTT(self):
@@ -214,7 +214,7 @@ class Worker():
         """
         self.writeLog("alarm", "Intruder Alert")
         self.enableSerene()
-        self.mynotify.sendStateMQTT(self.getTriggeredStatus())
+        self.mynotify.sendStateMQTT()
         self.mynotify.updateUI('alarmStatus', self.getTriggeredStatus())
         threadSendMail = threading.Thread(target=self.sendMail)
         threadSendMail.daemon = True
@@ -264,7 +264,8 @@ class Worker():
             bodyMsg = self.settings['mail']['messageBody']
             LogsTriggered = self.getSensorsLog(
                 fromText='Alarm activated')['log']
-            for logTriggered in LogsTriggered.reversed():
+            LogsTriggered.reverse()
+            for logTriggered in LogsTriggered:
                 bodyMsg += '<br>' + logTriggered
             msg = MIMEText(bodyMsg, 'html')
             sender = mail_user
@@ -302,7 +303,7 @@ class Worker():
 
         self.writeLog("user_action", "Alarm activated")
         self.settings['settings']['alarmArmed'] = True
-        self.mynotify.sendStateMQTT(self.getTriggeredStatus())
+        self.mynotify.sendStateMQTT()
         self.mynotify.updateUI('settingsChanged', self.getSensorsArmed())
         self.writeNewSettingsToFile(self.settings)
 
@@ -313,7 +314,7 @@ class Worker():
         self.writeLog("user_action", "Alarm deactivated")
         self.settings['settings']['alarmArmed'] = False
         self.stopSerene()
-        self.mynotify.sendStateMQTT(self.getTriggeredStatus())
+        self.mynotify.sendStateMQTT()
         self.mynotify.updateUI('settingsChanged', self.getSensorsArmed())
         self.writeNewSettingsToFile(self.settings)
 
