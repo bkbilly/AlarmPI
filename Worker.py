@@ -15,7 +15,6 @@ import smtplib
 import re
 from email.mime.text import MIMEText
 import uuid
-import paho.mqtt.client as mqtt
 from collections import OrderedDict
 
 
@@ -39,18 +38,16 @@ class Worker():
         self.logfile = logfile
         self.sipcallfile = sipcallfile
         self.settings = self.ReadSettings()
-        self.mqttclient = mqtt.Client("", True, None, mqtt.MQTTv31)
         self.limit = 10
         self.logtypes = 'all'
 
         # Stop execution on exit
-        self.alarmTriggered = False
         self.kill_now = False
 
         # Init Alarm
         self.mynotify = Notify(self.settings)
         self.mynotify.setupUpdateUI(optsUpdateUI)
-        self.mynotify.setupSendStateMQTT(self.mqttclient.publish)
+        self.mynotify.setupSendStateMQTT()
         mylogs = Logs(self.logfile)
         self.getSensorsLog = mylogs.getSensorsLog
         self.writeLog("system", "Alarm Booted")
@@ -63,48 +60,12 @@ class Worker():
         self.sensors.on_error(self.sensorError)
         self.sensors.on_error_stop(self.sensorStopError)
         self.sensors.add_sensors(self.settings)
-        self.mqttclient.on_connect_mqtt = self.on_connect_mqtt
-        self.mqttclient.on_message_mqtt = self.on_message_mqtt
 
         # Init MQTT Messages
-        self.startstopMQTT()
+        self.mynotify.on_disarm_mqtt(self.deactivateAlarm)
+        self.mynotify.on_arm_mqtt(self.activateAlarm)
         self.mynotify.sendStateMQTT()
 
-
-    def startstopMQTT(self):
-        """ Start or Stop the MQTT connection based on the settings """
-
-        self.mqttclient.disconnect()
-        self.mqttclient.loop_stop(force=False)
-        if self.settings['mqtt']['enable']:
-            try:
-                mqttHost = self.settings['mqtt']['host']
-                mqttPort = self.settings['mqtt']['port']
-                self.mqttclient.connect(mqttHost, mqttPort, 60)
-                self.mqttclient.loop_start()
-            except Exception as e:
-                print("{0}MQTT: {2}{1}".format(
-                    bcolors.FAIL, bcolors.ENDC, str(e)))
-        else:
-            self.mqttclient.disconnect()
-            self.mqttclient.loop_stop(force=False)
-
-    def on_connect_mqtt(self, mqttclient, userdata, flags, rc):
-        """ Subscribe to MQTT commands """
-
-        print("{0}Connected to MQTT with result code {2}{1}".format(
-            bcolors.WARNING, bcolors.ENDC, str(rc)))
-        mqttclient.subscribe(self.settings['mqtt']['command_topic'])
-
-    def on_message_mqtt(self, mqttclient, userdata, msg):
-        """ Arm or Disarm on message from subscribed MQTT topics """
-
-        message = msg.payload.decode("utf-8")
-        # print(msg.topic + " " + message)
-        if message == "DISARM":
-            self.deactivateAlarm()
-        elif message == "ARM_AWAY":
-            self.activateAlarm()
 
     def sensorAlert(self, sensorUUID):
         """ On Sensor Alert, write logs and check for intruder """
@@ -115,7 +76,7 @@ class Worker():
         self.settings['sensors'][sensorUUID]['alert'] = True
         self.settings['sensors'][sensorUUID]['online'] = True
         self.writeNewSettingsToFile(self.settings)
-        stateTopic = 'home/sensor/' + name
+        stateTopic = self.settings['mqtt']['state_topic'] + '/sensor/' + name
         self.mynotify.sendSensorMQTT(stateTopic, 'on')
         self.mynotify.updateUI('settingsChanged', self.getSensorsArmed())
         self.writeLog("sensor,start," + sensorUUID, name)
@@ -130,7 +91,7 @@ class Worker():
         self.settings['sensors'][sensorUUID]['alert'] = False
         self.settings['sensors'][sensorUUID]['online'] = True
         self.writeNewSettingsToFile(self.settings)
-        stateTopic = 'home/sensor/' + name
+        stateTopic = self.settings['mqtt']['state_topic'] + '/sensor/' + name
         self.mynotify.sendSensorMQTT(stateTopic, 'off')
         self.mynotify.updateUI('settingsChanged', self.getSensorsArmed())
         self.writeLog("sensor,stop," + sensorUUID, name)
@@ -165,12 +126,12 @@ class Worker():
         """ Checks if the alarm is armed and if it finds an active
             sensor then it calls the intruderAlert method """
 
-        if (self.settings['settings']['alarmArmed'] is True and
-                self.alarmTriggered is False):
+        if (self.settings['settings']['alarmArmed'] is True):
             for sensor, sensorvalue in self.settings['sensors'].items():
                 if (sensorvalue['alert'] is True and
-                        sensorvalue['enabled'] is True):
-                    self.alarmTriggered = True
+                        sensorvalue['enabled'] is True and
+                        self.settings['settings']['alarmTriggered'] is False):
+                    self.settings['settings']['alarmTriggered'] = True
                     threadIntruderAlert = threading.Thread(
                         target=self.intruderAlert)
                     threadIntruderAlert.daemon = True
@@ -235,7 +196,7 @@ class Worker():
         if self.settings['voip']['enable'] is True:
             for phone_number in self.settings['voip']['numbersToCall']:
                 phone_number = str(phone_number)
-                if self.alarmTriggered is True:
+                if self.settings['settings']['alarmTriggered'] is True:
                     self.writeLog("alarm", "Calling " + phone_number)
                     cmd = (self.sipcallfile, '-sd', sip_domain,
                            '-su', sip_user, '-sp', sip_password,
@@ -298,8 +259,13 @@ class Worker():
             serenePin = self.settings['serene']['pin']
             outputGPIO().disableOutputPin(serenePin)
 
-    def activateAlarm(self):
+    def activateAlarm(self, zones=None):
         """ Activates the alarm """
+
+        if zones is not None:
+            if type(zones) == str:
+                zones = [zones]
+            self.setSensorsZone(zones)
 
         self.writeLog("user_action", "Alarm activated")
         self.settings['settings']['alarmArmed'] = True
@@ -310,8 +276,8 @@ class Worker():
     def deactivateAlarm(self):
         """ Deactivates the alarm """
 
-        self.alarmTriggered = False
         self.writeLog("user_action", "Alarm deactivated")
+        self.settings['settings']['alarmTriggered'] = False
         self.settings['settings']['alarmArmed'] = False
         self.stopSerene()
         self.mynotify.sendStateMQTT()
@@ -327,14 +293,14 @@ class Worker():
         orderedSensors = OrderedDict(
             sorted(sensors.items(), key=lambda k_v: k_v[1]['name']))
         sensorsArmed['sensors'] = orderedSensors
-        sensorsArmed['triggered'] = self.alarmTriggered
+        sensorsArmed['triggered'] = self.settings['settings']['alarmTriggered']
         sensorsArmed['alarmArmed'] = self.settings['settings']['alarmArmed']
         return sensorsArmed
 
     def getTriggeredStatus(self):
         """ Returns the status of the alert for the UI """
 
-        return {"alert": self.alarmTriggered}
+        return {"alert": self.settings['settings']['alarmTriggered']}
 
     def setLogFilters(self, limit, logtypes):
         """ Sets the global filters for the getSensorsLog method """
@@ -395,8 +361,7 @@ class Worker():
             self.settings['mqtt'] = message
             self.writeLog("user_action", "Settings for MQTT changed")
             self.writeNewSettingsToFile(self.settings)
-            self.startstopMQTT()
-            self.sensors.reload('MQTT', message)
+            self.mynotify.setupSendStateMQTT()
 
     def setSensorState(self, sensorUUID, state):
         """ Activate or Deactivate a sensor """

@@ -26,6 +26,7 @@
         "pin": 14
     },
     "settings": {
+        "alarmTriggered": false,
         "alarmArmed": false,
         "timezone": "Europe/Athens"
     },

@@ -11,7 +11,6 @@ import requests
 import re
 
 from colors import bcolors
-import paho.mqtt.client as mqtt
 
 
 class outputGPIO():
@@ -239,49 +238,17 @@ class sensorMQTT():
         self._event_error_stop = []
 
         # Other Variables
-        self.mqttclient = mqtt.Client("", True, None, mqtt.MQTTv31)
         self.sensor = None
 
     def add_sensor(self, sensor, settings=None):
         self._notify_error()
         self.sensor = sensor
-        self.mqttclient.on_connect = self.on_connect
-        self.mqttclient.on_message = self.on_message
-        self.reload(settings)
 
     def del_sensor(self):
-        self.mqttclient.disconnect()
-        self.mqttclient.loop_stop(force=False)
+        pass
 
     def reload(self, settings=None):
-        self.mqttsettings = settings
-        self.mqttclient.disconnect()
-        self.mqttclient.loop_stop(force=False)
-        if self.mqttsettings['enable']:
-            try:
-                mqttHost = self.mqttsettings['host']
-                mqttPort = self.mqttsettings['port']
-                self.mqttclient.connect(mqttHost, mqttPort, 60)
-                self.mqttclient.loop_start()
-            except Exception:
-                self._notify_error()
-                # print(bcolors.FAIL, 'MQTT:', e, bcolors.ENDC)
-                pass
-        else:
-            self.mqttclient.disconnect()
-            self.mqttclient.loop_stop(force=False)
-
-    def on_connect(self, mqttclient, userdata, flags, rc):
-        mqttclient.subscribe(self.sensor['state_topic'])
-
-    def on_message(self, mqttclient, userdata, msg):
-        # print(msg.topic + " ------- " + msg.payload.decode("utf-8"))
-        if msg.payload.decode("utf-8") == self.sensor["message_alert"]:
-            self._notify_alert()
-        elif msg.payload.decode("utf-8") == self.sensor["message_noalert"]:
-            self._notify_alert_stop()
-        else:
-            self._notify_error()
+        pass
 
     # ------------------------------
     def on_alert(self, callback):
