@@ -42,8 +42,16 @@ class Notify():
                         password=self.settings['mqtt']['password'])
                 self.mqttclient.connect(mqttHost, mqttPort, 60)
                 self.mqttclient.loop_start()
-                print('subscribing to: ', self.settings['mqtt']['command_topic'])
+                print('MQTT subscribing to: {0}'.format(self.settings['mqtt']['command_topic']))
                 self.mqttclient.subscribe(self.settings['mqtt']['command_topic'])
+                for sensor, sensorvalue in self.settings['sensors'].items():
+                    setmqttsensor = '{0}{1}{2}'.format(
+                        self.settings['mqtt']['command_topic'],
+                        '/sensor/',
+                        sensorvalue['name'])
+                    print('MQTT subscribing to: {0}'.format(setmqttsensor))
+                    self.mqttclient.subscribe(setmqttsensor)
+
             except Exception as e:
                 print("{0}MQTT: {2}{1}".format(
                     bcolors.FAIL, bcolors.ENDC, str(e)))
@@ -76,14 +84,25 @@ class Notify():
         """ Arm or Disarm on message from subscribed MQTT topics """
 
         message = msg.payload.decode("utf-8")
+        topicArm = self.settings['mqtt']['command_topic']
+        topicSensorSet = self.settings['mqtt']['command_topic'] + '/sensor/'
+        print(msg.topic + " " + message)
         try:
-            print(msg.topic + " " + message)
-            if message == "DISARM":
-                self.deactivateAlarm()
-            elif message == "ARM_HOME":
-                self.activateAlarm('home')
-            elif message == "ARM_AWAY":
-                self.activateAlarm('away')
+            if msg.topic == self.settings['mqtt']['command_topic']:
+                if message == "DISARM":
+                    self.deactivateAlarm()
+                elif message == "ARM_HOME":
+                    self.activateAlarm('home')
+                elif message == "ARM_AWAY":
+                    self.activateAlarm('away')
+            elif topicSensorSet in msg.topic:
+                sensorName = msg.topic.replace(topicSensorSet, '')
+                for sensor, sensorvalue in self.settings['sensors'].items():
+                    if sensorvalue['name'] == sensorName:
+                        if message.lower() == 'on':
+                            self.sensorAlert(sensor)
+                        else:
+                            self.sensorStopAlert(sensor)
         except Exception as e:
             raise e
 
@@ -92,3 +111,9 @@ class Notify():
 
     def on_arm_mqtt(self, callback):
         self.activateAlarm = callback
+
+    def on_sensor_set_alert(self, callback):
+        self.sensorAlert = callback
+
+    def on_sensor_set_stopalert(self, callback):
+        self.sensorStopAlert = callback
