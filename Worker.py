@@ -64,6 +64,8 @@ class Worker():
         # Init MQTT Messages
         self.mynotify.on_disarm_mqtt(self.deactivateAlarm)
         self.mynotify.on_arm_mqtt(self.activateAlarm)
+        self.mynotify.on_sensor_set_alert(self.sensorAlert)
+        self.mynotify.on_sensor_set_stopalert(self.sensorStopAlert)
         self.mynotify.sendStateMQTT()
 
 
@@ -403,6 +405,7 @@ class Worker():
         self.settings['sensors'].update(sensorValues)
         self.writeNewSettingsToFile(self.settings)
         self.sensors.add_sensors(self.settings)
+        self.mynotify.setupSendStateMQTT()
 
     def delSensor(self, sensorUUID):
         """ Delete a sensor """

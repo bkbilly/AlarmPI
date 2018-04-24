@@ -21,6 +21,25 @@ You can download it from here: [Play Store](https://play.google.com/store/apps/d
 The source code for the application is here: https://github.com/bkbilly/AlarmPI-Android
 
 
+### MQTT
+These are the possible mqtt messages. First you will have to setup the MQTT state_topc & command_topic. The ones I will be using for this example are:
+state_topic: home/alarm
+command_topic: home/alarm/set
+
+Messages with topics sent by AlarmPI:
+ * home/alarm disarmed
+ * home/alarm triggered
+ * home/alarm armed_away
+ * home/alarm/sensor/Bedroom on
+ * home/alarm/sensor/Bedroom off
+
+Messages that is subscribed to:
+ * home/alarm/set ARM_AWAY
+ * home/alarm/set ARM_HOME
+ * home/alarm/set/sensor/Bedroom on
+ * home/alarm/set/sensor/Bedroom off
+
+
 ### IFTTT
 It can also be used with IFTTT using the Webhooks module like this:
 `https://admin:secret@example.com:5000/activateAlarmOnline`
@@ -105,6 +124,7 @@ To test it, execute this replacing the (myserver, myusername, mypassword, mynumb
 * `mqtt.username` (str) Username of the mqtt server if authentication is true
 * `mqtt.password` (str) Passwrd of the mqtt server if authentication is true
 * `settings.alarmArmed` (bool) If true, activate the alarm
+* `settings.alarmTriggered` (bool) If true, there is an intruder
 * `settings.timezone` (str) The timezone for the log file based on pytz
 
 ## Contributing
