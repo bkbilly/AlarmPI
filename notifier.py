@@ -6,6 +6,7 @@ import time
 from datetime import datetime
 from colors import bcolors
 import paho.mqtt.client as mqtt
+import random
 
 
 class Notify():
@@ -26,7 +27,7 @@ class Notify():
 
         # self.mqttclient = mqtt.Client("", True, None, mqtt.MQTTv311)
         if not hasattr(self, 'mqttclient'):
-            self.mqttclient = mqtt.Client("")
+            self.mqttclient = mqtt.Client(client_id=str(random.randint(1,10000)), clean_session=False)
 
 
         self.mqttclient.disconnect()
@@ -40,7 +41,7 @@ class Notify():
                     self.mqttclient.username_pw_set(
                         username=self.settings['mqtt']['username'],
                         password=self.settings['mqtt']['password'])
-                self.mqttclient.connect(mqttHost, mqttPort, 60)
+                self.mqttclient.connect(mqttHost, mqttPort, 10)
                 self.mqttclient.loop_start()
                 print('MQTT subscribing to: {0}'.format(self.settings['mqtt']['command_topic']))
                 self.mqttclient.subscribe(self.settings['mqtt']['command_topic'])
