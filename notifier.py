@@ -49,7 +49,7 @@ class Notify():
                     setmqttsensor = '{0}{1}{2}'.format(
                         self.settings['mqtt']['command_topic'],
                         '/sensor/',
-                        sensorvalue['name'])
+                        sensorvalue['name'].lower().replace(' ', '_'))
                     print('MQTT subscribing to: {0}'.format(setmqttsensor))
                     self.mqttclient.subscribe(setmqttsensor)
 
@@ -99,7 +99,7 @@ class Notify():
             elif topicSensorSet in msg.topic:
                 sensorName = msg.topic.replace(topicSensorSet, '')
                 for sensor, sensorvalue in self.settings['sensors'].items():
-                    if sensorvalue['name'] == sensorName:
+                    if sensorvalue['name'].lower().replace(' ', '_') == sensorName:
                         if message.lower() == 'on':
                             self.sensorAlert(sensor)
                         else:
