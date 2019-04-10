@@ -13,6 +13,10 @@ class Notify():
 
     def __init__(self, settings):
         self.settings = settings
+        self.deactivateAlarm = lambda:0
+        self.activateAlarm = lambda:0
+        self.sensorAlert = lambda:0
+        self.sensorStopAlert = lambda:0
 
     def setupUpdateUI(self, optsUpdateUI):
         self.optsUpdateUI = optsUpdateUI
@@ -118,3 +122,4 @@ class Notify():
 
     def on_sensor_set_stopalert(self, callback):
         self.sensorStopAlert = callback
+
