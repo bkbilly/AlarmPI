@@ -100,6 +100,8 @@ class Notify():
                     self.activateAlarm('home')
                 elif message == "ARM_AWAY":
                     self.activateAlarm('away')
+                elif message == "ARM_NIGHT":
+                    self.activateAlarm('night')
             elif topicSensorSet in msg.topic:
                 sensorName = msg.topic.replace(topicSensorSet, '')
                 for sensor, sensorvalue in self.settings['sensors'].items():
