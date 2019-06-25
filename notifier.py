@@ -7,6 +7,7 @@ from datetime import datetime
 from colors import bcolors
 import paho.mqtt.client as mqtt
 import random
+import json
 
 
 class Notify():
@@ -17,9 +18,11 @@ class Notify():
         self.activateAlarm = lambda:0
         self.sensorAlert = lambda:0
         self.sensorStopAlert = lambda:0
+        self.room = 'initial'
 
     def setupUpdateUI(self, optsUpdateUI):
         self.optsUpdateUI = optsUpdateUI
+        self.room = self.optsUpdateUI['room']
         return self.updateUI
 
     def updateUI(self, event, data):
@@ -47,9 +50,11 @@ class Notify():
                         password=self.settings['mqtt']['password'])
                 self.mqttclient.connect(mqttHost, mqttPort, 10)
                 self.mqttclient.loop_start()
+
                 print('MQTT subscribing to: {0}'.format(self.settings['mqtt']['command_topic']))
                 self.mqttclient.subscribe(self.settings['mqtt']['command_topic'])
                 for sensor, sensorvalue in self.settings['sensors'].items():
+                    # Subscribe to mqtt sensors events
                     setmqttsensor = '{0}{1}{2}'.format(
                         self.settings['mqtt']['command_topic'],
                         '/sensor/',
@@ -57,6 +62,31 @@ class Notify():
                     print('MQTT subscribing to: {0}'.format(setmqttsensor))
                     self.mqttclient.subscribe(setmqttsensor)
 
+		    # Home assistant integration
+                    statemqttsensor = '{0}/sensor/{1}'.format(
+                        self.settings['mqtt']['state_topic'],
+                        sensorvalue['name']
+                    )
+                    sensor_name = sensorvalue['name'].lower().replace(' ', '_')
+                    has_topic = "homeassistant/binary_sensor/{0}/config".format(sensor_name)
+                    print(has_topic)
+                    has_config = {
+                        "payload_on": "on",
+                        "payload_off": "off",
+                        "device_class": "door",
+                        "state_topic": statemqttsensor,
+                        "name": "AlarmPI-{0}".format(sensorvalue['name']),
+                        "unique_id": "alarmpi_{0}".format(sensor_name),
+                        "device": {
+                            "identifiers": "alarmpi-{0}".format(self.room),
+                            "name": "AlarmPI-{0}".format(self.room),
+                            "sw_version": "AlarmPI 4.0",
+                            "model": "Raspberry PI",
+                            "manufacturer": "bkbilly"
+                        }
+                    }
+                    has_payload = json.dumps(has_config)
+                    self.mqttclient.publish(has_topic, has_payload, retain=True, qos=2)
             except Exception as e:
                 print("{0}MQTT: {2}{1}".format(
                     bcolors.FAIL, bcolors.ENDC, str(e)))
