@@ -25,6 +25,7 @@ class notifyGPIO():
             self.connected = True
         except Exception as e:
             self.connected = False
+        self.GPIO = GPIO
 
 
     def enableSerene(self):
@@ -45,18 +46,18 @@ class notifyGPIO():
     def enableOutputPin(self, *pins):
         if self.connected:
             for pin in pins:
-                GPIO.setup(pin, GPIO.OUT)
-                state = GPIO.input(pin)
-                if state == GPIO.LOW:
-                    GPIO.output(pin, GPIO.HIGH)
+                self.GPIO.setup(pin, self.GPIO.OUT)
+                state = self.GPIO.input(pin)
+                if state == self.GPIO.LOW:
+                    self.GPIO.output(pin, self.GPIO.HIGH)
 
     def disableOutputPin(self, *pins):
         if self.connected:
             for pin in pins:
-                GPIO.setup(pin, GPIO.OUT)
-                if GPIO.input(pin) == GPIO.HIGH:
-                    GPIO.output(pin, GPIO.LOW)
-                GPIO.setup(pin, GPIO.IN)
+                self.GPIO.setup(pin, self.GPIO.OUT)
+                if self.GPIO.input(pin) == self.GPIO.HIGH:
+                    self.GPIO.output(pin, self.GPIO.LOW)
+                self.GPIO.setup(pin, self.GPIO.IN)
 
     def status(self):
         return self.connected
