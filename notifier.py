@@ -9,6 +9,8 @@ import os
 import smtplib
 from email.mime.text import MIMEText
 from collections import OrderedDict
+import subprocess
+import sys
 
 
 
@@ -291,7 +293,7 @@ class notifyVoip():
                         bcolors.FADE, bcolors.ENDC, " ".join(cmd)))
                     proc = subprocess.Popen(cmd, stderr=subprocess.PIPE)
                     for line in proc.stderr:
-                        sys.stderr.write(line)
+                        sys.stderr.write(str(line))
                     proc.wait()
                     self.mylogs.writeLog("alarm", "Call to " +
                                   phone_number + " endend")
