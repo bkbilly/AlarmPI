@@ -23,9 +23,9 @@ class notifyGPIO():
         try:
             import RPi.GPIO as GPIO
             self.connected = True
+            self.GPIO = GPIO
         except Exception as e:
             self.connected = False
-        self.GPIO = GPIO
 
 
     def enableSerene(self):
