@@ -170,7 +170,7 @@ class notifyMQTT():
                 has_payload = json.dumps(has_config)
                 self.mqttclient.publish(has_topic, has_payload, retain=True, qos=2)
 
-    def on_disconnect(self, client, userdata, flags, rc):
+    def on_disconnect(self, client, userdata, rc):
         self.isconnected = False
         if rc != 0:
             print("Unexpected disconnection.")
@@ -222,6 +222,7 @@ class notifyMQTT():
 
     def status(self):
         return self.isconnected
+
 
 class notifyEmail():
 
@@ -330,15 +331,19 @@ class Notify():
         self.callbacks['sensorStopAlert'] = lambda:0
         self.room = 'initial'
         self.optsUpdateUI = optsUpdateUI
+        self.settings = settings
         self.room = self.optsUpdateUI['room']
 
         print("{0}------------ INIT FOR DOOR SENSOR CLASS! ----------------{1}"
               .format(bcolors.HEADER, bcolors.ENDC))
-        self.gpio = notifyGPIO(settings, optsUpdateUI, mylogs, self.callbacks)
-        self.ui = notifyUI(settings, optsUpdateUI, mylogs, self.callbacks)
-        self.mqtt = notifyMQTT(settings, optsUpdateUI, mylogs, self.callbacks)
-        self.email = notifyEmail(settings, optsUpdateUI, mylogs, self.callbacks)
-        self.voip = notifyVoip(settings, optsUpdateUI, mylogs, self.callbacks)
+        self.gpio = notifyGPIO(self.settings, self.optsUpdateUI, self.mylogs, self.callbacks)
+        self.ui = notifyUI(self.settings, self.optsUpdateUI, self.mylogs, self.callbacks)
+        self.mqtt = notifyMQTT(self.settings, self.optsUpdateUI, self.mylogs, self.callbacks)
+        self.email = notifyEmail(self.settings, self.optsUpdateUI, self.mylogs, self.callbacks)
+        self.voip = notifyVoip(self.settings, self.optsUpdateUI, self.mylogs, self.callbacks)
+
+    def updateMQTT(self):
+        self.mqtt.setupMQTT()
 
     def status(self):
         return {

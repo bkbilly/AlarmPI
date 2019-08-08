@@ -236,6 +236,7 @@ class Worker():
             self.settings['mqtt'] = message
             self.mylogs.writeLog("user_action", "Settings for MQTT changed")
             self.writeNewSettingsToFile(self.settings)
+            self.mynotify.updateMQTT()
 
     def setSensorState(self, sensorUUID, state):
         """ Activate or Deactivate a sensor """
@@ -279,12 +280,14 @@ class Worker():
         self.settings['sensors'].update(sensorValues)
         self.writeNewSettingsToFile(self.settings)
         self.sensors.add_sensors(self.settings)
+        self.mynotify.updateMQTT()
 
     def delSensor(self, sensorUUID):
         """ Delete a sensor """
         self.sensors.del_sensor(sensorUUID)
         del self.settings['sensors'][sensorUUID]
         self.writeNewSettingsToFile(self.settings)
+        self.mynotify.updateMQTT()
 
 
     def setSensorStatus(self, name, status):
