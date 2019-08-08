@@ -53,10 +53,13 @@
                         <a href="#about">About</a>
                     </li>
                     <li>
-                        <a href="#install">Install</a>
+                        <a href="#capabilities">Capabilities</a>
                     </li>
                     <li>
                         <a href="#connectsensors">Sensors</a>
+                    </li>
+                    <li>
+                        <a href="#install">Install</a>
                     </li>
                     <li>
                         <a href="#openui">WebInterface</a>
@@ -114,13 +117,8 @@
                     <hr class="section-heading-spacer">
                     <div class="clearfix"></div>
                     <h2 class="section-heading">About</h2>
-                    <p class="lead" style="display: inline;">AlarmPI is a home alarm system based on Raspberry PI controlling PIR sensors, Door sensors or any other sensor. It is controlled with a Web UI, or a Android Application using HTTPS.<br>
-                    When the alarm detects movement, it supports the following events:
-                        <ul class="lead">
-                            <li>Enables Serene</li>
-                            <li>Send Mail</li>
-                            <li>VoIP Calls</li>
-                        </ul>
+                    <p class="lead">AlarmPI is a home alarm system based on Raspberry PI controlling PIR sensors, Door sensors or any other sensor.
+                    <p class="lead">It is controlled with a Web UI, or a Android Application. Supports multiple users with separate sensors for each user.</p>
                     </p>
                 </div>
                 <div class="col-lg-5 col-lg-offset-2 col-sm-6">
@@ -135,7 +133,7 @@
 
 
     <!-- Page Content -->
-    <a  name="connectsensors"></a>
+    <a  name="capabilities"></a>
     <div class="content-section-b">
         <div class="container">
 
@@ -143,13 +141,39 @@
                 <div class="col-lg-5 col-lg-offset-1 col-sm-push-6  col-sm-6">
                     <hr class="section-heading-spacer">
                     <div class="clearfix"></div>
-                    <h2 class="section-heading">Connect Sensors</h2>
+                    <h2 class="section-heading">Capabilities</h2>
+                    <p class="lead">Supports physical sensors as GPIO inputs and integrates Hikvision LineCrossing as sensor.</p>
+                    <p class="lead">All sensors are controlled by MQTT or HTTP requests and supports integration with HomeAssistant.</p>
+                    <p class="lead">When the alarm is triggered it activates the serene on browser and the RaspberryPI GPIO, sends an email to all users and finally makes VoIP Calls to provided phones.</p>
+                </div>
+                <div class="col-lg-5 col-sm-pull-6 col-sm-6">
+                    <img class="img-responsive" src="img/micropython.png" alt="">
+                </div>
+            </div>
+
+        </div>
+        <!-- /.container -->
+    </div>
+    <!-- /.content-section-a -->
+
+
+
+    <!-- Page Content -->
+    <a  name="connectsensors"></a>
+    <div class="content-section-a">
+        <div class="container">
+
+            <div class="row">
+                <div class="col-lg-5 col-sm-6">
+                    <hr class="section-heading-spacer">
+                    <div class="clearfix"></div>
+                    <h2 class="section-heading">Connect Physical Sensors</h2>
                     <p class="lead">Connect all your door sensors and PIR Sensors to the Raspberry. One of the cords go to a <b>BCM pin</b> and the other goes to the <b>Ground pin</b>.</p>
                     <p class="lead">You can find what each pin is here: <a target="_blank" href="https://pinout.xyz/">GPIO Pinout</a><br>
                     or from the terminal: <code>gpio readall</code></p>
 
                 </div>
-                <div class="col-lg-5 col-sm-pull-6  col-sm-6">
+                <div class="col-lg-5 col-lg-offset-2 col-sm-6">
                     <img class="img-responsive" src="img/connectsensors.png" alt="">
                 </div>
             </div>
@@ -162,11 +186,11 @@
 
     <!-- Page Content -->
     <a  name="install"></a>
-    <div class="content-section-a">
+    <div class="content-section-b">
         <div class="container">
 
             <div class="row">
-                <div class="col-lg-5 col-sm-6">
+                <div class="col-lg-5 col-lg-offset-1 col-sm-push-6  col-sm-6">
                     <hr class="section-heading-spacer">
                     <div class="clearfix"></div>
                     <h2 class="section-heading">Install on Raspberry PI</h2>
@@ -174,7 +198,7 @@
                     <pre><code>bash <(curl -s "https://raw.githubusercontent.com/bkbilly/AlarmPI/master/install.sh")</code></pre>
                     <p class="lead">Follow the on-screen instructions to complete the installation</p>
                 </div>
-                <div class="col-lg-5 col-lg-offset-2 col-sm-6">
+                <div class="col-lg-5 col-sm-pull-6 col-sm-6">
                     <img class="img-responsive" src="img/ssh.png" alt="">
                 </div>
             </div>
@@ -187,18 +211,18 @@
 
     <!-- Page Content -->
     <a  name="openui"></a>
-    <div class="content-section-b">
+    <div class="content-section-a">
         <div class="container">
 
             <div class="row">
-                <div class="col-lg-5 col-lg-offset-1 col-sm-push-6  col-sm-6">
+                <div class="col-lg-5 col-sm-6">
                     <hr class="section-heading-spacer">
                     <div class="clearfix"></div>
                     <h2 class="section-heading">Open the Web Interface</h2>
-                    <p class="lead">Connect from the browser to this URL: <a>https://ipoftheraspberry:5000/</a> </p>
-                    <p class="lead">From here you can add new sensors, and change every setting that you need.</p>
+                    <p class="lead">Connect from the browser to this URL:<br><a>https://ipoftheraspberry:5000/</a> </p>
+                    <p class="lead">From here you can add/delete sensors, enable/disable sensors, activate/deactivate the alarm, change settings and see any change live with the help of websockets.</p>
                 </div>
-                <div class="col-lg-5 col-sm-pull-6  col-sm-6">
+                <div class="col-lg-5 col-lg-offset-2 col-sm-6">
                     <img class="img-responsive" src="img/ui.png" alt="">
                 </div>
             </div>
@@ -213,11 +237,11 @@
 
     <!-- Page Content -->
     <a  name="downloadapp"></a>
-    <div class="content-section-a">
+    <div class="content-section-b">
         <div class="container">
 
             <div class="row">
-                <div class="col-lg-5 col-sm-6">
+                <div class="col-lg-5 col-lg-offset-1 col-sm-push-6  col-sm-6">
                     <hr class="section-heading-spacer">
                     <div class="clearfix"></div>
                     <h2 class="section-heading">Download Android application</h2>
@@ -225,7 +249,7 @@
                     <a href='https://play.google.com/store/apps/details?id=bkbilly.alarmpi&pcampaignid=MKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1'><img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png' height='70px'/></a>
 
                 </div>
-                <div class="col-lg-5 col-lg-offset-2 col-sm-6">
+                <div class="col-lg-5 col-sm-pull-6 col-sm-6">
                     <img class="img-responsive" src="img/android.png" alt="">
                 </div>
             </div>
