@@ -49,6 +49,7 @@ class notifyGPIO():
                 self.GPIO.setup(pin, self.GPIO.OUT)
                 state = self.GPIO.input(pin)
                 if state == self.GPIO.LOW:
+                    print('Enabling GPIO')
                     self.GPIO.output(pin, self.GPIO.HIGH)
 
     def disableOutputPin(self, *pins):
@@ -56,6 +57,7 @@ class notifyGPIO():
             for pin in pins:
                 self.GPIO.setup(pin, self.GPIO.OUT)
                 if self.GPIO.input(pin) == self.GPIO.HIGH:
+                    print('Disabling GPIO')
                     self.GPIO.output(pin, self.GPIO.LOW)
                 self.GPIO.setup(pin, self.GPIO.IN)
 
