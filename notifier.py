@@ -16,6 +16,7 @@ class notifyGPIO():
 
     def __init__(self, settings, optsUpdateUI, mylogs, callbacks):
         self.settings = settings
+        self.mylogs = mylogs
         try:
             import RPi.GPIO as GPIO
             self.connected = True
@@ -206,6 +207,7 @@ class notifyEmail():
 
     def __init__(self, settings, optsUpdateUI, mylogs, callbacks):
         self.settings = settings
+        self.mylogs = mylogs
 
     def sendMail(self):
         """ This method sends an email to all recipients
@@ -263,6 +265,7 @@ class notifyVoip():
 
     def __init__(self, settings, optsUpdateUI, mylogs, callbacks):
         self.settings = settings
+        self.mylogs = mylogs
         self.wd = os.path.dirname(os.path.realpath(__file__))
         self.sipcallfile = os.path.join(
             os.path.join(self.wd, "voip"), "sipcall")
@@ -323,10 +326,10 @@ class Notify():
             Sends MQTT message, enables serene, Send mail, Call Voip.
         """
         self.mylogs.writeLog("alarm", "Intruder Alert")
-        self.enableSerene()
+        self.qgpio.enableSerene()
         self.mqtt.sendStateMQTT()
         self.ui.updateUI('alarmStatus', {"alert": self.settings['settings']['alarmTriggered']})
-        threadSendMail = threading.Thread(target=self.mail.sendMail)
+        threadSendMail = threading.Thread(target=self.email.sendMail)
         threadSendMail.daemon = True
         threadSendMail.start()
         threadCallVoip = threading.Thread(target=self.voip.callVoip)
