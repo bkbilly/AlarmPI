@@ -87,12 +87,40 @@
 			
 			<span class="close" onclick="closeConfigWindow()">x</span><br><br>
 
+			<!-- UI SETTINGS -->
+			<div class="onoffswitch settingsOnOffSwitch">
+				<input type="checkbox" name="onoffswitchMail" class="onoffswitch-checkbox" id="settUI-enable">
+				<label class="onoffswitch-label" for="settUI-enable">
+					<span class="onoffswitch-inner onoffswitch-innerHttps"></span>
+					<span class="onoffswitch-switch notificationstate_ui"></span>
+				</label>
+			</div>
+			<h1 class="settingsTitle">UI Settings</h1>
+			<div class="settingsContent">
+				<table>
+					<tr>
+						<td>
+							<label for="settUI-username">username</label><br>
+							<input type="text" id="settUI-username" placeholder="username" readonly="readonly"><br>
+							<label for="settUI-password">password</label><br>
+							<input type="password" id="settUI-password" placeholder="password"><br>
+						</td>
+						<td>
+							<label for="settUI-timezone">timezone</label><br>
+							<input type="text" id="settUI-timezone" placeholder="timezone"><br>
+							<label for="settUI-port">port</label><br>
+							<input type="text" id="settUI-port" placeholder="port"><br>
+						</td>
+					</tr>
+				</table>
+			</div>
+
 			<!-- SERENE SETTINGS -->
 			<div class="onoffswitch settingsOnOffSwitch">
 				<input type="checkbox" name="onoffswitchSerene" class="onoffswitch-checkbox" id="myonoffswitchSerene">
 				<label class="onoffswitch-label" for="myonoffswitchSerene">
 					<span class="onoffswitch-inner"></span>
-					<span class="onoffswitch-switch"></span>
+					<span class="onoffswitch-switch notificationstate_gpio"></span>
 				</label>
 			</div>
 			<h1 class="settingsTitle">Serene Settings</h1>
@@ -113,7 +141,7 @@
 				<input type="checkbox" name="onoffswitchMail" class="onoffswitch-checkbox" id="settMail-enable">
 				<label class="onoffswitch-label" for="settMail-enable">
 					<span class="onoffswitch-inner"></span>
-					<span class="onoffswitch-switch"></span>
+					<span class="onoffswitch-switch notificationstate_email"></span>
 				</label>
 			</div>
 			<h1 class="settingsTitle">Mail Settings </h1>
@@ -147,7 +175,7 @@
 				<input type="checkbox" name="onoffswitchVoip" class="onoffswitch-checkbox" id="settVoip-enable">
 				<label class="onoffswitch-label" for="settVoip-enable">
 					<span class="onoffswitch-inner"></span>
-					<span class="onoffswitch-switch"></span>
+					<span class="onoffswitch-switch notificationstate_voip"></span>
 				</label>
 			</div>
 			<h1 class="settingsTitle">Voip Settings</h1>
@@ -172,40 +200,12 @@
 				</table>
 			</div>
 
-			<!-- UI SETTINGS -->
-			<div class="onoffswitch settingsOnOffSwitch">
-				<input type="checkbox" name="onoffswitchMail" class="onoffswitch-checkbox" id="settUI-enable">
-				<label class="onoffswitch-label" for="settUI-enable">
-					<span class="onoffswitch-inner onoffswitch-innerHttps"></span>
-					<span class="onoffswitch-switch"></span>
-				</label>
-			</div>
-			<h1 class="settingsTitle">UI Settings</h1>
-			<div class="settingsContent">
-				<table>
-					<tr>
-						<td>
-							<label for="settUI-username">username</label><br>
-							<input type="text" id="settUI-username" placeholder="username"><br>
-							<label for="settUI-password">password</label><br>
-							<input type="password" id="settUI-password" placeholder="password"><br>
-						</td>
-						<td>
-							<label for="settUI-timezone">timezone</label><br>
-							<input type="text" id="settUI-timezone" placeholder="timezone"><br>
-							<label for="settUI-port">port</label><br>
-							<input type="text" id="settUI-port" placeholder="port"><br>
-						</td>
-					</tr>
-				</table>
-			</div>
-
 			<!-- MQTT SETTINGS -->
 			<div class="onoffswitch settingsOnOffSwitch">
 				<input type="checkbox" name="onoffswitchMail" class="onoffswitch-checkbox" id="settMQTT-enable">
 				<label class="onoffswitch-label" for="settMQTT-enable">
 					<span class="onoffswitch-inner"></span>
-					<span class="onoffswitch-switch"></span>
+					<span class="onoffswitch-switch notificationstate_mqtt"></span>
 				</label>
 			</div>
 			<h1 class="settingsTitle">MQTT Settings</h1>
@@ -229,6 +229,8 @@
 							<input type="text" id="settMQTT-authentication" placeholder="Authentication"><br>
 							<label for="settMQTT-password">Password</label><br>
 							<input type="password" id="settMQTT-password" placeholder="Password"><br>
+							<label for="settMQTT-homeassistant">HomeAssistant Integration</label><br>
+							<input type="text" id="settMQTT-homeassistant" placeholder="HomeAssistant Integration"><br>
 						</td>
 					</tr>
 				</table>

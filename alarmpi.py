@@ -195,6 +195,13 @@ class AlarmPiServer(object):
             )
             return json.dumps(returnedLogs)
 
+        @self.app.route('/getNotifiersStatus.json')
+        @flask_login.login_required
+        def getNotifiersStatus():
+            user = flask_login.current_user.id
+            sensorClass = self.users[user]['obj']
+            return json.dumps(sensorClass.getNotifiersStatus())
+
         @self.app.route('/getSereneSettings.json')
         @flask_login.login_required
         def getSereneSettings():
