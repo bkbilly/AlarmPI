@@ -326,7 +326,7 @@ class Notify():
             Sends MQTT message, enables serene, Send mail, Call Voip.
         """
         self.mylogs.writeLog("alarm", "Intruder Alert")
-        self.qgpio.enableSerene()
+        self.gpio.enableSerene()
         self.mqtt.sendStateMQTT()
         self.ui.updateUI('alarmStatus', {"alert": self.settings['settings']['alarmTriggered']})
         threadSendMail = threading.Thread(target=self.email.sendMail)
