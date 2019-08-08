@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import json
 import os
@@ -28,8 +28,6 @@ class AlarmPiServer(object):
         self.certkeyfile = os.path.join(self.wd, 'my.cert.key')
         self.certcrtfile = os.path.join(self.wd, 'my.cert.crt')
         self.webDirectory = os.path.join(self.wd, 'web')
-        self.sipcallfile = os.path.join(
-            os.path.join(self.wd, "voip"), "sipcall")
 
     def setServerConfig(self, jsonfile):
         """ Set the server file to use and initialize the users """
@@ -324,6 +322,17 @@ class AlarmPiServer(object):
             sensorClass.delSensor(str(message['sensor']))
             self.socketio.emit('sensorsChanged', room=user)
 
+        @self.app.route('/setSensorStatus', methods=['GET', 'POST'])
+        @flask_login.login_required
+        def setSensorStatus():
+            message = request.get_json()
+            name = request.args.get('name')
+            state = request.args.get('state')
+            user = flask_login.current_user.id
+            sensorClass = self.users[user]['obj']
+            result = sensorClass.setSensorStatus(name, state)
+            return json.dumps(result)
+
         @self.socketio.on('setSereneSettings')
         @flask_login.login_required
         def setSereneSettings(message):
@@ -395,7 +404,6 @@ class AlarmPiServer(object):
             self.users[user]['obj'] = Worker(
                 jsonfile,
                 logfile,
-                self.sipcallfile,
                 optsUpdateUI
             )
 
