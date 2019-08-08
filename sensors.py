@@ -13,21 +13,6 @@ import re
 from colors import bcolors
 
 
-class outputGPIO():
-    def enableOutputPin(self, *pins):
-        for pin in pins:
-            GPIO.setup(pin, GPIO.OUT)
-            state = GPIO.input(pin)
-            if state == GPIO.LOW:
-                GPIO.output(pin, GPIO.HIGH)
-
-    def disableOutputPin(self, *pins):
-        for pin in pins:
-            GPIO.setup(pin, GPIO.OUT)
-            if GPIO.input(pin) == GPIO.HIGH:
-                GPIO.output(pin, GPIO.LOW)
-            GPIO.setup(pin, GPIO.IN)
-
 
 class sensorGPIO():
     def __init__(self, sensorName):

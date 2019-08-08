@@ -4,12 +4,41 @@ import re
 import threading
 import time
 from datetime import datetime
+import pytz
 
 
 class Logs():
 
-    def __init__(self, logfile):
+    def __init__(self, logfile, timezone):
         self.logfile = logfile
+        try:
+            self.mytimezone = pytz.timezone(timezone)
+        except Exception:
+            self.mytimezone = pytz.utc
+        self.updateUI = lambda **args:0
+        self.limit = 10
+        self.logtypes = 'all'
+
+    def setCallbackUpdateUI(self, callback):
+        self.updateUI = callback
+
+    def setLogFilters(self, limit, logtypes):
+        """ Sets the global filters for the getSensorsLog method """
+
+        self.limit = limit
+        self.logtypes = logtypes
+
+    def writeLog(self, logType, message):
+        """ Write log events into a file and send the last to UI.
+            It also uses the timezone from json file to get the local time.
+        """
+
+        myTimeLog = datetime.now(tz=self.mytimezone).strftime("%Y-%m-%d %H:%M:%S")
+        logmsg = '({0}) [{1}] {2}\n'.format(logType, myTimeLog, message)
+        with open(self.logfile, "a") as myfile:
+            myfile.write(logmsg)
+        self.updateUI('sensorsLog', self.getSensorsLog(
+            self.limit, selectTypes=self.logtypes))
 
     def startTrimThread(self):
         threadTrimLogFile = threading.Thread(target=self.trimLogFile)
@@ -122,14 +151,14 @@ class Logs():
             for log in logs:
                 if 'sensor' in log['type'][0].lower():
                     status, uuid = log['type'][1], log['type'][2]
-                    if status == 'start':
+                    if status == 'on':
                         startedSensors[uuid] = {
                             'start': log['time'],
                             'ind': index
                         }
                         index += 1
                         tmplogs.append(log)
-                    elif status == 'stop':
+                    elif status == 'off':
                         try:
                             info = startedSensors.pop(uuid, None)
                             if info is not None:
