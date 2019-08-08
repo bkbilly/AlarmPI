@@ -332,7 +332,7 @@ class Notify():
         threadSendMail = threading.Thread(target=self.email.sendMail)
         threadSendMail.daemon = True
         threadSendMail.start()
-        threadCallVoip = threading.Thread(target=self.voip.callVoip)
+        threadCallVoip = threading.Thread(target=self.voip.callNotify)
         threadCallVoip.daemon = True
         threadCallVoip.start()
 
