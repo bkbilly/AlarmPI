@@ -33,14 +33,14 @@ class notifyGPIO():
         if self.settings['serene']['enable'] is True and self.connected:
             self.mylogs.writeLog("alarm", "Serene started")
             serenePin = int(self.settings['serene']['pin'])
-            outputGPIO().enableOutputPin(serenePin)
+            self.enableOutputPin(serenePin)
 
     def stopSerene(self):
         """ This method disables the output pin for the serene """
 
         if self.settings['serene']['enable'] is True and self.connected:
             serenePin = self.settings['serene']['pin']
-            outputGPIO().disableOutputPin(serenePin)
+            self.disableOutputPin(serenePin)
 
     def enableOutputPin(self, *pins):
         if self.connected:
