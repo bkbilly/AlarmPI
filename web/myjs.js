@@ -302,8 +302,18 @@ function settingsMenu(){
 		$("#settMQTT-password").val(data.mqtt.password);
 		$("#settMQTT-state_topic").val(data.mqtt.state_topic);
 		$("#settMQTT-command_topic").val(data.mqtt.command_topic);
-
+		$("#settMQTT-homeassistant").val(data.mqtt.homeassistant);
 	});
+	$.getJSON("getNotifiersStatus.json").done(function(data){
+		for (var key in data) {
+			if (data[key] === false) {
+				$(".notificationstate_"+key).css("background-color", 'red');
+			} else {
+				$(".notificationstate_"+key).css("background-color", 'green');
+			}
+		};
+	});
+
 }
 
 function saveSettings(){
@@ -347,6 +357,7 @@ function saveSettings(){
 	messageMQTT.password = $("#settMQTT-password").val();
 	messageMQTT.state_topic = $("#settMQTT-state_topic").val();
 	messageMQTT.command_topic = $("#settMQTT-command_topic").val();
+	messageMQTT.homeassistant = $("#settMQTT-homeassistant").val() == 'true';
 
 	console.log(messageSerene);
 	console.log(messageMail);

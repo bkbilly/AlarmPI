@@ -180,6 +180,9 @@ class Worker():
         """ Sets the global filters for the getSensorsLog method """
         self.mylogs.setLogFilters(limit, logtypes)
 
+    def getNotifiersStatus(self):
+        return self.mynotify.status()
+
     def getSereneSettings(self):
         """ Gets the Serene Settings """
         return self.settings['serene']

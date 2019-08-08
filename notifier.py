@@ -11,6 +11,7 @@ from email.mime.text import MIMEText
 from collections import OrderedDict
 import subprocess
 import sys
+import re
 
 
 
@@ -57,7 +58,7 @@ class notifyGPIO():
                     GPIO.output(pin, GPIO.LOW)
                 GPIO.setup(pin, GPIO.IN)
 
-    def status():
+    def status(self):
         return self.connected
 
 
@@ -79,7 +80,20 @@ class notifyMQTT():
         self.optsUpdateUI = optsUpdateUI
         self.callbacks = callbacks
         self.isconnected = False
+        self.version = self.getVersion()
         self.setupMQTT()
+
+    def getVersion(self):
+        version = 0
+        wd = os.path.dirname(os.path.realpath(__file__))
+        setupfile = os.path.join(wd, "setup.py")
+        with open(setupfile) as setup:
+            for line in setup:
+                if 'version=' in line:
+                    match = re.findall(r"\'(.*?)\'", line)
+                    if len(match) > 0:
+                        version = match[0]
+        return version
 
     def setupMQTT(self):
         """ Start or Stop the MQTT connection based on the settings """
@@ -127,30 +141,31 @@ class notifyMQTT():
             self.mqttclient.subscribe(setmqttsensor)
 
             # Home assistant integration
-            statemqttsensor = '{0}/sensor/{1}'.format(
-                self.settings['mqtt']['state_topic'],
-                sensorvalue['name']
-            )
-            sensor_name = sensorvalue['name'].lower().replace(' ', '_')
-            has_topic = "homeassistant/binary_sensor/{0}/config".format(sensor_name)
-            print(has_topic)
-            has_config = {
-                "payload_on": "on",
-                "payload_off": "off",
-                "device_class": "door",
-                "state_topic": statemqttsensor,
-                "name": "AlarmPI-{0}".format(sensorvalue['name']),
-                "unique_id": "alarmpi_{0}".format(sensor_name),
-                "device": {
-                    "identifiers": "alarmpi-{0}".format(self.optsUpdateUI['room']),
-                    "name": "AlarmPI-{0}".format(self.optsUpdateUI['room']),
-                    "sw_version": "AlarmPI 4.0",
-                    "model": "Raspberry PI",
-                    "manufacturer": "bkbilly"
+            if self.settings['mqtt']['homeassistant']:
+                statemqttsensor = '{0}/sensor/{1}'.format(
+                    self.settings['mqtt']['state_topic'],
+                    sensorvalue['name']
+                )
+                sensor_name = sensorvalue['name'].lower().replace(' ', '_')
+                has_topic = "homeassistant/binary_sensor/{0}/config".format(sensor_name)
+                print(has_topic)
+                has_config = {
+                    "payload_on": "on",
+                    "payload_off": "off",
+                    "device_class": "door",
+                    "state_topic": statemqttsensor,
+                    "name": "AlarmPI-{0}".format(sensorvalue['name']),
+                    "unique_id": "alarmpi_{0}".format(sensor_name),
+                    "device": {
+                        "identifiers": "alarmpi-{0}".format(self.optsUpdateUI['room']),
+                        "name": "AlarmPI-{0}".format(self.optsUpdateUI['room']),
+                        "sw_version": "AlarmPI {0}".format(self.version),
+                        "model": "Raspberry PI",
+                        "manufacturer": "bkbilly"
+                    }
                 }
-            }
-            has_payload = json.dumps(has_config)
-            # self.mqttclient.publish(has_topic, has_payload, retain=False, qos=2)
+                has_payload = json.dumps(has_config)
+                self.mqttclient.publish(has_topic, has_payload, retain=True, qos=2)
 
     def on_disconnect(self, client, userdata, flags, rc):
         self.isconnected = False
@@ -243,7 +258,7 @@ class notifyEmail():
 
             self.mylogs.writeLog("alarm", "Mail sent to: " + ", ".join(recipients))
 
-    def status():
+    def status(self):
         connected = False
         if self.settings['mail']['enable'] is True:
             try:
@@ -316,11 +331,18 @@ class Notify():
 
         print("{0}------------ INIT FOR DOOR SENSOR CLASS! ----------------{1}"
               .format(bcolors.HEADER, bcolors.ENDC))
-        self.mqtt = notifyMQTT(settings, optsUpdateUI, mylogs, self.callbacks)
-        self.ui = notifyUI(settings, optsUpdateUI, mylogs, self.callbacks)
         self.gpio = notifyGPIO(settings, optsUpdateUI, mylogs, self.callbacks)
+        self.ui = notifyUI(settings, optsUpdateUI, mylogs, self.callbacks)
+        self.mqtt = notifyMQTT(settings, optsUpdateUI, mylogs, self.callbacks)
         self.email = notifyEmail(settings, optsUpdateUI, mylogs, self.callbacks)
         self.voip = notifyVoip(settings, optsUpdateUI, mylogs, self.callbacks)
+
+    def status(self):
+        return {
+            'email': self.email.status(),
+            'gpio': self.gpio.status(),
+            'mqtt': self.mqtt.status(),
+        }
 
     def intruderAlert(self):
         """ This method is called when an intruder is detected. It calls
