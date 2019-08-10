@@ -250,7 +250,7 @@ class Worker():
         self.mylogs.writeLog("user_action", "{0} sensor: {1}".format(
             logState, logSensorName))
         self.writeNewSettingsToFile(self.settings)
-        self.mynotify.update_sensor(sensorUUID)
+        self.mynotify.updateUI('settingsChanged', self.getSensorsArmed())
 
 
     def setSensorsZone(self, zones):
