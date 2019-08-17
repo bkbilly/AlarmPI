@@ -74,6 +74,21 @@ To test it, execute this replacing the (myserver, myusername, mypassword, mynumb
 
 `./sipcall -sd myserver -su myusername -sp mypassword -pn mynumbertocall -s 1 -mr 2 -ttsf ../play.wav`
 
+
+## API
+### MQTT
+  * `home/alarm/set` [ARM_HOME,ARM_AWAY,ARM_NIGHT,DISARM]
+  * `home/alarm/set/sensor/test1` [off,online]
+  * `home/alarm/sensor/test1` [off,on,error]
+  * `home/alarm` [armed_away,disarmed,triggered]
+
+### HTTP
+  * `https://admin:secret@example.com:5000/setSensorStatus?name=test1&state=off`
+  * `https://admin:secret@example.com:5000/activateAlarmZone?zones=home,away`
+  * `https://admin:secret@example.com:5000/activateAlarmOnline`
+  * `https://admin:secret@example.com:5000/deactivateAlarmOnline`
+
+
 ## Configuration
 ### Configuration Explained `server.json`
 * `ui.https` (bool) Use HTTPs
@@ -115,6 +130,7 @@ To test it, execute this replacing the (myserver, myusername, mypassword, mynumb
 * `sensors[uuid].state_topic` (str) [MQTT] The unique topic for the sensor
 * `sensors[uuid].message_alert` (str) [MQTT] The message for alert
 * `sensors[uuid].message_noalert` (str) [MQTT] The message for stop alert
+* `sensors[uuid].zones` (list str) Set zones to massively activate the desired sensors
 * `mqtt.enable` (bool) Enable the mqtt server
 * `mqtt.authentication` (bool) Use authentication for the mqtt server
 * `mqtt.state_topic` (str) The MQTT topic for the state (disarmed, triggered, armed_away)
@@ -123,6 +139,7 @@ To test it, execute this replacing the (myserver, myusername, mypassword, mynumb
 * `mqtt.port` (int) Port of the mqtt server
 * `mqtt.username` (str) Username of the mqtt server if authentication is true
 * `mqtt.password` (str) Passwrd of the mqtt server if authentication is true
+* `mqtt.homeassistant` (bool) Automatically create sensors on HomeAssistant
 * `settings.alarmArmed` (bool) If true, activate the alarm
 * `settings.alarmTriggered` (bool) If true, there is an intruder
 * `settings.timezone` (str) The timezone for the log file based on pytz
