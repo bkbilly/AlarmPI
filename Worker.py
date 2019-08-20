@@ -114,6 +114,7 @@ class Worker():
             for sensor, sensorvalue in self.settings['sensors'].items():
                 if (sensorvalue['alert'] is True and
                         sensorvalue['enabled'] is True and
+                        sensorvalue['online'] is True and
                         self.settings['settings']['alarmTriggered'] is False):
                     self.settings['settings']['alarmTriggered'] = True
                     threadIntruderAlert = threading.Thread(
@@ -146,6 +147,7 @@ class Worker():
         self.settings['settings']['alarmArmed'] = True
         self.writeNewSettingsToFile(self.settings)
         self.mynotify.update_alarmstate()
+        self.checkIntruderAlert()
 
     def deactivateAlarm(self):
         """ Deactivates the alarm """

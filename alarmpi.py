@@ -436,7 +436,7 @@ class AlarmPiServer(object):
 
 if __name__ == '__main__':
     log = logging.getLogger('werkzeug')
-    # log.setLevel(logging.ERROR)
+    log.setLevel(logging.ERROR)
 
     if len(sys.argv) > 1:
         if ".pid" in sys.argv[1]:
