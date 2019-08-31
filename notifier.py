@@ -24,6 +24,7 @@ class notifyGPIO():
             import RPi.GPIO as GPIO
             self.connected = True
             self.GPIO = GPIO
+            GPIO.setmode(GPIO.BCM)
         except Exception as e:
             self.connected = False
 

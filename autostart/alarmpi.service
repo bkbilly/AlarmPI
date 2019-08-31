@@ -1,0 +1,12 @@
+[Unit]
+Description=AlarmPI
+After=network-online.target
+ 
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/python3 /opt/AlarmPI/alarmpi.py
+ 
+[Install]
+WantedBy=multi-user.target
+

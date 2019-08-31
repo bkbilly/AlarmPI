@@ -16,16 +16,16 @@ if [ -z $(which jq) ]; then
     sudo apt-get --yes --force-yes install jq
 fi
 
-echo -e "\e[35mLooking for Python...\e[0m"
-if [ -z $(which python) ]; then
-    echo -e "\e[31mPython not found, installing from apt-get:\e[0m"
-    sudo apt-get --yes --force-yes install python
+echo -e "\e[35mLooking for Python3...\e[0m"
+if [ -z $(which python3) ]; then
+    echo -e "\e[31mPython3 not found, installing from apt-get:\e[0m"
+    sudo apt-get --yes --force-yes install python3
 fi
 
-echo -e "\e[35mLooking for PIP...\e[0m"
-if [ -z $(which pip) ]; then
-    echo -e "\e[31mPIP not found, installing from apt-get:\e[0m"
-    sudo apt-get --yes --force-yes install python-pip
+echo -e "\e[35mLooking for PIP3...\e[0m"
+if [ -z $(which pip3) ]; then
+    echo -e "\e[31mPIP3 not found, installing from apt-get:\e[0m"
+    sudo apt-get --yes --force-yes install python3-pip
 fi
 
 
@@ -111,15 +111,20 @@ fi
 
 # Install Python requirements
 echo -e "\e[35mInstalling Python requirements...\e[0m"
-sudo pip install -r $basedir/requirements.txt
+sudo pip3 install -r $basedir/requirements.txt
 
 # Install as a service
 echo -e "\e[35mInstalling as a service...\e[0m"
-sudo chmod +x $basedir/alarmpi
-sudo ln -s $basedir/alarmpi /etc/init.d/alarmpi
-sudo update-rc.d alarmpi defaults
-sudo service alarmpi stop
+#sudo chmod +x $basedir/autostart/alarmpi
+#sudo ln -s $basedir/autostart/alarmpi /etc/init.d/alarmpi
+#sudo update-rc.d alarmpi defaults
+#sudo service alarmpi stop
+#sudo service alarmpi start
+sudo cp $basedir/autostart/alarmpi.service /etc/systemd/system/alarmpi.service
+sudo chmod +x /etc/systemd/system/alarmpi.service
+sudo systemctl enable alarmpi
 sudo service alarmpi start
+
 
 # Done
 myURL="$httpsurl://$username:$password@localhost:$port"
