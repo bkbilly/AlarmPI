@@ -39,6 +39,10 @@ Messages that is subscribed to:
  * home/alarm/set/sensor/Bedroom on
  * home/alarm/set/sensor/Bedroom off
 
+Custom messages subscriptions on MQTT Sensors:
+ These can be configured in the sensor settings through the topic and payload inputs. The payload must be a python function with the payload stored as `message` like this:
+ * message['contact'] == 'ON'
+
 
 ### IFTTT
 It can also be used with IFTTT using the Webhooks module like this:
