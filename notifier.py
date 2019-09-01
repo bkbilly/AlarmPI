@@ -133,8 +133,11 @@ class notifyMQTT():
 
     def on_connect(self, client, userdata, flags, rc):
         self.isconnected = True
+        # Subscribe to Alarm Set command
         print('MQTT subscribing to: {0}'.format(self.settings['mqtt']['command_topic']))
         self.mqttclient.subscribe(self.settings['mqtt']['command_topic'])
+
+        # Subscribe to Sensor Set command
         for sensor, sensorvalue in self.settings['sensors'].items():
             # Subscribe to mqtt sensors events
             setmqttsensor = '{0}{1}{2}'.format(
@@ -143,6 +146,13 @@ class notifyMQTT():
                 sensorvalue['name'].lower().replace(' ', '_'))
             print('MQTT subscribing to: {0}'.format(setmqttsensor))
             self.mqttclient.subscribe(setmqttsensor)
+
+            # Subscribe to custom MQTT sensors events
+            if sensorvalue['type'].lower() == 'mqtt' and 'topic' in sensorvalue:
+                if sensorvalue['topic'] is not None and sensorvalue['topic'] != '':
+                    print('MQTT subscribing to: {0}'.format(sensorvalue['topic']))
+                    self.mqttclient.subscribe(sensorvalue['topic'])
+
 
             # Home assistant integration
             if self.settings['mqtt']['homeassistant']:
@@ -202,6 +212,14 @@ class notifyMQTT():
                             self.callbacks['sensorAlert'](sensor)
                         else:
                             self.callbacks['sensorStopAlert'](sensor)
+            elif msg.topic in [value.get('topic') for value in self.settings['sensors'].values() if value.get('topic') is not None]:
+                for sensor, sensorvalue in self.settings['sensors'].items():
+                    if sensorvalue.get('topic') == msg.topic:
+                        message = json.loads(message)
+                        if eval(sensorvalue['payload']) is True:
+                            self.callbacks['sensorStopAlert'](sensor)
+                        else:
+                            self.callbacks['sensorAlert'](sensor)
         except Exception as e:
             raise e
 
