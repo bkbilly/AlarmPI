@@ -8,8 +8,14 @@ AlarmPI is a home security system based on Raspberry PI. It supports wired senso
 
 It is written in python and supports both python 2.7 & python 3.6. There is also the option of having more than one user by editing the server.json file accordingly.
 
-## Usage
 
+## Installation
+With this command on your terminal you can install and update the application with my latest commit.
+```bash
+bash <(curl -s "https://raw.githubusercontent.com/bkbilly/AlarmPI/master/install.sh")
+```
+
+## Usage
 ### Web UI
 The Web Interface of the alarm has all the features that are needed to configure and use the home security. It supports real time events of the sensors, the logs and their status.
 It also works as an smartphone application from the browser: _Add to Home screen_
@@ -19,37 +25,6 @@ The android application is very light and fast and it is recomended for the phon
 You can download it from here: [Play Store](https://play.google.com/store/apps/details?id=bkbilly.alarmpi)
 
 The source code for the application is here: https://github.com/bkbilly/AlarmPI-Android
-
-
-### MQTT
-These are the possible mqtt messages. First you will have to setup the MQTT state_topc & command_topic. The ones I will be using for this example are:
-state_topic: home/alarm
-command_topic: home/alarm/set
-
-Messages with topics sent by AlarmPI:
- * home/alarm disarmed
- * home/alarm triggered
- * home/alarm armed_away
- * home/alarm/sensor/Bedroom on
- * home/alarm/sensor/Bedroom off
-
-Messages that is subscribed to:
- * home/alarm/set ARM_AWAY
- * home/alarm/set ARM_HOME
- * home/alarm/set/sensor/Bedroom on
- * home/alarm/set/sensor/Bedroom off
-
-Custom messages subscriptions on MQTT Sensors:
- These can be configured in the sensor settings through the topic and payload inputs. The payload must be a python function with the payload stored as `message` like this:
- * message['contact'] == 'ON'
-
-
-### IFTTT
-It can also be used with IFTTT using the Webhooks module like this:
-`https://admin:secret@example.com:5000/activateAlarmOnline`
-`https://admin:secret@example.com:5000/deactivateAlarmOnline`
->My personal favourite is to control it with Google Assistant.
-
 
 ### Home-Assistant
 It is also controlled with MQTT commands with the Home-Assistant component: 'MQTT Alarm Control Panel'.
@@ -64,33 +39,35 @@ alarm_control_panel:
     payload_arm_away: "ARM_AWAY"
 ```
 
-
-## Installation
-With this command on your terminal you can install and update the application with my latest commit.
-```bash
-bash <(curl -s "https://raw.githubusercontent.com/bkbilly/AlarmPI/master/install.sh")
-```
-
-## SipCall (VoIP)
-
-I have built the sipcall for the Raspberry Pi, so hopefully you will not have to build it yourself.
-To test it, execute this replacing the (myserver, myusername, mypassword, mynumbertocall):
-
-`./sipcall -sd myserver -su myusername -sp mypassword -pn mynumbertocall -s 1 -mr 2 -ttsf ../play.wav`
-
-
 ## API
-### MQTT
-  * `home/alarm/set` [ARM_HOME,ARM_AWAY,ARM_NIGHT,DISARM]
-  * `home/alarm/set/sensor/test1` [off,online]
-  * `home/alarm/sensor/test1` [off,on,error]
-  * `home/alarm` [armed_away,disarmed,triggered]
-
 ### HTTP
   * `https://admin:secret@example.com:5000/setSensorStatus?name=test1&state=off`
   * `https://admin:secret@example.com:5000/activateAlarmZone?zones=home,away`
   * `https://admin:secret@example.com:5000/activateAlarmOnline`
   * `https://admin:secret@example.com:5000/deactivateAlarmOnline`
+
+### MQTT
+These are the possible mqtt messages. First you will have to setup the MQTT state_topc & command_topic.
+  * `home/alarm/set` [ARM_HOME,ARM_AWAY,ARM_NIGHT,DISARM]
+  * `home/alarm/set/sensor/test1` [off,online]
+  * `home/alarm/sensor/test1` [off,on,error]
+  * `home/alarm` [armed_away,disarmed,triggered]
+
+Supports custom messages subscriptions on MQTT Sensors by filling the appropriate information about topic and payload on sensor settings. This can be used for cases like zigbee2mqtt so that zigbee devices can be used. The payload must be a python function with the payload stored as `message` like this:
+ * message['contact'] == 'ON'
+
+### IFTTT
+It can also be used with IFTTT using the Webhooks module like this:
+`https://admin:secret@example.com:5000/activateAlarmOnline`
+`https://admin:secret@example.com:5000/deactivateAlarmOnline`
+>My personal favourite is to control it with Google Assistant.
+
+
+## SipCall (VoIP)
+I have built the sipcall for the Raspberry Pi, so hopefully you will not have to build it yourself.
+To test it, execute this replacing the (myserver, myusername, mypassword, mynumbertocall):
+
+`./sipcall -sd myserver -su myusername -sp mypassword -pn mynumbertocall -s 1 -mr 2 -ttsf ../play.wav`
 
 
 ## Configuration
@@ -104,7 +81,6 @@ To test it, execute this replacing the (myserver, myusername, mypassword, mynumb
 
 
 ### Configuration Explained `settings.json`
-
 * `serene.enable` (bool) Enable serene activation
 * `serene.pin` (int) Output pin of the serene
 * `mail.enable` (bool) Enable mail alerts
@@ -149,7 +125,6 @@ To test it, execute this replacing the (myserver, myusername, mypassword, mynumb
 * `settings.timezone` (str) The timezone for the log file based on pytz
 
 ## Contributing
-
 1. Fork it!
 2. Create your feature branch: `git checkout -b my-new-feature`
 3. Commit your changes: `git commit -am 'Add some feature'`
