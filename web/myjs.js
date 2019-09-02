@@ -171,11 +171,13 @@ function changeSensorSettings(sensor, type){
 	if (type === 'newSensor') {
 		var currentName = ""
 		var zones = ""
+		var behavior = "normal"
 		$("#sensorType").show()
 		$("#delSensorBTN").hide();
 		$("#inputName").val('');
 	} else if (type === 'oldSensor') {
 		var currentName = allproperties['sensors'][sensor]['name'];
+		var behavior = allproperties['sensors'][sensor]['behavior']
 		var zones = allproperties['sensors'][sensor]['zones'];
 		$("#sensorType").val(allproperties['sensors'][sensor]['type']).change();
 		$("#sensorType").hide()
@@ -202,6 +204,7 @@ function changeSensorSettings(sensor, type){
 	$("#okButton").attr("onclick","saveConfigSettings('"+ type+"','"+sensor+"','"+currentName+"')");
 	$("#inputName").val(currentName);
 	$("#inputZones").val(zones);
+	$("#inputBehavior").val(behavior);
 	$("#sensorModal").show();
 }
 
@@ -219,8 +222,9 @@ function saveConfigSettings(type, sensor, currentName){
 	var newname = $("#inputName").val();
 	var zones = $("#inputZones").val().split(/[\s,]+/);
 	var sensorType = $("#sensorType").prop("value");
+	var behavior = $("#inputBehavior").prop("value");
 	var sensorValues = {}
-	sensorValues[sensor] = {'type': sensorType, 'name': newname, 'zones': zones}
+	sensorValues[sensor] = {'type': sensorType, 'name': newname, 'zones': zones, 'behavior': behavior}
 	$('#inputDiv'+sensorType+' [id^="'+sensorType+'-"]').each(function(){
 		var key = this.id.replace(sensorType+'-', '');
 		var value = $(this).val();

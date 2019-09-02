@@ -64,6 +64,11 @@ class Worker():
         ))
         self.settings['sensors'][sensorUUID]['alert'] = True
         self.settings['sensors'][sensorUUID]['online'] = True
+        if (self.settings['sensors'][sensorUUID].get('behavior') == '24hours' and
+                self.settings['sensors'][sensorUUID]['alert'] is True and
+                self.settings['sensors'][sensorUUID]['enabled'] is True and
+                self.settings['sensors'][sensorUUID]['online'] is True):
+            self.settings['settings']['alarmArmed'] = True
         self.writeNewSettingsToFile(self.settings)
         self.mynotify.update_sensor(sensorUUID)
         self.checkIntruderAlert()
