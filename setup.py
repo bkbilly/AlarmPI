@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 REQUIRES = [
-    'Flask==1.0.2',
+    'Flask==1.1.1',
     'Flask-SocketIO==4.2.1',
     'Flask-Login==0.4.1',
     'requests==2.20.0',
