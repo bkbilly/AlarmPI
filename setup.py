@@ -6,7 +6,7 @@ REQUIRES = [
     'Flask-Login==0.4.1',
     'requests==2.20.0',
     'pytz==2018.5',
-    'paho-mqtt==1.3.1',
+    'paho-mqtt==1.4.0',
     'RPi.GPIO==0.6.3',
 ]
 
