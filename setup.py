@@ -1,13 +1,13 @@
 from setuptools import setup, find_packages
 
 REQUIRES = [
-    'Flask==1.0.2',
+    'Flask==1.1.1',
     'Flask-SocketIO==3.0.1',
     'Flask-Login==0.4.1',
-    'requests==2.20.0',
-    'pytz==2018.5',
-    'paho-mqtt==1.3.1',
-    'RPi.GPIO==0.6.3',
+    'requests==2.22.0',
+    'pytz==2019.2',
+    'paho-mqtt==1.4.0',
+    'RPi.GPIO==0.7.0',
 ]
 
 
