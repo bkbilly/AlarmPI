@@ -225,7 +225,8 @@ class AlarmPiServer(object):
                 "mail": sensorClass.getMailSettings(),
                 "voip": sensorClass.getVoipSettings(),
                 "ui": uisettings,
-                "mqtt": sensorClass.getMQTTSettings()
+                "mqtt": sensorClass.getMQTTSettings(),
+                "serene": sensorClass.getSereneSettings(),
             })
 
         @self.app.route('/activateAlarmOnline')
