@@ -122,8 +122,8 @@
 
 			<!-- SERENE SETTINGS -->
 			<div class="onoffswitch settingsOnOffSwitch">
-				<input type="checkbox" name="onoffswitchSerene" class="onoffswitch-checkbox" id="myonoffswitchSerene">
-				<label class="onoffswitch-label" for="myonoffswitchSerene">
+				<input type="checkbox" name="onoffswitchSerene" class="onoffswitch-checkbox" id="settSiren-enable">
+				<label class="onoffswitch-label" for="settSiren-enable">
 					<span class="onoffswitch-inner"></span>
 					<span class="onoffswitch-switch notificationstate_gpio"></span>
 				</label>
@@ -133,9 +133,18 @@
 				<table>
 					<tr>
 						<td>
-							BCM Pin:<select id="inputSerenePin" class="pinSelect">
+							<label for="settSiren-Pin">BCM Pin:</label><br>
+							<select id="settSiren-Pin" class="pinSelect">
 								<option value="" disabled selected></option>
 							</select><br>
+						</td>
+						<td>
+							<label for="settSiren-http_start">Siren Start HTTP Request</label><br>
+							<input type="text" id="settSiren-http_start" placeholder="Siren Start HTTP Request"><br>
+						</td>
+						<td>
+							<label for="settSiren-http_stop">Siren Stop HTTP Request</label><br>
+							<input type="text" id="settSiren-http_stop" placeholder="Siren Stop HTTP Request"><br>
 						</td>
 					</tr>
 				</table>

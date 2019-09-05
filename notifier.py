@@ -12,6 +12,7 @@ from collections import OrderedDict
 import subprocess
 import sys
 import re
+import requests
 
 
 
@@ -36,6 +37,7 @@ class notifyGPIO():
             self.mylogs.writeLog("alarm", "Serene started")
             serenePin = int(self.settings['serene']['pin'])
             self.enableOutputPin(serenePin)
+            requests.get(self.settings['serene']['http_start'])
 
     def stopSerene(self):
         """ This method disables the output pin for the serene """
@@ -43,6 +45,8 @@ class notifyGPIO():
         if self.settings['serene']['enable'] is True and self.connected:
             serenePin = self.settings['serene']['pin']
             self.disableOutputPin(serenePin)
+            requests.get(self.settings['serene']['http_stop'])
+            
 
     def enableOutputPin(self, *pins):
         if self.connected:

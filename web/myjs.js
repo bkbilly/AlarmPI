@@ -271,11 +271,12 @@ function closeConfigWindow(){
 
 function settingsMenu(){
 	$("#settingsModal").show();
-	$.getJSON("getSereneSettings.json").done(function(data){
-		$("#myonoffswitchSerene").prop('checked', data.enable);
-		addPinsToSelect('#inputSerenePin', data.pin);
-	});
 	$.getJSON("getAllSettings.json").done(function(data){
+		$("#settSiren-enable").prop('checked', data.serene.enable);
+		addPinsToSelect('#settSiren-Pin', data.serene.pin);
+		$("#settSiren-http_start").val(data.serene.http_start);
+		$("#settSiren-http_stop").val(data.serene.http_stop);
+
 		$("#settMail-enable").prop('checked', data.mail.enable);
 		$("#settMail-username").val(data.mail.username);
 		$("#settMail-password").val(data.mail.password);
@@ -328,8 +329,10 @@ function saveSettings(){
 	var messageUI = {}
 	var messageMQTT = {}
 
-	messageSerene.enable = $("#myonoffswitchSerene").prop('checked');
-	messageSerene.pin = parseInt($("#inputSerenePin").val());
+	messageSerene.enable = $("#settSiren-enable").prop('checked');
+	messageSerene.pin = parseInt($("#settSiren-Pin").val());
+	messageSerene.http_start = $("#settSiren-http_start").val();
+	messageSerene.http_stop = $("#settSiren-http_stop").val();
 
 	messageMail.enable = $("#settMail-enable").prop('checked');
 	messageMail.username = $("#settMail-username").val();
