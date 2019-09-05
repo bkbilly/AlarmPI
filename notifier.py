@@ -37,7 +37,11 @@ class notifyGPIO():
             self.mylogs.writeLog("alarm", "Serene started")
             serenePin = int(self.settings['serene']['pin'])
             self.enableOutputPin(serenePin)
-            requests.get(self.settings['serene']['http_start'])
+            if self.settings['serene']['http_start'] != '':
+                try:
+                    requests.get(self.settings['serene']['http_start'])
+                except Exception as e:
+                    print(e)
 
     def stopSerene(self):
         """ This method disables the output pin for the serene """
@@ -45,7 +49,11 @@ class notifyGPIO():
         if self.settings['serene']['enable'] is True and self.connected:
             serenePin = self.settings['serene']['pin']
             self.disableOutputPin(serenePin)
-            requests.get(self.settings['serene']['http_stop'])
+            if self.settings['serene']['http_stop'] != '':
+                try:
+                    requests.get(self.settings['serene']['http_stop'])
+                except Exception as e:
+                    print(e)
             
 
     def enableOutputPin(self, *pins):
