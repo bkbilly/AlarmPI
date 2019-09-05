@@ -162,6 +162,14 @@ class Worker():
         self.writeNewSettingsToFile(self.settings)
         self.mynotify.update_alarmstate()
 
+    def startSiren(self, zones=None):
+        """ Activates the Siren """
+        self.mynotify.startSiren()
+
+    def stopSiren(self):
+        """ Deactivates the Siren """
+        self.mynotify.stopSiren()
+
     def getSensorsArmed(self):
         """ Returns the sensors and alarm status
             as a json to use it to the UI """

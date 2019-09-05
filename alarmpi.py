@@ -303,6 +303,22 @@ class AlarmPiServer(object):
             self.socketio.emit('settingsChanged',
                                sensorClass.getSensorsArmed(), room=user)
 
+        @self.app.route('/startSiren', methods=['GET', 'POST'])
+        @flask_login.login_required
+        def startSiren():
+            user = flask_login.current_user.id
+            sensorClass = self.users[user]['obj']
+            sensorClass.startSiren()
+            return json.dumps("done")
+
+        @self.app.route('/stopSiren', methods=['GET', 'POST'])
+        @flask_login.login_required
+        def stopSiren():
+            user = flask_login.current_user.id
+            sensorClass = self.users[user]['obj']
+            sensorClass.stopSiren()
+            return json.dumps("done")
+
         # @self.socketio.on('addSensor')
         # @flask_login.login_required
         # def addSensor(message):
