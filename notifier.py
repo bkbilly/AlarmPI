@@ -29,7 +29,7 @@ class notifyGPIO():
             self.connected = False
 
 
-    def enableSerene(self):
+    def startSerene(self):
         """ This method enables the output pin for the serene """
 
         if self.settings['serene']['enable'] is True and self.connected:
@@ -371,13 +371,19 @@ class Notify():
             'mqtt': self.mqtt.status(),
         }
 
+    def startSiren(self):
+        self.gpio.startSerene()
+        
+    def stopSiren(self):
+        self.gpio.stopSerene()
+
     def intruderAlert(self):
         """ This method is called when an intruder is detected. It calls
             all the methods whith the actions that we want to do.
             Sends MQTT message, enables serene, Send mail, Call Voip.
         """
         self.mylogs.writeLog("alarm", "Intruder Alert")
-        self.gpio.enableSerene()
+        self.gpio.startSerene()
         self.mqtt.sendStateMQTT()
         self.ui.updateUI('alarmStatus', {"alert": self.settings['settings']['alarmTriggered']})
         threadSendMail = threading.Thread(target=self.email.sendMail)
