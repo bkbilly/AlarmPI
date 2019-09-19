@@ -151,7 +151,7 @@ class Logs():
             for log in logs:
                 if 'sensor' in log['type'][0].lower():
                     status, uuid = log['type'][1], log['type'][2]
-                    if status == 'on':
+                    if status == 'on' and uuid not in startedSensors:
                         startedSensors[uuid] = {
                             'start': log['time'],
                             'ind': index
@@ -212,7 +212,7 @@ class Logs():
             tmplogs = []
             for log in logs:
                 if ('timediff' in log):
-                    tmplogs.append('[{0}] ({1}) {2}'.format(log['time'], log['timediff'], log['event']))
+                    tmplogs.append('[{0}] ({1}) {2}'.format(log['timeend'], log['timediff'], log['event']))
                 else:
                     tmplogs.append('[{0}] {1}'.format(log['time'], log['event']))
             logs = tmplogs
