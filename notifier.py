@@ -173,15 +173,15 @@ class notifyMQTT():
                     sensorvalue['name']
                 )
                 sensor_name = sensorvalue['name'].lower().replace(' ', '_')
-                has_topic = "homeassistant/binary_sensor/{0}/config".format(sensor_name)
+                has_topic = "homeassistant/binary_sensor/{0}_{1}/config".format(self.optsUpdateUI['room'], sensor_name)
                 print(has_topic)
                 has_config = {
                     "payload_on": "on",
                     "payload_off": "off",
                     "device_class": "door",
                     "state_topic": statemqttsensor,
-                    "name": "AlarmPI-{0}".format(sensorvalue['name']),
-                    "unique_id": "alarmpi_{0}".format(sensor_name),
+                    "name": "AlarmPI-{0}-{1}".format(self.optsUpdateUI['room'], sensorvalue['name']),
+                    "unique_id": "alarmpi_{0}_{1}".format(self.optsUpdateUI['room'], sensor_name),
                     "device": {
                         "identifiers": "alarmpi-{0}".format(self.optsUpdateUI['room']),
                         "name": "AlarmPI-{0}".format(self.optsUpdateUI['room']),
@@ -192,6 +192,28 @@ class notifyMQTT():
                 }
                 has_payload = json.dumps(has_config)
                 self.mqttclient.publish(has_topic, has_payload, retain=True, qos=2)
+        # Home assistant integration
+        if self.settings['mqtt']['homeassistant']:
+            has_topic = "homeassistant/alarm_control_panel/{0}/config".format(self.optsUpdateUI['room'])
+            print(has_topic)
+            has_config = {
+                "name": "alarmpi {0}".format(self.optsUpdateUI['room']),
+                "payload_arm_home": "ARM_HOME",
+                "payload_arm_away": "ARM_AWAY",
+                "payload_arm_night": "ARM_NIGHT",
+                "state_topic": self.settings['mqtt']['state_topic'],
+                "command_topic": self.settings['mqtt']['command_topic'],
+                "unique_id": "alarmpi_{0}".format(self.optsUpdateUI['room']),
+                "device": {
+                    "identifiers": "alarmpi-{0}".format(self.optsUpdateUI['room']),
+                    "name": "AlarmPI-{0}".format(self.optsUpdateUI['room']),
+                    "sw_version": "AlarmPI {0}".format(self.version),
+                    "model": "Raspberry PI",
+                    "manufacturer": "bkbilly"
+                }
+            }
+            has_payload = json.dumps(has_config)
+            self.mqttclient.publish(has_topic, has_payload, retain=True, qos=2)
 
     def on_disconnect(self, client, userdata, rc):
         self.isconnected = False
