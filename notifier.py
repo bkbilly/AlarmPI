@@ -245,7 +245,7 @@ class notifyMQTT():
                 state = 'triggered'
             elif self.settings['settings']['alarmArmed']:
                 state = 'armed_away'
-            self.mqttclient.publish(stateTopic, state, retain=False, qos=2)
+            self.mqttclient.publish(stateTopic, state, retain=True, qos=2)
 
     def sendSensorMQTT(self, topic, state):
         if self.settings['mqtt']['enable']:
