@@ -63,7 +63,6 @@ else
 fi
 defusername=`echo $serverJson | jq -r ".users | keys[0]"`
 defpassword=`echo $serverJson | jq -r ".users.$defusername.pw"`
-deftimezone=`echo $settingsJson | jq -r ".settings.timezone"`
 
 read -p "Change port? [$defport] " port
 if [[ ! $port =~ ^[0-9]+$ ]]; then
@@ -87,18 +86,12 @@ read -p "Password [$defpassword]: " password
 if [[ $password == "" ]]; then
     password=$defpassword
 fi
-echo "Find your timezone here: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones"
-read -p "Enter your timezone [$deftimezone]: " timezone
-if [[ $timezone == "" ]]; then
-    timezone=$deftimezone
-fi
 serverJson=`echo $serverJson | jq ".ui.port=$port"`
 serverJson=`echo $serverJson | jq ".ui.https=$https"`
 serverJson=`echo $serverJson | jq ".users.$defusername.pw=\"$password\""`
 if [ "$defusername" != "$username" ]; then
     serverJson=`echo $serverJson | jq ".users.$username=.users.$defusername | del(.users.$defusername)"`
 fi
-settingsJson=`echo $settingsJson | jq ".settings.timezone=\"$timezone\""`
 echo $settingsJson | jq '.' | sudo tee $basedir/settings.json > /dev/null
 echo $serverJson | jq '.' | sudo tee $basedir/server.json > /dev/null
 
