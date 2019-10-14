@@ -381,20 +381,23 @@ class notifyHTTP():
 
     def sendSensorHTTP(self, name, state):
         if self.settings['http']['enable']:
-            auth = '{0}:{1}@'
-            http = 'http://'
-            if self.settings['http']['https']:
-                http = 'https://'
-            host = '{0}{5}:{6}@{1}:{2}/setSensorStatus?name={3}&state={4}'.format(
-                http,
-                self.settings['http']['host'],
-                self.settings['http']['port'],
-                name,
-                state,
-                self.settings['http']['username'],
-                self.settings['http']['password'],
-            )
-            requests.get(host)
+            try:
+                auth = '{0}:{1}@'
+                http = 'http://'
+                if self.settings['http']['https']:
+                    http = 'https://'
+                host = '{0}{5}:{6}@{1}:{2}/setSensorStatus?name={3}&state={4}'.format(
+                    http,
+                    self.settings['http']['host'],
+                    self.settings['http']['port'],
+                    name,
+                    state,
+                    self.settings['http']['username'],
+                    self.settings['http']['password'],
+                )
+                requests.get(host)
+            except Exception as e:
+                print(e)
 
 
 class Notify():

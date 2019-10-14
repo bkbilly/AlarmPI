@@ -1,4 +1,12 @@
 {
+    "http": {
+        "enable": false,
+        "host": "",
+        "https": true,
+        "password": "",
+        "port": 443,
+        "username": "test1"
+    },
     "mail": {
         "enable": true,
         "messageBody": "Alert",

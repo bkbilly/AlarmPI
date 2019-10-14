@@ -1,8 +1,8 @@
 *.pyc
 *.log
 play.wav
-settings.json
-settings_tasos.json
 server.json
 .tox
 AlarmPI.egg-info
+settings*.json
+!*_template.json
