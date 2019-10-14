@@ -1,6 +1,8 @@
 {
     "ui": {
         "https": false,
+        "key": "my.cert.key",
+        "cert": "my.cert.crt",
         "port": 5000
     },
     "users": {
