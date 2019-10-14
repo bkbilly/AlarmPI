@@ -373,6 +373,30 @@ class notifyVoip():
                         bcolors.FADE, bcolors.ENDC))
 
 
+class notifyHTTP():
+
+    def __init__(self, settings, optsUpdateUI, mylogs, callbacks):
+        self.settings = settings
+        self.optsUpdateUI = optsUpdateUI
+
+    def sendSensorHTTP(self, name, state):
+        if self.settings['http']['enable']:
+            auth = '{0}:{1}@'
+            http = 'http://'
+            if self.settings['http']['https']:
+                http = 'https://'
+            host = '{0}{5}:{6}@{1}:{2}/setSensorStatus?name={3}&state={4}'.format(
+                http,
+                self.settings['http']['host'],
+                self.settings['http']['port'],
+                name,
+                state,
+                self.settings['http']['username'],
+                self.settings['http']['password'],
+            )
+            requests.get(host)
+
+
 class Notify():
 
     def __init__(self, settings, optsUpdateUI, mylogs):
@@ -394,6 +418,7 @@ class Notify():
         self.mqtt = notifyMQTT(self.settings, self.optsUpdateUI, self.mylogs, self.callbacks)
         self.email = notifyEmail(self.settings, self.optsUpdateUI, self.mylogs, self.callbacks)
         self.voip = notifyVoip(self.settings, self.optsUpdateUI, self.mylogs, self.callbacks)
+        self.http = notifyHTTP(self.settings, self.optsUpdateUI, self.mylogs, self.callbacks)
 
     def updateMQTT(self):
         self.mqtt.setupMQTT()
@@ -441,6 +466,7 @@ class Notify():
         self.mylogs.writeLog("{0},{1},{2}".format('sensor', sensorState, sensorUUID), name)
         self.ui.updateUI('settingsChanged', self.getSensorsArmed())
         self.mqtt.sendSensorMQTT(stateTopic, sensorState)
+        self.http.sendSensorHTTP(name, sensorState)
 
     def update_alarmstate(self):
         if self.settings['settings']['alarmArmed']:
