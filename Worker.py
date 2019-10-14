@@ -198,60 +198,21 @@ class Worker():
     def getNotifiersStatus(self):
         return self.mynotify.status()
 
-    def getSereneSettings(self):
-        """ Gets the Serene Settings """
-        return self.settings['serene']
+    def getSettings(self, set_topic):
+        """ Gets the Settings """
+        return self.settings[set_topic]
 
-    def getMailSettings(self):
-        return self.settings['mail']
-
-    def getVoipSettings(self):
-        """ Gets the Voip Settings """
-        return self.settings['voip']
-
-    def getTimezoneSettings(self):
-        """ Get the Timezone Settings """
-        return self.settings['settings']['timezone']
-
-    def getMQTTSettings(self):
-        """ Gets the MQTT Settings """
-        return self.settings['mqtt']
-
-    def setSereneSettings(self, message):
-        """ set Serene Settings """
-        if self.settings['serene'] != message:
-            self.settings['serene'] = message
-            self.mylogs.writeLog("user_action", "Settings for Serene changed")
-            self.writeNewSettingsToFile(self.settings)
-
-    def setMailSettings(self, message):
-        """ Set Mail Settings """
-        if self.settings['mail'] != message:
-            self.settings['mail'] = message
-            self.mylogs.writeLog("user_action", "Settings for Mail changed")
-            self.writeNewSettingsToFile(self.settings)
-
-    def setVoipSettings(self, message):
-        """ Set Voip Settings """
-        if self.settings['voip'] != message:
-            self.settings['voip'] = message
-            self.mylogs.writeLog("user_action", "Settings for VoIP changed")
-            self.writeNewSettingsToFile(self.settings)
-
-    def setTimezoneSettings(self, message):
-        """ Set the Timezone """
-        if self.settings['settings']['timezone'] != message:
-            self.settings['settings']['timezone'] = message
-            self.mylogs.writeLog("user_action", "Settings for UI changed")
-            self.writeNewSettingsToFile(self.settings)
-
-    def setMQTTSettings(self, message):
-        """ Set MQTT Settings """
-        if self.settings['mqtt'] != message:
-            self.settings['mqtt'] = message
-            self.mylogs.writeLog("user_action", "Settings for MQTT changed")
-            self.writeNewSettingsToFile(self.settings)
-            self.mynotify.updateMQTT()
+    def setSettings(self, message):
+        """ set Settings """
+        for msg_topic, msg_values in message.items():
+            changedValue = False
+            for val_topic, set_value in msg_values.items():
+                if self.settings[msg_topic][val_topic] != set_value:
+                    changedValue = True
+                    self.settings[msg_topic][val_topic] = set_value
+            if changedValue:
+                self.mylogs.writeLog("user_action", "Settings for %s changed" % (msg_topic))
+        self.writeNewSettingsToFile(self.settings)
 
     def setSensorState(self, sensorUUID, state):
         """ Activate or Deactivate a sensor """
@@ -316,4 +277,6 @@ class Worker():
                     self.sensorAlert(sensor)
                 elif status == 'off':
                     self.sensorStopAlert(sensor)
+                elif status == 'error':
+                    self.sensorError(sensor)
         return found
