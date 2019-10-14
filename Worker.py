@@ -8,6 +8,8 @@ import json
 import threading
 import uuid
 from collections import OrderedDict
+from shutil import copyfile
+import os
 
 
 class Worker():
@@ -129,6 +131,9 @@ class Worker():
 
     def ReadSettings(self):
         """ Reads the json settings file and returns it """
+
+        if not os.path.exists(self.jsonfile):
+            copyfile('settings_template.json', self.jsonfile)
 
         with open(self.jsonfile) as data_file:
             settings = json.load(data_file)
