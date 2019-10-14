@@ -395,7 +395,7 @@ class notifyHTTP():
                     self.settings['http']['username'],
                     self.settings['http']['password'],
                 )
-                requests.get(host)
+                requests.get(host, verify=False)
             except Exception as e:
                 print(e)
 
