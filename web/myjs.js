@@ -59,19 +59,15 @@ $( document ).ready(function() {
 	socket.emit('join', {})
 
 	socket.on('sensorsChanged', function(msg){
-		console.log("THIS IS A TEST OF A ROOM1");
 		startAgain();
 	});
 	socket.on('settingsChanged', function(msg){
-		console.log("THIS IS A TEST OF A ROOM2");
 		refreshStatus(msg);
 	});
 	socket.on('alarmStatus', function(msg){
-		console.log("THIS IS A TEST OF A ROOM3");
 		setAlarmStatus(msg);
 	});
 	socket.on('sensorsLog', function(msg){
-		console.log("THIS IS A TEST OF A ROOM4");
 		addSensorLog(msg);
 	});
 });
@@ -129,6 +125,7 @@ function refreshStatus(data){
 	}
 	if (data.triggered === true){
 		$("#alertStatus").addClass("activeAlarm");
+		document.getElementById('audioalert').play()
 	} else if (data.triggered === false){
 		$("#alertStatus").removeClass("activeAlarm");
 		document.getElementById('audioalert').pause()
@@ -308,6 +305,13 @@ function settingsMenu(){
 		$("#settMQTT-state_topic").val(data.mqtt.state_topic);
 		$("#settMQTT-command_topic").val(data.mqtt.command_topic);
 		$("#settMQTT-homeassistant").val(data.mqtt.homeassistant);
+
+		$("#settHTTP-enable").prop('checked', data.http.enable);
+		$("#settHTTP-host").val(data.http.host);
+		$("#settHTTP-port").val(data.http.port);
+		$("#settHTTP-https").val(data.http.https);
+		$("#settHTTP-username").val(data.http.username);
+		$("#settHTTP-password").val(data.http.password);
 	});
 	$.getJSON("getNotifiersStatus.json").done(function(data){
 		for (var key in data) {
@@ -328,69 +332,78 @@ function saveSettings(){
 	var messageVoip = {}
 	var messageUI = {}
 	var messageMQTT = {}
+	var messageHTTP = {}
 
-	messageSerene.enable = $("#settSiren-enable").prop('checked');
-	messageSerene.pin = parseInt($("#settSiren-Pin").val());
-	messageSerene.http_start = $("#settSiren-http_start").val();
-	messageSerene.http_stop = $("#settSiren-http_stop").val();
+	var message = {
+		'serene': {},
+		'mail': {},
+		'voip': {},
+		'settings': {},
+		'mqtt': {},
+		'http': {},
+	}
 
-	messageMail.enable = $("#settMail-enable").prop('checked');
-	messageMail.username = $("#settMail-username").val();
-	messageMail.password = $("#settMail-password").val();
-	messageMail.smtpServer = $("#settMail-smtpServer").val();
-	messageMail.smtpPort = parseInt($("#settMail-smtpPort").val());
-	messageMail.recipients = $("#settMail-recipients").val().split(/[\s,]+/);
-	messageMail.messageSubject = $("#settMail-messageSubject").val();
-	messageMail.messageBody = $("#settMail-messageBody").val();
+	message.serene.enable = $("#settSiren-enable").prop('checked');
+	message.serene.pin = parseInt($("#settSiren-Pin").val());
+	message.serene.http_start = $("#settSiren-http_start").val();
+	message.serene.http_stop = $("#settSiren-http_stop").val();
 
-	messageVoip.enable = $("#settVoip-enable").prop('checked');
-	messageVoip.username = $("#settVoip-username").val();
-	messageVoip.password = $("#settVoip-password").val();
-	messageVoip.domain = $("#settVoip-domain").val();
-	messageVoip.numbersToCall = $("#settVoip-numbersToCall").val().split(/[\s,]+/);
-	messageVoip.timesOfRepeat = $("#settVoip-timesOfRepeat").val();
+	message.mail.enable = $("#settMail-enable").prop('checked');
+	message.mail.username = $("#settMail-username").val();
+	message.mail.password = $("#settMail-password").val();
+	message.mail.smtpServer = $("#settMail-smtpServer").val();
+	message.mail.smtpPort = parseInt($("#settMail-smtpPort").val());
+	message.mail.recipients = $("#settMail-recipients").val().split(/[\s,]+/);
+	message.mail.messageSubject = $("#settMail-messageSubject").val();
+	message.mail.messageBody = $("#settMail-messageBody").val();
 
-	messageUI.https = $("#settUI-enable").prop('checked');
-	messageUI.username = $("#settUI-username").val();
-	messageUI.password = $("#settUI-password").val();
-	messageUI.timezone = $("#settUI-timezone").val();
-	messageUI.port = parseInt($("#settUI-port").val());
+	message.voip.enable = $("#settVoip-enable").prop('checked');
+	message.voip.username = $("#settVoip-username").val();
+	message.voip.password = $("#settVoip-password").val();
+	message.voip.domain = $("#settVoip-domain").val();
+	message.voip.numbersToCall = $("#settVoip-numbersToCall").val().split(/[\s,]+/);
+	message.voip.timesOfRepeat = $("#settVoip-timesOfRepeat").val();
 
-	messageMQTT.enable = $("#settMQTT-enable").prop('checked');
-	messageMQTT.host = $("#settMQTT-host").val();
-	messageMQTT.port = parseInt($("#settMQTT-port").val());
-	messageMQTT.authentication = $("#settMQTT-authentication").val() == 'true';
-	messageMQTT.username = $("#settMQTT-username").val();
-	messageMQTT.password = $("#settMQTT-password").val();
-	messageMQTT.state_topic = $("#settMQTT-state_topic").val();
-	messageMQTT.command_topic = $("#settMQTT-command_topic").val();
-	messageMQTT.homeassistant = $("#settMQTT-homeassistant").val() == 'true';
+	message.settings.timezone = $("#settUI-timezone").val();
 
-	console.log(messageSerene);
-	console.log(messageMail);
-	console.log(messageVoip);
-	console.log(messageUI);
-	console.log(messageMQTT);
-	socket.emit('setSereneSettings', messageSerene);
-	socket.emit('setMailSettings', messageMail);
-	socket.emit('setVoipSettings', messageVoip);
-	socket.emit('setUISettings', messageUI);
-	socket.emit('setMQTTSettings', messageMQTT);
+	message.mqtt.enable = $("#settMQTT-enable").prop('checked');
+	message.mqtt.host = $("#settMQTT-host").val();
+	message.mqtt.port = parseInt($("#settMQTT-port").val());
+	message.mqtt.authentication = $("#settMQTT-authentication").val() == 'true';
+	message.mqtt.username = $("#settMQTT-username").val();
+	message.mqtt.password = $("#settMQTT-password").val();
+	message.mqtt.state_topic = $("#settMQTT-state_topic").val();
+	message.mqtt.command_topic = $("#settMQTT-command_topic").val();
+	message.mqtt.homeassistant = $("#settMQTT-homeassistant").val() == 'true';
+
+	message.http.enable = $("#settHTTP-enable").prop('checked');
+	message.http.host = $("#settHTTP-host").val();
+	message.http.port = parseInt($("#settHTTP-port").val());
+	message.http.https = $("#settHTTP-https").val() == 'true';
+	message.http.username = $("#settHTTP-username").val();
+	message.http.password = $("#settHTTP-password").val();
+
+	console.log(message);
+	socket.emit('setSettings', message);
 	closeConfigWindow();
 }
 
 
 function addPinsToSelect(selectDiv, selectPin){
-	$(selectDiv).empty();
-	enabledPinsList = enabledPins['in'].concat(enabledPins['out'])
-	enabledPinsList.push(allproperties['serenePin'].toString())
-	for (var i = 1; i <= 27; i++) {
-		disabled = ''
-		selected = ''
-		if ($.inArray(i.toString(), enabledPinsList) != -1 && i != selectPin)
-			disabled = 'disabled'
-		if (i == selectPin)
-			selected = 'selected'
-		$(selectDiv).append(`<option value="${i}" ${disabled} ${selected}>${i}</option>`)
+	try {
+		$(selectDiv).empty();
+		enabledPinsList = enabledPins['in'].concat(enabledPins['out'])
+		enabledPinsList.push(allproperties['serenePin'].toString())
+		for (var i = 1; i <= 27; i++) {
+			disabled = ''
+			selected = ''
+			if ($.inArray(i.toString(), enabledPinsList) != -1 && i != selectPin)
+				disabled = 'disabled'
+			if (i == selectPin)
+				selected = 'selected'
+			$(selectDiv).append(`<option value="${i}" ${disabled} ${selected}>${i}</option>`)
+		}
+	} catch {
+		console.log('not supported the addPinsToSelect')
 	}
 }

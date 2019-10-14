@@ -205,7 +205,7 @@ class AlarmPiServer(object):
         def getSereneSettings():
             user = flask_login.current_user.id
             sensorClass = self.users[user]['obj']
-            return json.dumps(sensorClass.getSereneSettings())
+            return json.dumps(sensorClass.getSettings('serene'))
 
         @self.app.route('/getAllSettings.json')
         @flask_login.login_required
@@ -215,16 +215,17 @@ class AlarmPiServer(object):
             uisettings = {
                 'username': user,
                 'password': self.serverJson['users'][user]['pw'],
-                'timezone': sensorClass.getTimezoneSettings(),
+                'timezone': sensorClass.getSettings('settings')['timezone'],
                 'https': self.serverJson['ui']['https'],
                 'port': self.serverJson['ui']['port']
             }
             return json.dumps({
-                "mail": sensorClass.getMailSettings(),
-                "voip": sensorClass.getVoipSettings(),
+                "mail": sensorClass.getSettings('mail'),
+                "voip": sensorClass.getSettings('voip'),
                 "ui": uisettings,
-                "mqtt": sensorClass.getMQTTSettings(),
-                "serene": sensorClass.getSereneSettings(),
+                "mqtt": sensorClass.getSettings('mqtt'),
+                "http": sensorClass.getSettings('http'),
+                "serene": sensorClass.getSettings('serene'),
             })
 
         @self.app.route('/activateAlarmOnline')
@@ -355,57 +356,12 @@ class AlarmPiServer(object):
             result = sensorClass.setSensorStatus(name, state)
             return json.dumps(result)
 
-        @self.socketio.on('setSereneSettings')
+        @self.socketio.on('setSettings')
         @flask_login.login_required
-        def setSereneSettings(message):
+        def setSettings(message):
             user = flask_login.current_user.id
             sensorClass = self.users[user]['obj']
-            sensorClass.setSereneSettings(message)
-            self.socketio.emit('settingsChanged',
-                               sensorClass.getSensorsArmed(), room=user)
-
-        @self.socketio.on('setMailSettings')
-        @flask_login.login_required
-        def setMailSettings(message):
-            user = flask_login.current_user.id
-            sensorClass = self.users[user]['obj']
-            sensorClass.setMailSettings(message)
-            self.socketio.emit('settingsChanged',
-                               sensorClass.getSensorsArmed(), room=user)
-
-        @self.socketio.on('setVoipSettings')
-        @flask_login.login_required
-        def setVoipSettings(message):
-            user = flask_login.current_user.id
-            sensorClass = self.users[user]['obj']
-            sensorClass.setVoipSettings(message)
-            self.socketio.emit('settingsChanged',
-                               sensorClass.getSensorsArmed(), room=user)
-
-        @self.socketio.on('setUISettings')
-        @flask_login.login_required
-        def setUISettings(message):
-            user = flask_login.current_user.id
-            sensorClass = self.users[user]['obj']
-            sensorClass.setTimezoneSettings(message['timezone'])
-            self.serverJson['users'][user]['pw'] = message['password']
-            self.serverJson['ui']['port'] = message['port']
-            self.serverJson['ui']['https'] = message['https']
-            with open(self.serverfile, 'w') as outfile:
-                json.dump(self.serverJson, outfile, sort_keys=True,
-                          indent=4, separators=(',', ': '))
-            print("You might want to restart...")
-            self.socketio.emit('settingsChanged',
-                               sensorClass.getSensorsArmed(), room=user)
-
-        @self.socketio.on('setMQTTSettings')
-        @flask_login.login_required
-        def setMQTTSettings(message):
-            user = flask_login.current_user.id
-            sensorClass = self.users[user]['obj']
-            sensorClass.setMQTTSettings(message)
-            self.socketio.emit('settingsChanged',
-                               sensorClass.getSensorsArmed(), room=user)
+            sensorClass.setSettings(message)
 
         @self.socketio.on('join')
         @flask_login.login_required
