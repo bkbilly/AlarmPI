@@ -25,8 +25,6 @@ class AlarmPiServer(object):
     def __init__(self):
         """ Initialize the global variables for AlarmPIServer """
         self.wd = os.path.dirname(os.path.realpath(__file__))
-        self.certkeyfile = os.path.join(self.wd, 'my.cert.key')
-        self.certcrtfile = os.path.join(self.wd, 'my.cert.crt')
         self.webDirectory = os.path.join(self.wd, 'web')
 
     def setServerConfig(self, jsonfile):
@@ -435,6 +433,12 @@ class AlarmPiServer(object):
     def startServer(self):
         """ Start the Flask App """
         if self.serverJson['ui']['https'] is True:
+            if 'key' in self.serverJson['ui'] and 'key' in self.serverJson['ui']:
+                self.certkeyfile = self.serverJson['ui']['key']
+                self.certcrtfile = self.serverJson['ui']['cert']
+            else:
+                self.certkeyfile = os.path.join(self.wd, 'my.cert.key')
+                self.certcrtfile = os.path.join(self.wd, 'my.cert.crt')
             try:
                 self.socketio.run(self.app, host="0.0.0.0",
                                   port=self.serverJson['ui']['port'],
