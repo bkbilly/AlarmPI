@@ -376,7 +376,8 @@ class AlarmPiServer(object):
 
         mysocket = self.socketio
         for user, properties in self.users.items():
-            jsonfile = os.path.join(self.wd, properties['settings'])
+            jsonfile = os.path.join(self.wd, 'config')
+            jsonfile = os.path.join(jsonfile, properties['settings'])
             logfile = os.path.join(self.wd, properties['logfile'])
             optsUpdateUI = {'obj': mysocket.emit, 'room': user}
             self.users[user]['obj'] = Worker(
@@ -421,7 +422,7 @@ if __name__ == '__main__':
             with open(sys.argv[1], "w") as f:
                 f.write(str(os.getpid()))
     myserver = AlarmPiServer()
-    myserver.setServerConfig('server.json')
+    myserver.setServerConfig('config/server.json')
     myserver.create_app()
     myserver.startMyApp()
     myserver.startServer()

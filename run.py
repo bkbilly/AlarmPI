@@ -17,7 +17,7 @@ if __name__ == '__main__':
                 f.write(str(os.getpid()))
     wd = os.path.dirname(os.path.realpath(__file__))
     myserver = AlarmPiServer(wd)
-    myserver.setServerConfig('server.json')
+    myserver.setServerConfig('config/server.json')
     myserver.create_app()
     myserver.startMyApp()
     myserver.startServer()
