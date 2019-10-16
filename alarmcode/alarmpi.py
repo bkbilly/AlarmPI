@@ -96,6 +96,29 @@ class AlarmPiServer(object):
                 {'WWWAuthenticate': 'Basic realm="Login Required"'}
             )
 
+        @self.app.route('/switchUser', methods=['Get', 'POST'])
+        @flask_login.login_required
+        def switchUser():
+            newuser = request.args.get('newuser')
+            user = User()
+            user.id = newuser
+            flask_login.login_user(user)
+            return redirect('/')
+
+        @self.app.route('/getUsers', methods=['Get', 'POST'])
+        @flask_login.login_required
+        def getUsers():
+            user = flask_login.current_user.id
+            admin = self.serverJson['users'][user].get('admin')
+            allusers = [user]
+            if admin:
+                allusers = list(self.users.keys())
+            usersdict = {
+                'current': user,
+                'allusers': allusers
+            }
+            return json.dumps(usersdict)
+
         # **********************************
 
         # # Start/Stop Application
