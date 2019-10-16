@@ -45,14 +45,14 @@ echo -e "\e[35mUser configuration...\e[0m"
 if [ ! -f $basedir/play.wav ]; then
     sudo cp $basedir/play_template.wav $basedir/play.wav
 fi
-if [ ! -f $basedir/settings.json ]; then
-    sudo cp $basedir/settings_template.json $basedir/settings.json
+if [ ! -f $basedir/config/settings.json ]; then
+    sudo cp $basedir/config/settings_template.json $basedir/config/settings.json
 fi
-if [ ! -f $basedir/server.json ]; then
-    sudo cp $basedir/server_template.json $basedir/server.json
+if [ ! -f $basedir/config/server.json ]; then
+    sudo cp $basedir/config/server_template.json $basedir/config/server.json
 fi
-settingsJson=`cat $basedir/settings.json`
-serverJson=`cat $basedir/server.json`
+settingsJson=`cat $basedir/config/settings.json`
+serverJson=`cat $basedir/config/server.json`
 defport=`echo $serverJson | jq -r ".ui.port"`
 defhttps=`echo $serverJson | jq -r ".ui.https"`
 echo $defhttps
@@ -113,7 +113,7 @@ echo -e "\e[35mInstalling as a service...\e[0m"
 #sudo update-rc.d alarmpi defaults
 #sudo service alarmpi stop
 #sudo service alarmpi start
-sudo cp $basedir/autostart/alarmpi.service /etc/systemd/system/alarmpi.service
+sudo ln -ls $basedir/autostart/alarmpi.service /etc/systemd/system/alarmpi.service
 sudo chmod +x /etc/systemd/system/alarmpi.service
 sudo systemctl enable alarmpi
 sudo service alarmpi start
