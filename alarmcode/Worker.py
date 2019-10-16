@@ -10,6 +10,9 @@ import uuid
 from collections import OrderedDict
 from shutil import copyfile
 import os
+import logging
+
+logging = logging.getLogger('alarmpi')
 
 
 class Worker():
@@ -60,7 +63,7 @@ class Worker():
     def sensorAlert(self, sensorUUID):
         """ On Sensor Alert, write logs and check for intruder """
 
-        print("{0}-> Alert Sensor: {2}{1}".format(
+        logging.info("{0}-> Alert Sensor: {2}{1}".format(
             bcolors.OKGREEN,
             bcolors.ENDC,
             self.settings['sensors'][sensorUUID]['name']
@@ -79,7 +82,7 @@ class Worker():
     def sensorStopAlert(self, sensorUUID):
         """ On Sensor Alert Stop, write logs """
 
-        print("{0}<- Stop Alert Sensor: {2}{1}".format(
+        logging.info("{0}<- Stop Alert Sensor: {2}{1}".format(
             bcolors.OKGREEN,
             bcolors.ENDC,
             self.settings['sensors'][sensorUUID]['name']
@@ -92,7 +95,7 @@ class Worker():
     def sensorError(self, sensorUUID):
         """ On Sensor Error, write logs """
 
-        print("{0}!- Error Sensor: {2}{1}".format(
+        logging.info("{0}!- Error Sensor: {2}{1}".format(
             bcolors.FAIL,
             bcolors.ENDC,
             self.settings['sensors'][sensorUUID]['name']
@@ -105,7 +108,7 @@ class Worker():
     def sensorStopError(self, sensorUUID):
         """ On Sensor Stop Error, write logs """
 
-        print("{0}-- Error Stop Sensor: {2}{1}".format(
+        logging.info("{0}-- Error Stop Sensor: {2}{1}".format(
             bcolors.FAIL,
             bcolors.ENDC,
             self.settings['sensors'][sensorUUID]['name']
@@ -213,6 +216,8 @@ class Worker():
         for msg_topic, msg_values in message.items():
             changedValue = False
             for val_topic, set_value in msg_values.items():
+                if val_topic not in self.settings[msg_topic]:
+                    self.settings[msg_topic][val_topic] = None
                 if self.settings[msg_topic][val_topic] != set_value:
                     changedValue = True
                     self.settings[msg_topic][val_topic] = set_value
@@ -248,7 +253,7 @@ class Worker():
 
     def addSensor(self, sensorValues):
         """ Add a new sensor """
-        print("{0}New Sensor: {2}{1}".format(
+        logging.info("{0}New Sensor: {2}{1}".format(
             bcolors.WARNING, bcolors.ENDC, sensorValues))
         key = next(iter(sensorValues))
         sensorValues[key]['enabled'] = True
@@ -275,7 +280,7 @@ class Worker():
     def setSensorStatus(self, name, status):
         """ Add a new sensor """
         found = False
-        print(name, status)
+        logging.info(name, status)
         for sensor, sensorvalue in self.settings['sensors'].items():
             if sensorvalue['name'].lower().replace(' ', '_') == name.lower().replace(' ', '_'):
                 found = True

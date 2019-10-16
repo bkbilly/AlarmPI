@@ -13,6 +13,8 @@ import logging
 
 from alarmcode.Worker import Worker
 
+logging = logging.getLogger('alarmpi')
+
 
 class User(flask_login.UserMixin):
     pass
@@ -107,10 +109,10 @@ class AlarmPiServer(object):
         # def restart():
         #     try:
         #         some_queue.put("something")
-        #         print("Restarted successfully")
+        #         logging.WARNING("Restarted successfully")
         #         return "Quit"
         #     except Exception:
-        #         print("Failed in restart")
+        #         logging.WARNING("Failed in restart")
         #         return "Failed"
 
         # Get the required files for the UI
@@ -268,7 +270,7 @@ class AlarmPiServer(object):
                 "enabled": strtobool(request.args.get('enabled').lower())
             }
             message['enabled'] = True if message['enabled'] else False
-            # print(message)
+            # logging.INFO(message)
             user = flask_login.current_user.id
             sensorClass = self.users[user]['obj']
             sensorClass.setSensorState(message['sensor'], message['enabled'])
@@ -366,7 +368,7 @@ class AlarmPiServer(object):
         @self.socketio.on('join')
         @flask_login.login_required
         def on_join(data):
-            # print('joining room:', flask_login.current_user.id)
+            # logging.INFO('joining room:', flask_login.current_user.id)
             join_room(flask_login.current_user.id)
 
         return self.app
@@ -395,14 +397,17 @@ class AlarmPiServer(object):
                 self.certkeyfile = self.serverJson['ui']['key']
                 self.certcrtfile = self.serverJson['ui']['cert']
             else:
-                self.certkeyfile = os.path.join(self.wd, 'my.cert.key')
-                self.certcrtfile = os.path.join(self.wd, 'my.cert.crt')
+                self.certkeyfile = os.path.join(self.wd, 'config')
+                self.certkeyfile = os.path.join(self.certkeyfile, 'my.cert.key')
+                self.certcrtfile = os.path.join(self.wd, 'config')
+                self.certcrtfile = os.path.join(self.certcrtfile, 'my.cert.crt')
             try:
                 self.socketio.run(self.app, host="0.0.0.0",
                                   port=self.serverJson['ui']['port'],
                                   certfile=self.certcrtfile,
                                   keyfile=self.certkeyfile)
             except Exception:
+                logging.exception("Can't run server with HTTPS:")
                 context = (self.certcrtfile, self.certkeyfile)
                 self.socketio.run(self.app, host="0.0.0.0",
                                   port=self.serverJson['ui']['port'],

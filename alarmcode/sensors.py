@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import logging
 try:
     import RPi.GPIO as GPIO
 except Exception as e:
@@ -11,6 +12,8 @@ import requests
 import re
 
 from alarmcode.colors import bcolors
+
+logging = logging.getLogger('alarmpi')
 
 
 class sensorGeneral():
@@ -116,8 +119,7 @@ class sensorGPIO(sensorGeneral):
             else:
                 self._notify_alert_stop(self.sensorName)
         else:
-            print("{0}GPIO {2}: Wrong state change. Ignoring!!!{1}"
-                  .format(bcolors.STRIKE, bcolors.ENDC, str(inputPin)))
+            logging.info("{0}GPIO {2}: Wrong state change. Ignoring!!!{1}".format(bcolors.STRIKE, bcolors.ENDC, str(inputPin)))
 
 
 class sensorHikvision(sensorGeneral):
@@ -176,12 +178,10 @@ class sensorHikvision(sensorGeneral):
                             if match.group(1) == 'linedetection':
                                 if not self.hasBeenNotified:
                                     self._notify_alert(self.sensorName)
-            except Exception as e:
-                print(e)
+            except Exception:
+                logging.exception("Hikvision can't connect:")
                 if self.online:
                     self._notify_error(self.sensorName)
-                print("{0}Hikvision: {2}{1}".format(
-                    bcolors.FAIL, bcolors.ENDC, str(e)))
                 time.sleep(2)
 
     def del_sensor(self):
@@ -234,7 +234,7 @@ class Sensor(sensorGeneral):
             if sensor not in self.allSensors:
                 sensorType = sensorvalues['type']
                 sensorName = sensorvalues['name']
-                print(" {0}{2} {3} sensor with id: {4}{1}"
+                logging.info(" {0}{2} {3} sensor with id: {4}{1}"
                       .format(bcolors.OKBLUE,
                               bcolors.ENDC,
                               sensorType,
@@ -245,7 +245,8 @@ class Sensor(sensorGeneral):
                 if sensorType == 'GPIO':
                     try:
                         sensorobject = sensorGPIO(sensor)
-                    except:
+                    except Exception:
+                        logging.exception("Can't find GPIO:")
                         sensorobject = sensorGeneral(sensor)
                 elif sensorType == 'Hikvision':
                     sensorobject = sensorHikvision(sensor)
@@ -278,7 +279,7 @@ class Sensor(sensorGeneral):
         for sensor in self.allSensors:
             if (sensortype is None or
                     sensortype == self.allSensors[sensor]['values']['type']):
-                # print(self.allSensors[sensor]['values']['name'])
+                # logging.info(self.allSensors[sensor]['values']['name'])
                 self.allSensors[sensor]['obj'].reload(settings)
 
     def get_all_sensors(self):

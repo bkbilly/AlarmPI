@@ -13,8 +13,12 @@ import subprocess
 import sys
 import re
 import requests
+import logging
+
+logging = logging.getLogger('alarmpi')
 
 g_wd = None
+
 
 class notifyGPIO():
 
@@ -26,7 +30,8 @@ class notifyGPIO():
             self.connected = True
             self.GPIO = GPIO
             GPIO.setmode(GPIO.BCM)
-        except Exception as e:
+        except Exception:
+            logging.exception("Can't connect to GPIO Serene:")
             self.connected = False
 
 
@@ -40,8 +45,8 @@ class notifyGPIO():
             if self.settings['serene']['http_start'] != '':
                 try:
                     requests.get(self.settings['serene']['http_start'])
-                except Exception as e:
-                    print(e)
+                except Exception:
+                    logging.exception("Can't find http_start on settings:")
 
     def stopSerene(self):
         """ This method disables the output pin for the serene """
@@ -52,8 +57,8 @@ class notifyGPIO():
             if self.settings['serene']['http_stop'] != '':
                 try:
                     requests.get(self.settings['serene']['http_stop'])
-                except Exception as e:
-                    print(e)
+                except Exception:
+                    logging.exception("Can't find http_stop on settings:")
             
 
     def enableOutputPin(self, *pins):
@@ -62,7 +67,7 @@ class notifyGPIO():
                 self.GPIO.setup(pin, self.GPIO.OUT)
                 state = self.GPIO.input(pin)
                 if state == self.GPIO.LOW:
-                    print('Enabling GPIO')
+                    logging.info('Enabling GPIO')
                     self.GPIO.output(pin, self.GPIO.HIGH)
 
     def disableOutputPin(self, *pins):
@@ -70,7 +75,7 @@ class notifyGPIO():
             for pin in pins:
                 self.GPIO.setup(pin, self.GPIO.OUT)
                 if self.GPIO.input(pin) == self.GPIO.HIGH:
-                    print('Disabling GPIO')
+                    logging.info('Disabling GPIO')
                     self.GPIO.output(pin, self.GPIO.LOW)
                 self.GPIO.setup(pin, self.GPIO.IN)
 
@@ -134,9 +139,8 @@ class notifyMQTT():
                 self.mqttclient.on_disconnect = self.on_disconnect
                 self.mqttclient.connect(mqttHost, mqttPort, 10)
                 self.mqttclient.loop_start()
-            except Exception as e:
-                print("{0}MQTT: {2}{1}".format(
-                    bcolors.FAIL, bcolors.ENDC, str(e)))
+            except Exception:
+                logging.exception("Can't connecto to MQTT")
         else:
             self.mqttclient.disconnect()
             self.mqttclient.loop_stop(force=False)
@@ -146,7 +150,7 @@ class notifyMQTT():
     def on_connect(self, client, userdata, flags, rc):
         self.isconnected = True
         # Subscribe to Alarm Set command
-        print('MQTT subscribing to: {0}'.format(self.settings['mqtt']['command_topic']))
+        logging.info('MQTT subscribing to: {0}'.format(self.settings['mqtt']['command_topic']))
         self.mqttclient.subscribe(self.settings['mqtt']['command_topic'])
 
         # Subscribe to Sensor Set command
@@ -156,13 +160,13 @@ class notifyMQTT():
                 self.settings['mqtt']['command_topic'],
                 '/sensor/',
                 sensorvalue['name'].lower().replace(' ', '_'))
-            print('MQTT subscribing to: {0}'.format(setmqttsensor))
+            logging.info('MQTT subscribing to: {0}'.format(setmqttsensor))
             self.mqttclient.subscribe(setmqttsensor)
 
             # Subscribe to custom MQTT sensors events
             if sensorvalue['type'].lower() == 'mqtt' and 'topic' in sensorvalue:
                 if sensorvalue['topic'] is not None and sensorvalue['topic'] != '':
-                    print('MQTT subscribing to: {0}'.format(sensorvalue['topic']))
+                    logging.info('MQTT subscribing to: {0}'.format(sensorvalue['topic']))
                     self.mqttclient.subscribe(sensorvalue['topic'])
 
 
@@ -174,7 +178,7 @@ class notifyMQTT():
                 )
                 sensor_name = sensorvalue['name'].lower().replace(' ', '_')
                 has_topic = "homeassistant/binary_sensor/{0}_{1}/config".format(self.optsUpdateUI['room'], sensor_name)
-                print(has_topic)
+                logging.info(has_topic)
                 has_config = {
                     "payload_on": "on",
                     "payload_off": "off",
@@ -195,7 +199,7 @@ class notifyMQTT():
         # Home assistant integration
         if self.settings['mqtt']['homeassistant']:
             has_topic = "homeassistant/alarm_control_panel/{0}/config".format(self.optsUpdateUI['room'])
-            print(has_topic)
+            logging.info(has_topic)
             has_config = {
                 "name": "alarmpi {0}".format(self.optsUpdateUI['room']),
                 "payload_arm_home": "ARM_HOME",
@@ -218,7 +222,7 @@ class notifyMQTT():
     def on_disconnect(self, client, userdata, rc):
         self.isconnected = False
         if rc != 0:
-            print("Unexpected disconnection.")
+            logging.warning("Unexpected disconnection.")
         client.reconnect()
 
     def on_message_mqtt(self, mqttclient, userdata, msg):
@@ -227,7 +231,7 @@ class notifyMQTT():
         message = msg.payload.decode("utf-8")
         topicArm = self.settings['mqtt']['command_topic']
         topicSensorSet = self.settings['mqtt']['command_topic'] + '/sensor/'
-        print(msg.topic + " " + message)
+        logging.info(msg.topic + " " + message)
         try:
             if msg.topic == self.settings['mqtt']['command_topic']:
                 if message == "DISARM":
@@ -254,8 +258,8 @@ class notifyMQTT():
                             self.callbacks['sensorStopAlert'](sensor)
                         else:
                             self.callbacks['sensorAlert'](sensor)
-        except Exception as e:
-            raise e
+        except Exception:
+            logging.exception("Unknown MQTT Error:")
 
     def sendStateMQTT(self):
         """ Send to the MQTT server the state of the alarm
@@ -330,8 +334,8 @@ class notifyEmail():
                 smtpserver.login(mail_user, mail_pwd)
                 smtpserver.close()
                 connected = True
-            except Exception as e:
-                pass
+            except Exception:
+                logging.exception("Mail server seems down:")
         return connected
 
 
@@ -362,7 +366,7 @@ class notifyVoip():
                            '-su', sip_user, '-sp', sip_password,
                            '-pn', phone_number, '-s', '1', '-mr', sip_repeat,
                            '-ttsf', g_wd + '/play.wav')
-                    print("{0}Voip command: {2}{1}".format(
+                    logging.info("{0}Voip command: {2}{1}".format(
                         bcolors.FADE, bcolors.ENDC, " ".join(cmd)))
                     proc = subprocess.Popen(cmd, stderr=subprocess.PIPE)
                     for line in proc.stderr:
@@ -370,7 +374,7 @@ class notifyVoip():
                     proc.wait()
                     self.mylogs.writeLog("alarm", "Call to " +
                                   phone_number + " endend")
-                    print("{0}Call Ended{1}".format(
+                    logging.info("{0}Call Ended{1}".format(
                         bcolors.FADE, bcolors.ENDC))
 
 
@@ -383,7 +387,6 @@ class notifyHTTP():
     def sendSensorHTTP(self, name, state):
         if self.settings['http']['enable']:
             try:
-                auth = '{0}:{1}@'
                 http = 'http://'
                 if self.settings['http']['https']:
                     http = 'https://'
@@ -397,8 +400,8 @@ class notifyHTTP():
                     self.settings['http']['password'],
                 )
                 requests.get(host, verify=False)
-            except Exception as e:
-                print(e)
+            except Exception:
+                logging.exception("Can't connect to remote AlarmPI server:")
 
 
 class Notify():
@@ -417,7 +420,7 @@ class Notify():
         self.settings = settings
         self.room = self.optsUpdateUI['room']
 
-        print("{0}------------ INIT FOR DOOR SENSOR CLASS! ----------------{1}"
+        logging.info("{0}------------ INIT FOR DOOR SENSOR CLASS! ----------------{1}"
               .format(bcolors.HEADER, bcolors.ENDC))
         self.gpio = notifyGPIO(self.settings, self.optsUpdateUI, self.mylogs, self.callbacks)
         self.ui = notifyUI(self.settings, self.optsUpdateUI, self.mylogs, self.callbacks)
