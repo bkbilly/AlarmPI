@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import threading
-from colors import bcolors
+from alarmcode.colors import bcolors
 import paho.mqtt.client as mqtt
 import random
 import json
@@ -14,7 +14,7 @@ import sys
 import re
 import requests
 
-
+g_wd = None
 
 class notifyGPIO():
 
@@ -101,8 +101,8 @@ class notifyMQTT():
 
     def getVersion(self):
         version = 0
-        wd = os.path.dirname(os.path.realpath(__file__))
-        setupfile = os.path.join(wd, "setup.py")
+        global g_wd
+        setupfile = os.path.join(g_wd, "setup.py")
         with open(setupfile) as setup:
             for line in setup:
                 if 'version=' in line:
@@ -340,9 +340,9 @@ class notifyVoip():
     def __init__(self, settings, optsUpdateUI, mylogs, callbacks):
         self.settings = settings
         self.mylogs = mylogs
-        self.wd = os.path.dirname(os.path.realpath(__file__))
+        global g_wd
         self.sipcallfile = os.path.join(
-            os.path.join(self.wd, "voip"), "sipcall")
+            os.path.join(g_wd, "voip"), "sipcall")
 
     def callNotify(self):
         """ This method uses a prebuild application in C to connect to the SIP provider
@@ -360,7 +360,8 @@ class notifyVoip():
                     self.mylogs.writeLog("alarm", "Calling " + phone_number)
                     cmd = (self.sipcallfile, '-sd', sip_domain,
                            '-su', sip_user, '-sp', sip_password,
-                           '-pn', phone_number, '-s', '1', '-mr', sip_repeat)
+                           '-pn', phone_number, '-s', '1', '-mr', sip_repeat,
+                           '-ttsf', g_wd + '/play.wav')
                     print("{0}Voip command: {2}{1}".format(
                         bcolors.FADE, bcolors.ENDC, " ".join(cmd)))
                     proc = subprocess.Popen(cmd, stderr=subprocess.PIPE)
@@ -402,7 +403,9 @@ class notifyHTTP():
 
 class Notify():
 
-    def __init__(self, settings, optsUpdateUI, mylogs):
+    def __init__(self, wd, settings, optsUpdateUI, mylogs):
+        global g_wd
+        g_wd = wd
         self.mylogs = mylogs
         self.callbacks = {}
         self.callbacks['deactivateAlarm'] = lambda:0

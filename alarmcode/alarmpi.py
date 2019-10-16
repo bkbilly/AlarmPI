@@ -11,7 +11,7 @@ from distutils.util import strtobool
 from copy import deepcopy
 import logging
 
-from Worker import Worker
+from alarmcode.Worker import Worker
 
 
 class User(flask_login.UserMixin):
@@ -22,9 +22,9 @@ class AlarmPiServer(object):
     """Initialize the AlarmPI Server by defying the files to use,
     the RESTful Services and calling the class (Worker)"""
 
-    def __init__(self):
+    def __init__(self, wd):
         """ Initialize the global variables for AlarmPIServer """
-        self.wd = os.path.dirname(os.path.realpath(__file__))
+        self.wd = wd
         self.webDirectory = os.path.join(self.wd, 'web')
 
     def setServerConfig(self, jsonfile):
@@ -380,6 +380,7 @@ class AlarmPiServer(object):
             logfile = os.path.join(self.wd, properties['logfile'])
             optsUpdateUI = {'obj': mysocket.emit, 'room': user}
             self.users[user]['obj'] = Worker(
+                self.wd,
                 jsonfile,
                 logfile,
                 optsUpdateUI
