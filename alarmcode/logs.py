@@ -7,6 +7,9 @@ from datetime import datetime
 import pytz
 import logging
 
+logging = logging.getLogger('alarmpi')
+
+
 class Logs():
 
     def __init__(self, wd, logfile, timezone):
@@ -15,25 +18,11 @@ class Logs():
         try:
             self.mytimezone = pytz.timezone(timezone)
         except Exception:
+            logging.exception("Can't find the correct timezone")
             self.mytimezone = pytz.utc
         self.updateUI = lambda **args:0
         self.limit = 10
         self.logtypes = 'all'
-
-        # Logging setup
-        logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
-        rootLogger = logging.getLogger()
-
-        fileHandler = logging.FileHandler("{0}/{1}.log".format(self.wd, 'sysrun'))
-        fileHandler.setFormatter(logFormatter)
-        rootLogger.addHandler(fileHandler)
-
-        consoleHandler = logging.StreamHandler()
-        consoleHandler.setFormatter(logFormatter)
-        rootLogger.addHandler(consoleHandler)
-
-    def get_logger(self):
-        return logging
 
     def setCallbackUpdateUI(self, callback):
         self.updateUI = callback
@@ -145,6 +134,7 @@ class Logs():
                     logTime = mymatch.group(2)
                     logText = mymatch.group(3)
             except Exception:
+                logging.exception("Can't find the correct log group:")
                 mymatch = re.match(r'^\[(.*)\] (.*)', line)
                 if mymatch:
                     logType = ["unknown", "unknown"]
@@ -185,11 +175,9 @@ class Logs():
                                 timediff = self._convert_timedelta(endtime - starttime)
                                 tmplogs[info['ind']]['timediff'] = timediff
                                 tmplogs[info['ind']]['timeend'] = log['time']
-                        except Exception as e:
-                            print(e)
-                            print(info)
-                            print(log)
-                            pass
+                        except Exception:
+                            logging.exception("Error combining logs")
+                            logging.error(info)
                 else:
                     index += 1
                     tmplogs.append(log)
