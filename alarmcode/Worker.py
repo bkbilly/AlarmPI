@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-from sensors import Sensor
-from logs import Logs
-from notifier import Notify
-from colors import bcolors
+from alarmcode.sensors import Sensor
+from alarmcode.logs import Logs
+from alarmcode.notifier import Notify
+from alarmcode.colors import bcolors
 import json
 import threading
 import uuid
@@ -22,10 +22,11 @@ class Worker():
     the main application.
     """
 
-    def __init__(self, jsonfile, logfile, optsUpdateUI=None):
+    def __init__(self, wd, jsonfile, logfile, optsUpdateUI=None):
         """ Init for the Worker class """
 
         # Global Variables
+        self.wd = wd
         self.jsonfile = jsonfile
         self.logfile = logfile
         self.settings = self.ReadSettings()
@@ -35,14 +36,14 @@ class Worker():
         self.kill_now = False
 
         # Init Alarm
-        self.mylogs = Logs(self.logfile, self.settings['settings']['timezone'])
+        self.mylogs = Logs(self.wd, self.logfile, self.settings['settings']['timezone'])
         self.mylogs.startTrimThread()
-        self.mynotify = Notify(self.settings, self.optsUpdateUI, self.mylogs)
+        self.mynotify = Notify(self.wd, self.settings, self.optsUpdateUI, self.mylogs)
         self.mylogs.setCallbackUpdateUI(self.mynotify.updateUI)
         self.mylogs.writeLog("system", "Alarm Booted")
 
         # Event Listeners
-        self.sensors = Sensor()
+        self.sensors = Sensor(self.wd)
         self.sensors.on_alert(self.sensorAlert)
         self.sensors.on_alert_stop(self.sensorStopAlert)
         self.sensors.on_error(self.sensorError)
@@ -133,7 +134,7 @@ class Worker():
         """ Reads the json settings file and returns it """
 
         if not os.path.exists(self.jsonfile):
-            copyfile('settings_template.json', self.jsonfile)
+            copyfile(os.path.join(self.wd, 'settings_template.json'), self.jsonfile)
 
         with open(self.jsonfile) as data_file:
             settings = json.load(data_file)

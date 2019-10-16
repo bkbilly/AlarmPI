@@ -5,11 +5,12 @@ import threading
 import time
 from datetime import datetime
 import pytz
-
+import logging
 
 class Logs():
 
-    def __init__(self, logfile, timezone):
+    def __init__(self, wd, logfile, timezone):
+        self.wd = wd
         self.logfile = logfile
         try:
             self.mytimezone = pytz.timezone(timezone)
@@ -18,6 +19,21 @@ class Logs():
         self.updateUI = lambda **args:0
         self.limit = 10
         self.logtypes = 'all'
+
+        # Logging setup
+        logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
+        rootLogger = logging.getLogger()
+
+        fileHandler = logging.FileHandler("{0}/{1}.log".format(self.wd, 'sysrun'))
+        fileHandler.setFormatter(logFormatter)
+        rootLogger.addHandler(fileHandler)
+
+        consoleHandler = logging.StreamHandler()
+        consoleHandler.setFormatter(logFormatter)
+        rootLogger.addHandler(consoleHandler)
+
+    def get_logger(self):
+        return logging
 
     def setCallbackUpdateUI(self, callback):
         self.updateUI = callback

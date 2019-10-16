@@ -10,7 +10,7 @@ import time
 import requests
 import re
 
-from colors import bcolors
+from alarmcode.colors import bcolors
 
 
 class sensorGeneral():
@@ -219,8 +219,13 @@ class sensorMQTT(sensorGeneral):
 class Sensor(sensorGeneral):
     """docstring for Sensor"""
 
-    def __init__(self):
+    def __init__(self, wd):
+        self.wd = wd
         self.allSensors = {}
+        self._event_alert = []
+        self._event_alert_stop = []
+        self._event_error = []
+        self._event_error_stop = []
 
     def add_sensors(self, settings):
         self.settings = settings
@@ -278,3 +283,4 @@ class Sensor(sensorGeneral):
 
     def get_all_sensors(self):
         return self.allSensors
+
