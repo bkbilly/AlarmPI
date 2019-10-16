@@ -113,7 +113,7 @@ echo -e "\e[35mInstalling as a service...\e[0m"
 #sudo update-rc.d alarmpi defaults
 #sudo service alarmpi stop
 #sudo service alarmpi start
-sudo ln -ls $basedir/autostart/alarmpi.service /etc/systemd/system/alarmpi.service
+sudo cp $basedir/autostart/alarmpi.service /etc/systemd/system/alarmpi.service
 sudo chmod +x /etc/systemd/system/alarmpi.service
 sudo systemctl enable alarmpi
 sudo service alarmpi start
