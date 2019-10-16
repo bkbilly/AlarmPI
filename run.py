@@ -5,6 +5,7 @@ import sys
 
 import logging
 from alarmcode.alarmpi import AlarmPiServer
+import alarmcode
 
 if __name__ == '__main__':
     # log = logging.getLogger('werkzeug')
@@ -19,7 +20,6 @@ if __name__ == '__main__':
             with open(sys.argv[1], "w") as f:
                 f.write(str(os.getpid()))
 
-    wd = os.path.dirname(os.path.realpath(__file__))
     # Logging setup
     rootLogger = logging.getLogger('socketio')
     rootLogger.setLevel(logging.ERROR)
@@ -41,6 +41,7 @@ if __name__ == '__main__':
     rootLogger.addHandler(consoleHandler)
 
     # Run App
+    wd = os.path.dirname(os.path.dirname(alarmcode.__file__))
     try:
         myserver = AlarmPiServer(wd)
         myserver.setServerConfig('config/server.json')
