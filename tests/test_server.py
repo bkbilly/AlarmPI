@@ -1,4 +1,4 @@
-from alarmpi import AlarmPiServer
+from alarmcode.alarmpi import AlarmPiServer
 import unittest
 from base64 import b64encode
 import json
@@ -17,7 +17,7 @@ class FlaskBookshelfTests(unittest.TestCase):
     def setUp(self):
         # creates a test client
         myserver = AlarmPiServer()
-        myserver.setServerConfig('server.json')
+        myserver.setServerConfig('config/server.json')
         app = myserver.create_app()
         myserver.startMyApp()
 
