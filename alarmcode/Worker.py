@@ -134,7 +134,7 @@ class Worker():
         """ Reads the json settings file and returns it """
 
         if not os.path.exists(self.jsonfile):
-            copyfile(os.path.join(self.wd, 'settings_template.json'), self.jsonfile)
+            copyfile(os.path.join(self.wd, 'config/settings_template.json'), self.jsonfile)
 
         with open(self.jsonfile) as data_file:
             settings = json.load(data_file)
