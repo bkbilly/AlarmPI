@@ -13,8 +13,63 @@ import re
 from colors import bcolors
 
 
+class sensorGeneral():
+    def __init__(self, sensorName):
+        self.sensorName = sensorName
+        self.online = None
+        self.alert = None
+        self._event_alert = []
+        self._event_alert_stop = []
+        self._event_error = []
+        self._event_error_stop = []
 
-class sensorGPIO():
+    def add_sensor(self, sensor, settings=None):
+        self.sensor = sensor
+        self.reload()
+
+    def del_sensor(self):
+        pass
+
+    def reload(self, settings=None):
+        pass
+
+    def setAlertStatus(self, alertstate=None):
+        self.alert = alertstate
+
+    def on_alert(self, callback):
+        self._event_alert.append(callback)
+
+    def on_alert_stop(self, callback):
+        self._event_alert_stop.append(callback)
+
+    def on_error(self, callback):
+        self._event_error.append(callback)
+
+    def on_error_stop(self, callback):
+        self._event_error_stop.append(callback)
+
+    def _notify_alert(self, sensorName):
+        self.setAlertStatus(alertstate=True)
+        for callback in self._event_alert:
+            callback(sensorName)
+
+    def _notify_alert_stop(self, sensorName):
+        self.setAlertStatus(alertstate=False)
+        for callback in self._event_alert_stop:
+            callback(sensorName)
+
+    def _notify_error(self, sensorName):
+        self.online = False
+        for callback in self._event_error:
+            callback(sensorName)
+
+    def _notify_error_stop(self, sensorName):
+        self.online = True
+        for callback in self._event_error_stop:
+            callback(sensorName)
+
+
+class sensorGPIO(sensorGeneral):
     def __init__(self, sensorName):
         # GPIO Setup
         GPIO.setmode(GPIO.BCM)
@@ -33,13 +88,7 @@ class sensorGPIO():
         self.gpioState = None
         self.pin = None
 
-    def getOnlineStatus(self):
-        return self.online
-
-    def getAlertStatus(self):
-        return self.alert
-
-    def setAlertStatus(self):
+    def setAlertStatus(self, alertstate=None):
         self.gpioState = GPIO.input(self.pin)
         self.alert = False
         if self.gpioState == 1:
@@ -56,9 +105,6 @@ class sensorGPIO():
         self._checkInputPinState(self.pin)
         self.setAlertStatus()
 
-    def reload(self, settings=None):
-        pass
-
     def del_sensor(self):
         GPIO.remove_event_detect(self.pin)
 
@@ -66,44 +112,15 @@ class sensorGPIO():
         nowState = GPIO.input(self.pin)
         if nowState != self.gpioState:
             if nowState == 1:
-                self._notify_alert()
+                self._notify_alert(self.sensorName)
             else:
-                self._notify_alert_stop()
+                self._notify_alert_stop(self.sensorName)
         else:
             print("{0}GPIO {2}: Wrong state change. Ignoring!!!{1}"
                   .format(bcolors.STRIKE, bcolors.ENDC, str(inputPin)))
 
-    # ------------------------------
-    def on_alert(self, callback):
-        self._event_alert.append(callback)
 
-    def on_alert_stop(self, callback):
-        self._event_alert_stop.append(callback)
-
-    def on_error(self, callback):
-        pass
-
-    def on_error_stop(self, callback):
-        pass
-
-    def _notify_alert(self):
-        self.setAlertStatus()
-        for callback in self._event_alert:
-            callback(self.sensorName)
-
-    def _notify_alert_stop(self):
-        self.setAlertStatus()
-        for callback in self._event_alert_stop:
-            callback(self.sensorName)
-
-    def _notify_error(self):
-        pass
-
-    def _notify_error_stop(self):
-        pass
-
-
-class sensorHikvision():
+class sensorHikvision(sensorGeneral):
     def __init__(self, sensorName):
         # Global Required Variables
         self.sensorName = sensorName
@@ -137,7 +154,7 @@ class sensorHikvision():
                                                        password])
         self.threadRunforever.daemon = True
         self.threadRunforever.start()
-        self._notify_alert_stop()
+        self._notify_alert_stop(self.sensorName)
 
     def runInBackground(self, sensor, ip, username, password):
         self.runforever = True
@@ -150,7 +167,7 @@ class sensorHikvision():
                                         timeout=15,
                                         stream=True)
                 if not self.online:
-                    self._notify_error_stop()
+                    self._notify_error_stop(self.sensorName)
                 for chunk in response.iter_lines():
                     if chunk:
                         chunk = chunk.decode("utf-8")
@@ -158,60 +175,29 @@ class sensorHikvision():
                         if match:
                             if match.group(1) == 'linedetection':
                                 if not self.hasBeenNotified:
-                                    self._notify_alert()
+                                    self._notify_alert(self.sensorName)
             except Exception as e:
                 print(e)
                 if self.online:
-                    self._notify_error()
+                    self._notify_error(self.sensorName)
                 print("{0}Hikvision: {2}{1}".format(
                     bcolors.FAIL, bcolors.ENDC, str(e)))
-                time.sleep(5)
+                time.sleep(2)
 
     def del_sensor(self):
         self.runforever = False
 
-    # ------------------------------
-    def on_alert(self, callback):
-        self._event_alert.append(callback)
-
-    def on_alert_stop(self, callback):
-        self._event_alert_stop.append(callback)
-
-    def on_error(self, callback):
-        self._event_error.append(callback)
-
-    def on_error_stop(self, callback):
-        self._event_error_stop.append(callback)
-
-    def _notify_alert(self):
+    def setAlertStatus(self, alertstate=None):
         self.hasBeenNotified = True
         self.alert = True
         threading.Thread(target=self._notify_alert_stop_later).start()
-        for callback in self._event_alert:
-            callback(self.sensorName)
-
-    def _notify_alert_stop(self):
-        self.alert = False
-        self.hasBeenNotified = False
-        for callback in self._event_alert_stop:
-            callback(self.sensorName)
 
     def _notify_alert_stop_later(self):
         time.sleep(self.alertTime)
-        self._notify_alert_stop()
-
-    def _notify_error(self):
-        self.online = False
-        for callback in self._event_error:
-            callback(self.sensorName)
-
-    def _notify_error_stop(self):
-        self.online = True
-        for callback in self._event_error_stop:
-            callback(self.sensorName)
+        self._notify_alert_stop(self.sensorName)
 
 
-class sensorMQTT():
+class sensorMQTT(sensorGeneral):
     def __init__(self, sensorName):
         # Global Required Variables
         self.sensorName = sensorName
@@ -226,57 +212,14 @@ class sensorMQTT():
         self.sensor = None
 
     def add_sensor(self, sensor, settings=None):
-        self._notify_error()
+        self._notify_error(self.sensorName)
         self.sensor = sensor
 
-    def del_sensor(self):
-        pass
 
-    def reload(self, settings=None):
-        pass
-
-    # ------------------------------
-    def on_alert(self, callback):
-        self._event_alert.append(callback)
-
-    def on_alert_stop(self, callback):
-        self._event_alert_stop.append(callback)
-
-    def on_error(self, callback):
-        self._event_error.append(callback)
-
-    def on_error_stop(self, callback):
-        self._event_error_stop.append(callback)
-
-    def _notify_alert(self):
-        self.alert = True
-        for callback in self._event_alert:
-            callback(self.sensorName)
-
-    def _notify_alert_stop(self):
-        self.alert = False
-        for callback in self._event_alert_stop:
-            callback(self.sensorName)
-
-    def _notify_error(self):
-        self.online = False
-        for callback in self._event_error:
-            callback(self.sensorName)
-
-    def _notify_error_stop(self):
-        self.online = True
-        for callback in self._event_error_stop:
-            callback(self.sensorName)
-
-
-class Sensor():
+class Sensor(sensorGeneral):
     """docstring for Sensor"""
 
     def __init__(self):
-        self._event_alert = []
-        self._event_alert_stop = []
-        self._event_error = []
-        self._event_error_stop = []
         self.allSensors = {}
 
     def add_sensors(self, settings):
@@ -292,15 +235,21 @@ class Sensor():
                               sensorType,
                               sensorName,
                               sensor))
+
+                sensorsettings = None
                 if sensorType == 'GPIO':
-                    sensorobject = sensorGPIO(sensor)
-                    sensorsettings = None
+                    try:
+                        sensorobject = sensorGPIO(sensor)
+                    except:
+                        sensorobject = sensorGeneral(sensor)
                 elif sensorType == 'Hikvision':
                     sensorobject = sensorHikvision(sensor)
-                    sensorsettings = None
                 elif sensorType == 'MQTT':
                     sensorobject = sensorMQTT(sensor)
                     sensorsettings = settings['mqtt']
+                else:
+                    sensorobject = sensorGeneral(sensor)
+
                 self.allSensors[sensor] = {
                     'values': sensorvalues,
                     'obj': sensorobject,
@@ -329,34 +278,3 @@ class Sensor():
 
     def get_all_sensors(self):
         return self.allSensors
-
-    # ------------------------------
-    def on_alert(self, callback):
-        self._event_alert.append(callback)
-
-    def on_alert_stop(self, callback):
-        self._event_alert_stop.append(callback)
-
-    def on_error(self, callback):
-        self._event_error.append(callback)
-
-    def on_error_stop(self, callback):
-        self._event_error_stop.append(callback)
-
-    def _notify_alert(self, sensorName):
-        for callback in self._event_alert:
-            callback(sensorName)
-
-    def _notify_alert_stop(self, sensorName):
-        for callback in self._event_alert_stop:
-            callback(sensorName)
-
-    def _notify_error(self, sensorName):
-        self.online = False
-        for callback in self._event_error:
-            callback(sensorName)
-
-    def _notify_error_stop(self, sensorName):
-        self.online = True
-        for callback in self._event_error_stop:
-            callback(sensorName)
