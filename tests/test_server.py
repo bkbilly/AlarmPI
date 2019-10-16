@@ -1,3 +1,4 @@
+import alarmcode
 from alarmcode.alarmpi import AlarmPiServer
 import unittest
 from base64 import b64encode
@@ -17,7 +18,7 @@ class FlaskBookshelfTests(unittest.TestCase):
 
     def setUp(self):
         # creates a test client
-        wd = os.path.dirname(os.path.realpath(__file__))
+        wd = os.path.dirname(os.path.dirname(alarmcode.__file__))
         myserver = AlarmPiServer(wd)
         myserver.setServerConfig('config/server.json')
         app = myserver.create_app()
