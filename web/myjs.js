@@ -268,6 +268,21 @@ function closeConfigWindow(){
 
 function settingsMenu(){
 	$("#settingsModal").show();
+	$.getJSON("getUsers").done(function(data){
+		console.log(data)
+		$("#userslist").empty();
+		for (var index in data.allusers) {
+			user = data.allusers[index]
+			console.log(user)
+			if (user === data.current) {
+				var sensorHTML = '<option selected value ="' + user + '">' + user + '</option>'
+			} else {
+				var sensorHTML = '<option value ="' + user + '">' + user + '</option>'
+			}
+			$(sensorHTML).appendTo("#userslist");
+		}
+
+	});
 	$.getJSON("getAllSettings.json").done(function(data){
 		$("#settSiren-enable").prop('checked', data.serene.enable);
 		addPinsToSelect('#settSiren-Pin', data.serene.pin);

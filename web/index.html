@@ -92,6 +92,23 @@
 			
 			<span class="close" onclick="closeConfigWindow()">x</span><br><br>
 
+			<!-- USERS SWITCH -->
+			<h1 class="settingsTitle">USER SWITCH</h1>
+			<div class="settingsContent">
+				<form action="switchUser" target="result" method="get">
+					<select name="newuser" id="userslist" style="width:200px">
+						<option value ="test1">test1</option>
+						<option value ="test2">test2</option>
+					</select>
+					<input type="submit" value="Submit" style="width:70px"></p>
+				</form>
+					<form action="logout" target="result" method="get">
+					<input type="submit" value="logout" style="width:70px"></p>
+				</form>
+				<p>
+			</div>
+
+
 			<!-- UI SETTINGS -->
 			<div class="onoffswitch settingsOnOffSwitch">
 				<input type="checkbox" name="onoffswitchUI" class="onoffswitch-checkbox" id="settUI-enable">

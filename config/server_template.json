@@ -7,6 +7,7 @@
     },
     "users": {
         "test1": {
+            "admin": false,
             "logfile": "alert.log",
             "pw": "secret",
             "settings": "settings.json"
