@@ -86,7 +86,7 @@ class AlarmPiServer(object):
         @self.app.route('/logout')
         def logout():
             flask_login.logout_user()
-            return redirect('/login')
+            return json.dumps("done")
 
         @self.login_manager.unauthorized_handler
         def unauthorized_handler():
@@ -103,7 +103,7 @@ class AlarmPiServer(object):
             user = User()
             user.id = newuser
             flask_login.login_user(user)
-            return redirect('/')
+            return json.dumps("done")
 
         @self.app.route('/getUsers', methods=['Get', 'POST'])
         @flask_login.login_required
@@ -120,6 +120,12 @@ class AlarmPiServer(object):
             return json.dumps(usersdict)
 
         # **********************************
+        @self.app.route('/restart')
+        @flask_login.login_required
+        def restart():
+            os.system("sudo systemctl restart alarmpi.service &")
+            return json.dumps("done")
+
 
         # # Start/Stop Application
         # def shutdownServer():

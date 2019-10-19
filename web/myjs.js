@@ -72,6 +72,29 @@ $( document ).ready(function() {
 	});
 });
 
+function restart(){
+	$.getJSON("restart").done(function(data){
+		location.reload();
+	});
+}
+
+function logout(){
+	$.getJSON("logout").done(function(data){
+		location.reload();
+	});
+}
+
+function changeUser(){
+	newUser = $('#userslist').val()
+	$.getJSON("switchUser?newuser=" + newUser).done(function(data){
+		closeConfigWindow();
+		// startAgain();
+		// refreshLogs();
+		// socket.emit('join', {})
+		location.reload();
+	});
+}
+
 function startAgain(){
 	$("#sensors").empty();
 	$.getJSON("getSensors.json").done(function(data){
