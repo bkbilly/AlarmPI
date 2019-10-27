@@ -4,7 +4,7 @@ import json
 import os
 import sys
 
-from flask import Flask, send_from_directory, request, Response, redirect
+from flask import Flask, send_from_directory, request, Response, redirect, render_template
 from flask_socketio import SocketIO, join_room
 import flask_login
 from distutils.util import strtobool
@@ -28,6 +28,8 @@ class AlarmPiServer(object):
         """ Initialize the global variables for AlarmPIServer """
         self.wd = wd
         self.webDirectory = os.path.join(self.wd, 'web')
+        self.staticDirectory = os.path.join(self.webDirectory, 'static')
+        self.templateDirectory = os.path.join(self.webDirectory, 'template')
 
     def setServerConfig(self, jsonfile):
         """ Set the server file to use and initialize the users """
@@ -42,7 +44,11 @@ class AlarmPiServer(object):
             accordingly method in the Worker class """
 
         # some_queue = None
-        self.app = Flask(__name__, static_url_path='')
+        self.app = Flask(
+            __name__,
+            template_folder=self.templateDirectory,
+            static_folder=self.staticDirectory
+        )
         self.app.secret_key = 'super secret string'
         self.login_manager = flask_login.LoginManager()
         self.login_manager.init_app(self.app)
@@ -79,7 +85,7 @@ class AlarmPiServer(object):
             if flask_login.current_user.is_authenticated:
                 return redirect('/')
             if request.method == 'GET':
-                return send_from_directory(self.webDirectory, 'login.html')
+                return send_from_directory(self.templateDirectory, 'login.html')
             request_loader(request)
             return redirect('/')
 
@@ -145,51 +151,57 @@ class AlarmPiServer(object):
         #         return "Failed"
 
         # Get the required files for the UI
+        @self.app.route('/index2')
+        @flask_login.login_required
+        def index2():
+            user = flask_login.current_user.id
+            sensorClass = self.users[user]['obj']
+            return render_template('index.html', title='Home', sensorClass=sensorClass)
 
         @self.app.route('/')
         @flask_login.login_required
         def index():
-            return send_from_directory(self.webDirectory, 'index.html')
+            return send_from_directory(self.templateDirectory, 'index.html')
 
         @self.app.route('/main.css')
         @flask_login.login_required
         def main():
-            return send_from_directory(self.webDirectory, 'main.css')
+            return send_from_directory(self.staticDirectory, 'main.css')
 
         @self.app.route('/icon.png')
         @flask_login.login_required
         def icon():
-            return send_from_directory(self.webDirectory, 'icon.png')
+            return send_from_directory(self.staticDirectory, 'icon.png')
 
         @self.app.route('/mycss.css')
         @flask_login.login_required
         def mycss():
-            return send_from_directory(self.webDirectory, 'mycss.css')
+            return send_from_directory(self.staticDirectory, 'mycss.css')
 
         @self.app.route('/mycssMobile.css')
         @flask_login.login_required
         def mycssMobile():
-            return send_from_directory(self.webDirectory, 'mycssMobile.css')
+            return send_from_directory(self.staticDirectory, 'mycssMobile.css')
 
         @self.app.route('/myjs.js')
         @flask_login.login_required
         def myjs():
-            return send_from_directory(self.webDirectory, 'myjs.js')
+            return send_from_directory(self.staticDirectory, 'myjs.js')
 
         @self.app.route('/jquery.js')
         @flask_login.login_required
         def jqueryfile():
-            return send_from_directory(self.webDirectory, 'jquery.js')
+            return send_from_directory(self.staticDirectory, 'jquery.js')
 
         @self.app.route('/socket.io.js')
         @flask_login.login_required
         def socketiofile():
-            return send_from_directory(self.webDirectory, 'socket.io.js')
+            return send_from_directory(self.staticDirectory, 'socket.io.js')
 
         @self.app.route('/play_alert.mp3')
         @flask_login.login_required
         def play_alert():
-            return send_from_directory(self.webDirectory, 'play_alert.mp3')
+            return send_from_directory(self.staticDirectory, 'play_alert.mp3')
 
         @self.app.route('/getSensors.json')
         @flask_login.login_required
@@ -449,7 +461,7 @@ class AlarmPiServer(object):
 
 if __name__ == '__main__':
     log = logging.getLogger('werkzeug')
-    log.setLevel(logging.ERROR)
+    # log.setLevel(logging.ERROR)
 
     if len(sys.argv) > 1:
         if ".pid" in sys.argv[1]:
