@@ -329,7 +329,7 @@ class AlarmPiServer(object):
         @self.app.route('/setSensorStatus', methods=['GET', 'POST'])
         @flask_login.login_required
         def setSensorStatus():
-            message = request.get_json()
+            # message = request.get_json()
             name = request.args.get('name')
             state = request.args.get('state')
             user = flask_login.current_user.id
@@ -367,7 +367,6 @@ class AlarmPiServer(object):
                 logfile,
                 optsUpdateUI
             )
-
 
     def startServer(self):
         """ Start the Flask App """
