@@ -9,24 +9,24 @@
 	<title>Alarm</title>
 	<meta name="viewport" content="width=device-width">
 	<meta name="mobile-web-app-capable" content="yes">
-	<link rel="icon" sizes="192x192" href="icon.png">
+	<link rel="icon" sizes="192x192" href="static/icon.png">
 
 
-	<!--script src="Packages/jquery/jquery.min.js"></script>
-	<script src="Packages/jquery/jquery-ui.min.js"></script-->
-	<!--script src="/socket.io/socket.io.js"></script-->
-	<script src="jquery.js"></script>
-	<script src="socket.io.js"></script>
+	<script src="{{ url_for('static',filename='jquery.js') }}"></script>
+	<script src="{{ url_for('static',filename='socket.io.js') }}"></script>
 
-	<link rel="stylesheet" href="main.css">
-	<link rel="stylesheet" href="mycss.css">
-	<script type="text/javascript" src="myjs.js"></script>
+	<link rel="stylesheet" href="{{ url_for('static',filename='main.css') }}">
+	<link rel="stylesheet" href="{{ url_for('static',filename='mycss.css') }}">
+	<script type="text/javascript" src="{{ url_for('static',filename='myjs.js') }}"></script>
+	<script src="{{ url_for('static',filename='vis-timeline-graph2d.min.js') }}"></script>
+	<link href="{{ url_for('static',filename='vis-timeline-graph2d.min.css') }}" rel="stylesheet" type="text/css" />
+
 	
 </head>
 
 <body class="bg_carbon">
 	<audio id="audioalert" loop>
-		<source src="play_alert.mp3" type="audio/mpeg">
+		<source src="static/play_alert.mp3" type="audio/mpeg">
 	</audio>
 	<div id="sensorModal" class="modal">
 		<div class="modal-content sensorModalContent">
@@ -322,8 +322,8 @@
 						<option value="200">200</option>
 				</select>
 			</div>
-			<ul id="systemListLog">
-			</ul>
+			<ul id="systemListLog"></ul>
+			<div id="visualization"></div>
 		</div>
 		
 	</div>
