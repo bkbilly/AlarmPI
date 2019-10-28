@@ -37,7 +37,8 @@
     "settings": {
         "alarmTriggered": false,
         "alarmArmed": false,
-        "timezone": "Europe/Athens"
+        "timezone": "Europe/Athens",
+        "trim": 1000
     },
     "voip": {
         "domain": "",

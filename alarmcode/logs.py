@@ -20,7 +20,7 @@ class Logs():
         except Exception:
             logging.exception("Can't find the correct timezone")
             self.mytimezone = pytz.utc
-        self.updateUI = lambda **args:0
+        self.updateUI = lambda **args: 0
         self.limit = 10
         self.logtypes = 'all'
 
@@ -38,18 +38,21 @@ class Logs():
             It also uses the timezone from json file to get the local time.
         """
 
-        myTimeLog = datetime.now(tz=self.mytimezone).strftime("%Y-%m-%d %H:%M:%S")
+        myTimeLog = datetime.now(tz=self.mytimezone)
+        myTimeLog = myTimeLog.strftime("%Y-%m-%d %H:%M:%S")
         logmsg = '({0}) [{1}] {2}\n'.format(logType, myTimeLog, message)
         with open(self.logfile, "a") as myfile:
             myfile.write(logmsg)
         self.updateUI('sensorsLog', self.getSensorsLog(
             self.limit, selectTypes=self.logtypes))
 
-    def startTrimThread(self):
-        threadTrimLogFile = threading.Thread(target=self.trimLogFile)
+    def startTrimThread(self, lines=1000):
+        threadTrimLogFile = threading.Thread(
+            target=self.trimLogFile,
+            args=[lines]
+        )
         threadTrimLogFile.daemon = True
         threadTrimLogFile.start()
-
 
     def _convert_timedelta(self, duration):
         """ Converts a time difference into human readable format """
@@ -71,19 +74,17 @@ class Logs():
             days=days, hours=hours, minutes=minutes, seconds=seconds)
         return diffTxt
 
-
-    def trimLogFile(self):
+    def trimLogFile(self, lines):
         """ Trims the log file in an interval of 24 hours to 1000 lines """
 
-        lines = 1000  # Number of lines of logs to keep
+        # lines = 1000  # Number of lines of logs to keep
         repeat_every_n_sec = 86400  # 24 Hours
-        while True:
+        while True and lines is None and lines > 0:
             with open(self.logfile, 'r') as f:
                 data = f.readlines()
             with open(self.logfile, 'w') as f:
                 f.writelines(data[-lines:])
             time.sleep(repeat_every_n_sec)
-
 
     def getSensorsLog(self, limit=100, fromText=None,
                       selectTypes='all', filterText=None,
@@ -210,7 +211,6 @@ class Logs():
                     tmplogs.append(log)
             logs = tmplogs
 
-
         # Convert to Human format
         if (getFormat == 'text'):
             tmplogs = []
@@ -222,5 +222,3 @@ class Logs():
             logs = tmplogs
 
         return {"log": logs[-limit:]}
-
-

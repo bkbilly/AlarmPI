@@ -40,7 +40,7 @@ class Worker():
 
         # Init Alarm
         self.mylogs = Logs(self.wd, self.logfile, self.settings['settings']['timezone'])
-        self.mylogs.startTrimThread()
+        self.mylogs.startTrimThread(self.settings['settings'].get('trim', 0))
         self.mynotify = Notify(self.wd, self.settings, self.optsUpdateUI, self.mylogs)
         self.mylogs.setCallbackUpdateUI(self.mynotify.updateUI)
         self.mylogs.writeLog("system", "Alarm Booted")
@@ -58,7 +58,6 @@ class Worker():
         self.mynotify.on_disarm(self.deactivateAlarm)
         self.mynotify.on_sensor_set_alert(self.sensorAlert)
         self.mynotify.on_sensor_set_stopalert(self.sensorStopAlert)
-
 
     def sensorAlert(self, sensorUUID):
         """ On Sensor Alert, write logs and check for intruder """
@@ -239,7 +238,6 @@ class Worker():
         self.writeNewSettingsToFile(self.settings)
         self.mynotify.updateUI('settingsChanged', self.getSensorsArmed())
 
-
     def setSensorsZone(self, zones):
         for sensor, sensorvalue in self.settings['sensors'].items():
             sensorZones = sensorvalue.get('zones', [])
@@ -275,7 +273,6 @@ class Worker():
         del self.settings['sensors'][sensorUUID]
         self.writeNewSettingsToFile(self.settings)
         self.mynotify.updateMQTT()
-
 
     def setSensorStatus(self, name, status):
         """ Add a new sensor """
