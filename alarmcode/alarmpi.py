@@ -85,7 +85,7 @@ class AlarmPiServer(object):
             if flask_login.current_user.is_authenticated:
                 return redirect('/')
             if request.method == 'GET':
-                return send_from_directory(self.templateDirectory, 'login.html')
+                return render_template('login.html')
             request_loader(request)
             return redirect('/')
 
@@ -125,84 +125,22 @@ class AlarmPiServer(object):
             }
             return json.dumps(usersdict)
 
-        # **********************************
         @self.app.route('/restart')
         @flask_login.login_required
         def restart():
             os.system("sudo systemctl restart alarmpi.service &")
             return json.dumps("done")
 
-
-        # # Start/Stop Application
-        # def shutdownServer():
-        #     func = request.environ.get('werkzeug.server.shutdown')
-        #     if func is None:
-        #         raise RuntimeError('Not running with the Werkzeug Server')
-        #     func()
-        # @self.app.route('/restart')
-        # @flask_login.login_required
-        # def restart():
-        #     try:
-        #         some_queue.put("something")
-        #         logging.WARNING("Restarted successfully")
-        #         return "Quit"
-        #     except Exception:
-        #         logging.WARNING("Failed in restart")
-        #         return "Failed"
-
         # Get the required files for the UI
-        @self.app.route('/index2')
+        @self.app.route('/')
+        @self.app.route('/index')
         @flask_login.login_required
         def index2():
             user = flask_login.current_user.id
             sensorClass = self.users[user]['obj']
-            return render_template('index.html', title='Home', sensorClass=sensorClass)
+            return render_template('index.html', sensorClass=sensorClass)
 
-        @self.app.route('/')
-        @flask_login.login_required
-        def index():
-            return send_from_directory(self.templateDirectory, 'index.html')
-
-        @self.app.route('/main.css')
-        @flask_login.login_required
-        def main():
-            return send_from_directory(self.staticDirectory, 'main.css')
-
-        @self.app.route('/icon.png')
-        @flask_login.login_required
-        def icon():
-            return send_from_directory(self.staticDirectory, 'icon.png')
-
-        @self.app.route('/mycss.css')
-        @flask_login.login_required
-        def mycss():
-            return send_from_directory(self.staticDirectory, 'mycss.css')
-
-        @self.app.route('/mycssMobile.css')
-        @flask_login.login_required
-        def mycssMobile():
-            return send_from_directory(self.staticDirectory, 'mycssMobile.css')
-
-        @self.app.route('/myjs.js')
-        @flask_login.login_required
-        def myjs():
-            return send_from_directory(self.staticDirectory, 'myjs.js')
-
-        @self.app.route('/jquery.js')
-        @flask_login.login_required
-        def jqueryfile():
-            return send_from_directory(self.staticDirectory, 'jquery.js')
-
-        @self.app.route('/socket.io.js')
-        @flask_login.login_required
-        def socketiofile():
-            return send_from_directory(self.staticDirectory, 'socket.io.js')
-
-        @self.app.route('/play_alert.mp3')
-        @flask_login.login_required
-        def play_alert():
-            return send_from_directory(self.staticDirectory, 'play_alert.mp3')
-
+        # Services
         @self.app.route('/getSensors.json')
         @flask_login.login_required
         def getSensors():

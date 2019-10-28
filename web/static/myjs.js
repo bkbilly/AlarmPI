@@ -19,10 +19,6 @@ var sensorHTMLTemplate = '<div class="sensordiv" id="sensordiv{sensor}">\
 			</label>\
 		</div>\
 	</div>\
-	<!-- <div class="setSensorPin">\
-		<label>Pin:</label>\
-		<div id="sensorgpio{sensor}">55</div>\
-	</div> -->\
 </div>'
 
 
@@ -88,9 +84,6 @@ function changeUser(){
 	newUser = $('#userslist').val()
 	$.getJSON("switchUser?newuser=" + newUser).done(function(data){
 		closeConfigWindow();
-		// startAgain();
-		// refreshLogs();
-		// socket.emit('join', {})
 		location.reload();
 	});
 }
@@ -116,7 +109,41 @@ function refreshLogs(){
 	loglimit = $("#loglimit").val();
 	logtype = $("#logtype").val();
 	$.getJSON("getSensorsLog.json?saveLimit=True&limit="+loglimit+"&type="+logtype).done(function(data){
+		console.log(data)
 		addSensorLog(data);
+	});
+	$.getJSON("getSensorsLog.json?type=sensor&format=json&combineSensors=True").done(function(data){
+		var groups = new vis.DataSet();
+		$.each(allproperties.sensors, function(i, sensor){
+			console.log('hello')
+			console.log(sensor)
+			console.log('hello')
+			groups.add({id: i, content: sensor.name});
+		});
+
+		var items = new vis.DataSet();
+		$.each(data.log, function(i, tmplog){
+			if (tmplog.timeend !== undefined ){
+				items.add({
+					id: i,
+					content: tmplog.timediff,
+					start: tmplog.time,
+					end: tmplog.timeend,
+					group: tmplog.type[2],
+				})
+			}
+		});
+		var options = {
+			groupOrder: 'id',
+			stack: false,
+		};
+		console.log(groups)
+		console.log(items)
+		var container = document.getElementById('visualization');
+		var timeline = new vis.Timeline(container);
+		timeline.setOptions(options);
+		timeline.setGroups(groups);
+		timeline.setItems(items);
 	});
 }
 function refreshStatus(data){
@@ -135,11 +162,11 @@ function refreshStatus(data){
 		if (alertsensor.online === false)
 			btnColour = "blue"
 		shadowBtnColour = "inset 0px 30px 40px -20px " + btnColour
-		$("#sensorstatus"+sensor).css("background-color", btnColour);
+		// $("#sensorstatus"+sensor).css("background-color", btnColour);
 		$("#sensordiv"+sensor).css("box-shadow", shadowBtnColour);
 		$("#myonoffswitch"+sensor).prop('checked', alertsensor.enabled);
 		$("#sensorname"+sensor).text(alertsensor.name);
-		$("#sensorgpio"+sensor).text(sensor);
+		// $("#sensorgpio"+sensor).text(sensor);
 	});
 	if(data.alarmArmed == true) {
 		$("#armButton").removeClass("disarmedAlarm").addClass("armedAlarm");

@@ -241,6 +241,18 @@ table {
         right: 0;
         padding: 20px;
 }
+.sensor_alert {
+        box-shadow: inset 0px 30px 40px -20px green;
+}
+.sensor_noalert {
+        box-shadow: inset 0px 30px 40px -20px red;
+}
+.sensor_disabled {
+        box-shadow: inset 0px 30px 40px -20px white;
+}
+.sensor_offline {
+        box-shadow: inset 0px 30px 40px -20px blue;
+}
 
 
 
