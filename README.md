@@ -26,6 +26,9 @@ You can download it from here: [Play Store](https://play.google.com/store/apps/d
 
 The source code for the application is here: https://github.com/bkbilly/AlarmPI-Android
 
+### Snips
+Through voice commands from Snips platform using this application: [snips console](https://console.snips.ai/store/en/skill_G4V82q5rb2)
+
 ### Home-Assistant
 It is also controlled with MQTT commands with the Home-Assistant component: 'MQTT Alarm Control Panel'.
 On Home-Assistant the configuration is like so:
@@ -61,7 +64,6 @@ It can also be used with IFTTT using the Webhooks module like this:
 `https://admin:secret@example.com:5000/activateAlarmOnline`
 `https://admin:secret@example.com:5000/deactivateAlarmOnline`
 >My personal favourite is to control it with Google Assistant.
-
 
 ## SipCall (VoIP)
 I have built the sipcall for the Raspberry Pi, so hopefully you will not have to build it yourself.
