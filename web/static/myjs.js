@@ -25,8 +25,9 @@ var sensorHTMLTemplate = '<div class="sensordiv" id="sensordiv{sensor}">\
 $( document ).ready(function() {
 	var modal = document.getElementById('sensorModal');
 	var modal2 = document.getElementById('settingsModal');
+	var modal3 = document.getElementById('sensorsListModal');
 	window.onclick = function(event) {
-		if (event.target == modal || event.target == modal2) {
+		if (event.target == modal || event.target == modal2 || event.target == modal3) {
 			closeConfigWindow();
 		}
 	}
@@ -111,39 +112,6 @@ function refreshLogs(){
 	$.getJSON("getSensorsLog.json?saveLimit=True&limit="+loglimit+"&type="+logtype).done(function(data){
 		console.log(data)
 		addSensorLog(data);
-	});
-	$.getJSON("getSensorsLog.json?type=sensor&format=json&combineSensors=True").done(function(data){
-		var groups = new vis.DataSet();
-		$.each(allproperties.sensors, function(i, sensor){
-			console.log('hello')
-			console.log(sensor)
-			console.log('hello')
-			groups.add({id: i, content: sensor.name});
-		});
-
-		var items = new vis.DataSet();
-		$.each(data.log, function(i, tmplog){
-			if (tmplog.timeend !== undefined ){
-				items.add({
-					id: i,
-					content: tmplog.timediff,
-					start: tmplog.time,
-					end: tmplog.timeend,
-					group: tmplog.type[2],
-				})
-			}
-		});
-		var options = {
-			groupOrder: 'id',
-			stack: false,
-		};
-		console.log(groups)
-		console.log(items)
-		var container = document.getElementById('visualization');
-		var timeline = new vis.Timeline(container);
-		timeline.setOptions(options);
-		timeline.setGroups(groups);
-		timeline.setItems(items);
 	});
 }
 function refreshStatus(data){
@@ -305,15 +273,53 @@ function ArmDisarmAlarm(){
 	}
 }
 
+function openSensorsListWindow(){
+	$.getJSON("getSensorsLog.json?type=sensor&format=json&combineSensors=True&limit=0").done(function(data){
+		var groups = new vis.DataSet();
+		$.each(allproperties.sensors, function(i, sensor){
+			console.log(sensor)
+			groups.add({id: i, content: sensor.name});
+		});
+
+		var items = new vis.DataSet();
+		$.each(data.log, function(i, tmplog){
+			if (tmplog.timeend !== undefined ){
+				items.add({
+					id: i,
+					content: tmplog.timediff,
+					start: tmplog.time,
+					end: tmplog.timeend,
+					group: tmplog.type[2],
+				})
+			}
+		});
+		var options = {
+			groupOrder: 'id',
+			stack: false,
+		};
+		console.log(groups)
+		console.log(items)
+		var container = document.getElementById('visualization');
+		var timeline = new vis.Timeline(container);
+		timeline.setOptions(options);
+		timeline.setGroups(groups);
+		timeline.setItems(items);
+	});
+	document.body.style.overflowY = "hidden";
+	$("#sensorsListModal").show();
+}
+
 function openConfigWindow(){
 	document.body.style.overflowY = "hidden";
 	$("#sensorModal").show();
 }
 
 function closeConfigWindow(){
+	$("#visualization").empty();
 	document.body.style.overflowY = "auto";
 	$("#sensorModal").hide();
 	$("#settingsModal").hide();
+	$("#sensorsListModal").hide();
 }
 
 function settingsMenu(){
