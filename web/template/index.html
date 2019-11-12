@@ -28,6 +28,14 @@
 	<audio id="audioalert" loop>
 		<source src="static/play_alert.mp3" type="audio/mpeg">
 	</audio>
+	<div id="sensorsListModal" class="modal">
+		<div class="modal-content sensorModalContent">
+			<span class="close" onclick="closeConfigWindow()">x</span><br>
+			<div class="settingsContent">
+				<div id="visualization"></div>
+			</div>
+		</div>
+	</div>
 	<div id="sensorModal" class="modal">
 		<div class="modal-content sensorModalContent">
 			<span class="close" onclick="closeConfigWindow()">x</span><br>
@@ -299,7 +307,7 @@
 			<div class="sphere" id="alertStatus"><div id="serenePin"></div></div>
 			<button class="button" id="armButton" onclick="ArmDisarmAlarm()"></button>
 			<div class="sphere" id="settingsSphere" onclick="settingsMenu()">
-				<div id="settingsSphereText">&#9881</div>
+				<div id="settingsSphereText">&#9881;</div>
 			</div>
 		</div>
 		<div id="sensors" class="smallSensors"></div>
@@ -321,9 +329,9 @@
 						<option value="100">100</option>
 						<option value="200">200</option>
 				</select>
+				<button class="button" id="sensorsListButton" onclick="openSensorsListWindow()">&#9883;</button>
 			</div>
 			<ul id="systemListLog"></ul>
-			<div id="visualization"></div>
 		</div>
 		
 	</div>
