@@ -13,6 +13,11 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: 3.7
+    - name: Configuration Init
+      run: |
+        cp config/settings_template.json config/settings.json
+        cp config/server_template.json config/server.json
+        cp play_template.wav play.wav
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
