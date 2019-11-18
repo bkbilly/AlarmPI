@@ -1,4 +1,4 @@
-# AlarmPI ![Build Status](https://github.com/bkbilly/AlarmPI/workflows/build/badge.svg)
+# AlarmPI ![Build Status](https://github.com/bkbilly/AlarmPI/workflows/build/badge.svg) [![GitHub release (latest by date)](https://img.shields.io/github/v/release/bkbilly/AlarmPI)](https://github.com/bkbilly/AlarmPI/releases/latest)
 
 AlarmPI is a home security system based on Raspberry PI. It supports wired sensors (PIR, Magnetic etc.) and wireless through MQTT or Hikvision. It is controlled with a Web UI, a Android Application, or through HTTP & MQTT messages. When the alarm detects movement, it supports the following events:
  * Enables the Serene
