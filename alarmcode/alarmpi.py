@@ -72,6 +72,9 @@ class AlarmPiServer(object):
             elif request.authorization:
                 username = request.authorization['username']
                 password = request.authorization['password']
+            elif len(request.args) > 0:
+                username = request.args.get('username')
+                password = request.args.get('password')
             if username not in self.users:
                 return
             user = User()
