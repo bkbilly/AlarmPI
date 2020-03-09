@@ -411,10 +411,10 @@ class Notify():
         g_wd = wd
         self.mylogs = mylogs
         self.callbacks = {}
-        self.callbacks['deactivateAlarm'] = lambda:0
-        self.callbacks['activateAlarm'] = lambda:0
-        self.callbacks['sensorAlert'] = lambda:0
-        self.callbacks['sensorStopAlert'] = lambda:0
+        self.callbacks['deactivateAlarm'] = lambda *args:0
+        self.callbacks['activateAlarm'] = lambda *args:0
+        self.callbacks['sensorAlert'] = lambda *args:0
+        self.callbacks['sensorStopAlert'] = lambda *args:0
         self.room = 'initial'
         self.optsUpdateUI = optsUpdateUI
         self.settings = settings
