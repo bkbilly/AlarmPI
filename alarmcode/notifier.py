@@ -476,8 +476,10 @@ class Notify():
     def update_alarmstate(self):
         if self.settings['settings']['alarmState'] == "armed":
             self.mylogs.writeLog("user_action", "Alarm activated")
-        else:
+        elif self.settings['settings']['alarmState'] == "disarmed":
             self.mylogs.writeLog("user_action", "Alarm deactivated")
+        elif self.settings['settings']['alarmState'] == "pending":
+            self.mylogs.writeLog("user_action", "Alarm is pending for activation")
 
         self.gpio.stopSerene()
         self.mqtt.sendStateMQTT()

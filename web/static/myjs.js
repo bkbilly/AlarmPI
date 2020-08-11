@@ -131,24 +131,31 @@ function refreshStatus(data){
 		$("#sensorname"+sensor).text(alertsensor.name);
 		// $("#sensorgpio"+sensor).text(sensor);
 	});
-	console.log(data.alarmState);
+
 	if(data.alarmState == "armed") {
-		$("#armButton").removeClass("activeAlarm")
+		$("#armButton").removeClass("activeAlarm");
+		$("#armButton").removeClass("pendingAlarm");
 		$("#armButton").removeClass("disarmedAlarm");
 		$("#armButton").addClass("armedAlarm");
 	} else if (data.alarmState == "disarmed") {
-		$("#armButton").removeClass("activeAlarm")
+		$("#armButton").removeClass("activeAlarm");
+		$("#armButton").removeClass("pendingAlarm");
 		$("#armButton").removeClass("armedAlarm");
 		$("#armButton").addClass("disarmedAlarm");
-		document.getElementById('audioalert').pause()
-		document.getElementById('audioalert').currentTime = 0
+		document.getElementById('audioalert').pause();
+		document.getElementById('audioalert').currentTime = 0;
 	} else if (data.alarmState == "triggered") {
-		$("#armButton").removeClass("disarmedAlarm")
+		$("#armButton").removeClass("disarmedAlarm");
+		$("#armButton").removeClass("pendingAlarm");
 		$("#armButton").addClass("armedAlarm");
 		$("#armButton").addClass("activeAlarm");
 		document.getElementById('audioalert').play()
+	} else if (data.alarmState == "pending") {
+		$("#armButton").removeClass("disarmedAlarm");
+		$("#armButton").removeClass("armedAlarm");
+		$("#armButton").removeClass("activeAlarm");
+		$("#armButton").addClass("pendingAlarm");
 	}
-
 }
 
 
