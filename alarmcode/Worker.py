@@ -91,6 +91,17 @@ class Worker():
         self.writeNewSettingsToFile(self.settings)
         self.mynotify.update_sensor(sensorUUID)
 
+        if self.settings['settings']['alarmState'] == "pending":
+            sensorAlertFound = False
+            for sensor, sensorvalue in self.settings['sensors'].items():
+                if (sensorvalue['alert'] is True and
+                        sensorvalue['enabled'] is True and
+                        sensorvalue['online'] is True):
+                    sensorAlertFound = True
+            if not sensorAlertFound:
+                self.activateAlarm()
+
+
     def sensorError(self, sensorUUID):
         """ On Sensor Error, write logs """
 
@@ -159,7 +170,14 @@ class Worker():
                 zones = [zones]
             self.setSensorsZone(zones)
 
+        # Deside the state of the alarm based on the sensors status
         self.settings['settings']['alarmState'] = "armed"
+        for sensor, sensorvalue in self.settings['sensors'].items():
+            if (sensorvalue['alert'] is True and
+                    sensorvalue['enabled'] is True and
+                    sensorvalue['online'] is True):
+                self.settings['settings']['alarmState'] = "pending"
+
         self.writeNewSettingsToFile(self.settings)
         self.mynotify.update_alarmstate()
         self.checkIntruderAlert()
@@ -277,7 +295,7 @@ class Worker():
     def setSensorStatus(self, name, status):
         """ Add a new sensor """
         found = False
-        logging.info(name, status)
+        logging.info("{0} -- {1}".format(name, status))
         for sensor, sensorvalue in self.settings['sensors'].items():
             if sensorvalue['name'].lower().replace(' ', '_') == name.lower().replace(' ', '_'):
                 found = True
