@@ -266,11 +266,7 @@ class notifyMQTT():
             (disarmed, triggered, armed_away) """
         if self.settings['mqtt']['enable']:
             stateTopic = self.settings['mqtt']['state_topic']
-            state = 'disarmed'
-            if self.settings['settings']['alarmTriggered']:
-                state = 'triggered'
-            elif self.settings['settings']['alarmArmed']:
-                state = 'armed_away'
+            state = self.settings['settings']['alarmState']
             self.mqttclient.publish(stateTopic, state, retain=True, qos=2)
 
     def sendSensorMQTT(self, topic, state):
@@ -360,7 +356,7 @@ class notifyVoip():
         if self.settings['voip']['enable'] is True:
             for phone_number in self.settings['voip']['numbersToCall']:
                 phone_number = str(phone_number)
-                if self.settings['settings']['alarmTriggered'] is True:
+                if self.settings['settings']['alarmState'] == "triggered":
                     self.mylogs.writeLog("alarm", "Calling " + phone_number)
                     cmd = (self.sipcallfile, '-sd', sip_domain,
                            '-su', sip_user, '-sp', sip_password,
@@ -453,7 +449,7 @@ class Notify():
         self.mylogs.writeLog("alarm", "Intruder Alert")
         self.gpio.startSerene()
         self.mqtt.sendStateMQTT()
-        self.ui.updateUI('alarmStatus', {"alert": self.settings['settings']['alarmTriggered']})
+        self.ui.updateUI('sensorsChanged', self.getSensorsArmed())
         threadSendMail = threading.Thread(target=self.email.sendMail)
         threadSendMail.daemon = True
         threadSendMail.start()
@@ -473,19 +469,19 @@ class Notify():
             sensorState = 'off'
 
         self.mylogs.writeLog("{0},{1},{2}".format('sensor', sensorState, sensorUUID), name)
-        self.ui.updateUI('settingsChanged', self.getSensorsArmed())
+        self.ui.updateUI('sensorsChanged', self.getSensorsArmed())
         self.mqtt.sendSensorMQTT(stateTopic, sensorState)
         self.http.sendSensorHTTP(name, sensorState)
 
     def update_alarmstate(self):
-        if self.settings['settings']['alarmArmed']:
+        if self.settings['settings']['alarmState'] == "armed":
             self.mylogs.writeLog("user_action", "Alarm activated")
         else:
             self.mylogs.writeLog("user_action", "Alarm deactivated")
 
         self.gpio.stopSerene()
         self.mqtt.sendStateMQTT()
-        self.ui.updateUI('settingsChanged', self.getSensorsArmed())
+        self.ui.updateUI('sensorsChanged', self.getSensorsArmed())
 
 
     def updateUI(self, event, data):
@@ -500,8 +496,7 @@ class Notify():
         orderedSensors = OrderedDict(
             sorted(sensors.items(), key=lambda k_v: k_v[1]['name']))
         sensorsArmed['sensors'] = orderedSensors
-        sensorsArmed['triggered'] = self.settings['settings']['alarmTriggered']
-        sensorsArmed['alarmArmed'] = self.settings['settings']['alarmArmed']
+        sensorsArmed['alarmState'] = self.settings['settings']['alarmState']
         return sensorsArmed
 
     def settings_update(self, settings):

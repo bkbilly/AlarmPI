@@ -35,8 +35,7 @@
         "pin": 14
     },
     "settings": {
-        "alarmTriggered": false,
-        "alarmArmed": false,
+        "alarmState": "disarmed",
         "timezone": "Europe/Athens",
         "trim": 1000
     },
