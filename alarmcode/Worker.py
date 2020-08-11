@@ -73,7 +73,7 @@ class Worker():
                 self.settings['sensors'][sensorUUID]['alert'] is True and
                 self.settings['sensors'][sensorUUID]['enabled'] is True and
                 self.settings['sensors'][sensorUUID]['online'] is True):
-            self.settings['settings']['alarmArmed'] = True
+            self.settings['settings']['alarmState'] = "armed"
         self.writeNewSettingsToFile(self.settings)
         self.mynotify.update_sensor(sensorUUID)
         self.checkIntruderAlert()
@@ -120,13 +120,15 @@ class Worker():
         """ Checks if the alarm is armed and if it finds an active
             sensor then it calls the intruderAlert method """
 
-        if (self.settings['settings']['alarmArmed'] is True):
+        if (self.settings['settings']['alarmState'] == "armed"):
             for sensor, sensorvalue in self.settings['sensors'].items():
                 if (sensorvalue['alert'] is True and
                         sensorvalue['enabled'] is True and
                         sensorvalue['online'] is True and
-                        self.settings['settings']['alarmTriggered'] is False):
-                    self.settings['settings']['alarmTriggered'] = True
+                        self.settings['settings']['alarmState'] != "triggered"):
+                    logging.info("There is an intruder!!!!!!!!!!!!!")
+                    self.settings['settings']['alarmState'] = "triggered"
+                    self.writeNewSettingsToFile(self.settings)
                     threadIntruderAlert = threading.Thread(
                         target=self.mynotify.intruderAlert)
                     threadIntruderAlert.daemon = True
@@ -157,7 +159,7 @@ class Worker():
                 zones = [zones]
             self.setSensorsZone(zones)
 
-        self.settings['settings']['alarmArmed'] = True
+        self.settings['settings']['alarmState'] = "armed"
         self.writeNewSettingsToFile(self.settings)
         self.mynotify.update_alarmstate()
         self.checkIntruderAlert()
@@ -165,8 +167,7 @@ class Worker():
     def deactivateAlarm(self):
         """ Deactivates the alarm """
 
-        self.settings['settings']['alarmTriggered'] = False
-        self.settings['settings']['alarmArmed'] = False
+        self.settings['settings']['alarmState'] = "disarmed"
         self.writeNewSettingsToFile(self.settings)
         self.mynotify.update_alarmstate()
 
@@ -187,14 +188,13 @@ class Worker():
         orderedSensors = OrderedDict(
             sorted(sensors.items(), key=lambda k_v: k_v[1]['name']))
         sensorsArmed['sensors'] = orderedSensors
-        sensorsArmed['triggered'] = self.settings['settings']['alarmTriggered']
-        sensorsArmed['alarmArmed'] = self.settings['settings']['alarmArmed']
+        sensorsArmed['alarmState'] = self.settings['settings']['alarmState']
         return sensorsArmed
 
-    def getTriggeredStatus(self):
+    def getAlarmState(self):
         """ Returns the status of the alert for the UI """
 
-        return {"alert": self.settings['settings']['alarmTriggered']}
+        return {"state": self.settings['settings']['alarmState']}
 
     def getSensorsLog(self, **args):
         return self.mylogs.getSensorsLog(**args)
@@ -236,7 +236,7 @@ class Worker():
         self.mylogs.writeLog("user_action", "{0} sensor: {1}".format(
             logState, logSensorName))
         self.writeNewSettingsToFile(self.settings)
-        self.mynotify.updateUI('settingsChanged', self.getSensorsArmed())
+        self.mynotify.updateUI('sensorsChanged', self.getSensorsArmed())
 
     def setSensorsZone(self, zones):
         for sensor, sensorvalue in self.settings['sensors'].items():
@@ -246,7 +246,7 @@ class Worker():
                 sensorvalue['enabled'] = True
             else:
                 sensorvalue['enabled'] = False
-        self.mynotify.updateUI('settingsChanged', self.getSensorsArmed())
+        self.mynotify.updateUI('sensorsChanged', self.getSensorsArmed())
         self.writeNewSettingsToFile(self.settings)
 
     def addSensor(self, sensorValues):
