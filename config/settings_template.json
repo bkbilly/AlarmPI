@@ -32,6 +32,8 @@
     },
     "serene": {
         "enable": false,
+        "http_start": "",
+        "http_stop": "",
         "pin": 14
     },
     "settings": {

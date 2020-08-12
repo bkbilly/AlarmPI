@@ -148,12 +148,51 @@ class Worker():
     def ReadSettings(self):
         """ Reads the json settings file and returns it """
 
-        if not os.path.exists(self.jsonfile):
-            copyfile(os.path.join(self.wd, 'config/settings_template.json'), self.jsonfile)
-
-        with open(self.jsonfile) as data_file:
-            settings = json.load(data_file)
+        settings_template = os.path.join(self.wd, 'config/settings_template.json')
+        settings, missing = self.settings_reconciliation(settings_template, self.jsonfile)
         return settings
+
+    def settings_reconciliation(self, from_json, to_json, ignored=['sensors']):
+        """ Compared the template settings with the one provided to add missing options """
+        missing = []
+        with open(from_json) as data_file:
+            settings_from = json.load(data_file)
+        with open(to_json) as data_file:
+            try:
+                settings_to = json.load(data_file)
+            except:
+                settings_to = {}
+
+        for category, options in settings_from.items():
+            if category not in settings_to:
+                settings_to[category] = options
+                missing.append({
+                    'category': category,
+                    'option': None,
+                    'replacewith': options
+                })
+            elif category not in ignored:
+                for option, data in options.items():
+                    if option not in settings_to[category]:
+                        missing.append({
+                            'category': category,
+                            'option': option,
+                            'replacewith': data
+                        })
+        # return missing
+
+        for miss in missing:
+            if miss['option'] is None:
+                settings_to[miss['category']] = miss['replacewith']
+            else:
+                settings_to[miss['category']][miss['option']] = miss['replacewith']
+
+        if len(missing) > 0:
+            with open(self.jsonfile, 'w') as outfile:
+                json.dump(settings_to, outfile, sort_keys=True,
+                          indent=4, separators=(',', ': '))
+
+        return settings_to, missing
 
     def writeNewSettingsToFile(self, settings):
         """ Write the new settings to the json file """
