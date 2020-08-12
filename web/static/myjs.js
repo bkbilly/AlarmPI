@@ -250,12 +250,14 @@ function saveConfigSettings(type, sensor, currentName){
 	});
 
 	closeConfigWindow();
+	startAgain();
 }
 
 function deleteSensor(sensor){
 	delete sensor
 	socket.emit('delSensor', {"sensor": sensor});
 	closeConfigWindow();
+	startAgain();
 }
 
 function ArmDisarmAlarm(){
