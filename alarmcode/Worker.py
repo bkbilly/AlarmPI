@@ -246,6 +246,7 @@ class Worker():
             sorted(sensors.items(), key=lambda k_v: k_v[1]['name']))
         sensorsArmed['sensors'] = orderedSensors
         sensorsArmed['alarmState'] = self.settings['settings']['alarmState']
+        sensorsArmed['alarmArmed'] = False
         if self.settings['settings']['alarmState'] in ['armed', 'triggered', 'pending']:
             sensorsArmed['alarmArmed'] = True
         return sensorsArmed
