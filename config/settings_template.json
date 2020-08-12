@@ -8,7 +8,7 @@
         "username": "test1"
     },
     "mail": {
-        "enable": true,
+        "enable": false,
         "messageBody": "Alert",
         "messageSubject": "Home Security",
         "password": "",
@@ -20,7 +20,7 @@
     "mqtt": {
         "authentication": false,
         "command_topic": "home/alarm2/set",
-        "enable": true,
+        "enable": false,
         "host": "",
         "password": "",
         "port": 1883,
@@ -43,7 +43,7 @@
     },
     "voip": {
         "domain": "",
-        "enable": true,
+        "enable": false,
         "numbersToCall": [],
         "password": "",
         "timesOfRepeat": "",
