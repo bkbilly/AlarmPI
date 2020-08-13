@@ -272,20 +272,20 @@ table {
   100% { background-color: red; }
 }
 
-.armedAlarm {background-color: #090; }
-.armedAlarm:hover {background-color: #070;}
-.armedAlarm:active {background-color: #040;}
-.armedAlarm:after {content: "Deactivate Alarm";}
+.armedAlarm { background-color: #090; }
+.armedAlarm:hover { background-color: #070; }
+.armedAlarm:active { background-color: #040; }
+.armedAlarm:after { content: "Deactivate Alarm"; }
 
 
-.disarmedAlarm {background-color: #900;}
-.disarmedAlarm:hover {background-color: #700;}
-.disarmedAlarm:active {background-color: #400;}
-.disarmedAlarm:after {content: "Activate Alarm";}
+.disarmedAlarm { background-color: #900; }
+.disarmedAlarm:hover { background-color: #700; }
+.disarmedAlarm:active { background-color: #400; }
+.disarmedAlarm:after { content: "Activate Alarm"; }
 
 
-.pendingAlarm {background-color: #f80;}
-.pendingAlarm:hover {background-color: #c80;}
-.pendingAlarm:active {background-color: #a80;}
-.pendingAlarm:after {content: "Pending Alarm";}
+.pendingAlarm { background-color: #f80; }
+.pendingAlarm:hover { background-color: #c80; }
+.pendingAlarm:active { background-color: #a80; }
+.pendingAlarm:after { content: "Pending Alarm"; }
 
