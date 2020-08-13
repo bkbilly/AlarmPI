@@ -52,8 +52,9 @@
 
   #systemLog {
     border-radius: 20px;
-    background-color: rgba(50, 50, 50, 0.7);;
+    background-color: rgba(50, 50, 50, 0.7);
   }
+
   .settingsModalContent {
     width: auto;
     margin: 3% 10px;
@@ -64,11 +65,9 @@
     margin: 3% 10px;
   }
 
-
-  td{
+  td {
     display: block;
   }
-
 }
 
 @media all and (min-width: 768px) {
@@ -96,7 +95,7 @@
   /* List */
   #systemLog {
     border-radius: 20px;
-    background-color: rgba(50, 50, 50, 0.7);;
+    background-color: rgba(50, 50, 50, 0.7);
     position: absolute;
     width: 300px;
     top: 210px;
@@ -122,12 +121,12 @@
 
   .settingsModalContent {
     width: 80%;
-    margin: 3% auto; 
+    margin: 3% auto;
   }
 
   .sensorModalContent {
     width: 50%;
-    margin: 3% auto; 
+    margin: 3% auto;
   }
 }
 
@@ -156,7 +155,7 @@
   /* List */
   #systemLog {
     border-radius: 20px;
-    background-color: rgba(50, 50, 50, 0.7);;
+    background-color: rgba(50, 50, 50, 0.7);
     position: absolute;
     width: 500px;
     top: 110px;
@@ -224,9 +223,8 @@ table {
   padding: 10px;
   font-size: xx-large;
   cursor: pointer;
-  -webkit-user-select:none; -moz-user-select:none; -ms-user-select: none;
-
-  /*margin-left: 30px;*/
+  -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none;
+  /* margin-left: 30px; */
 }
 .setSensorState {
   position: absolute;
@@ -256,7 +254,7 @@ table {
 
 /* Serien */
 .activeAlarm {
-  /*position: absolute;*/
+  /* position: absolute; */
   -webkit-animation: background 2s infinite;
   animation: background 2s infinite;
 }
