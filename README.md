@@ -48,10 +48,11 @@ alarm_control_panel:
   * `https://admin:secret@example.com:5000/activateAlarmZone?zones=home,away`
   * `https://admin:secret@example.com:5000/activateAlarmOnline`
   * `https://admin:secret@example.com:5000/deactivateAlarmOnline`
+  * `https://example.com:5000/login?username=admin&password=secret`
 
 ### MQTT
 These are the possible mqtt messages. First you will have to setup the MQTT state_topc & command_topic.
-  * `home/alarm/set` [ARM_HOME,ARM_AWAY,ARM_NIGHT,DISARM]
+  * `home/alarm/set` [ARM_HOME,ARM_AWAY,ARM_NIGHT,DISARM,PENDING]
   * `home/alarm/set/sensor/test1` [off,online]
   * `home/alarm/sensor/test1` [off,on,error]
   * `home/alarm` [armed_away,disarmed,triggered]

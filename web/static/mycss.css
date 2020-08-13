@@ -1,203 +1,203 @@
 .sensordiv {
-        width: 80%;
-        min-width: 250px;
-        /*float:left;*/
-        border-radius: 20px;
-        background-color: rgba(0, 0, 0, 0.7);
-        margin: 10px;
-        height: 7em;
-        margin: 10px auto;
-        box-shadow: inset 0px 30px 40px -20px blue;
-        position: relative;
+    width: 80%;
+    min-width: 250px;
+    /*float:left;*/
+    border-radius: 20px;
+    background-color: rgba(0, 0, 0, 0.7);
+    margin: 10px;
+    height: 7em;
+    margin: 10px auto;
+    box-shadow: inset 0px 30px 40px -20px blue;
+    position: relative;
 }
 
 
 @media not all and (min-width: 768px){
 
-        /* ----------- Small ----------- */
-        /* topBar */
-        #sereneSettings {
-                position: relative;
-                width: 100%;
-                min-width: 350px;
-                height: 100px;
-                background-color: #222;
-                border-radius: 1px 1px 30px 30px;
-                box-shadow: inset 0px -5px 40px 1px #777;
-                margin-bottom: 20px;
-                text-align: center;
-        }
+    /* ----------- Small ----------- */
+    /* topBar */
+    #sereneSettings {
+        position: relative;
+        width: 100%;
+        min-width: 350px;
+        height: 100px;
+        background-color: #222;
+        border-radius: 1px 1px 30px 30px;
+        box-shadow: inset 0px -5px 40px 1px #777;
+        margin-bottom: 20px;
+        text-align: center;
+    }
 
-        #armButton {
-                width: 300px;
-                height: 70px;
-                margin: 15px auto;
-        }
+    #armButton {
+        width: 300px;
+        height: 70px;
+        margin: 15px auto;
+    }
 
-        #settingsSphere {
-                background-color: #666;
-                width: 40px;
-                height: 40px;
-                top: 0px;
-                right: 20px;
-        }
-        .sphere {
-                margin: 5px 0 0 10px;
-                height: 50px;
-                width: 50px;
-        }
+    #settingsSphere {
+        background-color: #666;
+        width: 40px;
+        height: 40px;
+        top: 0px;
+        right: 20px;
+    }
+    .sphere {
+        margin: 5px 0 0 10px;
+        height: 50px;
+        width: 50px;
+    }
 
-        .smallSensors {
-                min-width: 350px;
-                margin-left: 0;
-        }
+    .smallSensors {
+        min-width: 350px;
+        margin-left: 0;
+    }
 
-        #systemLog {
-                border-radius: 20px;
-                background-color: rgba(50, 50, 50, 0.7);;
-        }
-        .settingsModalContent {
-                width: auto;
-                margin: 3% 10px;
-        }
+    #systemLog {
+        border-radius: 20px;
+        background-color: rgba(50, 50, 50, 0.7);;
+    }
+    .settingsModalContent {
+        width: auto;
+        margin: 3% 10px;
+    }
 
-        .sensorModalContent {
-                width: auto;
-                margin: 3% 10px;
-        }
+    .sensorModalContent {
+        width: auto;
+        margin: 3% 10px;
+    }
 
 
-        td{
-                display: block;
-        }
+    td{
+        display: block;
+    }
 
 }
 
 
 @media all and (min-width: 768px){
-        /* ----------- Large ----------- */
-        /* topBar */
-        #sereneSettings {
-                position: relative;
-                width: 300px;
-                height: 200px;
-                background-color: #222;
-                border-radius: 1px 30px 30px 1px;
-                box-shadow: inset -10px 0px 40px 1px #777;
-                float: left;
-        }
+    /* ----------- Large ----------- */
+    /* topBar */
+    #sereneSettings {
+        position: relative;
+        width: 300px;
+        height: 200px;
+        background-color: #222;
+        border-radius: 1px 30px 30px 1px;
+        box-shadow: inset -10px 0px 40px 1px #777;
+        float: left;
+    }
 
-        #settingsSphere {
-                background-color: #666;
-                cursor: pointer;
-                width: 40px;
-                height: 40px;
-                top: 140px;
-                left: 190px;
-        }
+    #settingsSphere {
+        background-color: #666;
+        cursor: pointer;
+        width: 40px;
+        height: 40px;
+        top: 140px;
+        left: 190px;
+    }
 
-        /* List */
-        #systemLog {
-                border-radius: 20px;
-                background-color: rgba(50, 50, 50, 0.7);;
-                position: absolute;
-                width: 300px;
-                top: 210px;
-        }
+    /* List */
+    #systemLog {
+        border-radius: 20px;
+        background-color: rgba(50, 50, 50, 0.7);;
+        position: absolute;
+        width: 300px;
+        top: 210px;
+    }
 
-        #armButton {
-                position: relative;
-                top: 10px;
-                left: 20px;
-                width: 200px;
-                height: 70px;
-        }
+    #armButton {
+        position: relative;
+        top: 10px;
+        left: 20px;
+        width: 200px;
+        height: 70px;
+    }
 
-        .sphere {
-                margin: 5px 50px 0 40px;
-                left: 50px;
-                top: 100px;
-        }
+    .sphere {
+        margin: 5px 50px 0 40px;
+        left: 50px;
+        top: 100px;
+    }
 
-        .smallSensors {
-                margin-left: 300px;
-        }
+    .smallSensors {
+        margin-left: 300px;
+    }
 
-        .settingsModalContent {
-                width: 80%;
-                margin: 3% auto; 
-        }
+    .settingsModalContent {
+        width: 80%;
+        margin: 3% auto; 
+    }
 
-        .sensorModalContent {
-                width: 50%;
-                margin: 3% auto; 
-        }
+    .sensorModalContent {
+        width: 50%;
+        margin: 3% auto; 
+    }
 }
 @media all and (min-width: 1400px){
-        /* ----------- Ultra ----------- */
-        /* topBar */
-        #sereneSettings {
-                position: relative;
-                width: 500px;
-                height: 100px;
-                background-color: #222;
-                border-radius: 1px 30px 30px 1px;
-                box-shadow: inset -10px 0px 40px 1px #777;
-                float: left;
-        }
+    /* ----------- Ultra ----------- */
+    /* topBar */
+    #sereneSettings {
+        position: relative;
+        width: 500px;
+        height: 100px;
+        background-color: #222;
+        border-radius: 1px 30px 30px 1px;
+        box-shadow: inset -10px 0px 40px 1px #777;
+        float: left;
+    }
 
-        #settingsSphere {
-                background-color: #666;
-                cursor: pointer;
-                width: 40px;
-                height: 40px;
-                top: 22px;
-                left: 350px;
-        }
+    #settingsSphere {
+        background-color: #666;
+        cursor: pointer;
+        width: 40px;
+        height: 40px;
+        top: 22px;
+        left: 350px;
+    }
 
-        /* List */
-        #systemLog {
-                border-radius: 20px;
-                background-color: rgba(50, 50, 50, 0.7);;
-                position: absolute;
-                width: 500px;
-                top: 110px;
-        }
+    /* List */
+    #systemLog {
+        border-radius: 20px;
+        background-color: rgba(50, 50, 50, 0.7);;
+        position: absolute;
+        width: 500px;
+        top: 110px;
+    }
 
-        #armButton {
-                position: relative;
-                top: 0px;
-                left: 150px;
-                width: 200px;
-                height: 70px;
-        }
+    #armButton {
+        position: relative;
+        top: 0px;
+        left: 150px;
+        width: 200px;
+        height: 70px;
+    }
 
-        .sphere {
-                margin: 5px 50px 0 40px;
-                left: 0px;
-                top: 0px;
-        }
+    .sphere {
+        margin: 5px 50px 0 40px;
+        left: 0px;
+        top: 0px;
+    }
 
-        .smallSensors {
-                margin-left: 500px;
-                text-align: center;
-        }
+    .smallSensors {
+        margin-left: 500px;
+        text-align: center;
+    }
 
-        .settingsModalContent {
-                width: 80%;
-                margin: 3% auto; 
-        }
+    .settingsModalContent {
+        width: 80%;
+        margin: 3% auto; 
+    }
 
-        .sensorModalContent {
-                width: 50%;
-                margin: 3% auto; 
-        }
+    .sensorModalContent {
+        width: 50%;
+        margin: 3% auto; 
+    }
 
-        .sensordiv {
-                width: 40%;
-                margin: 10px 20px;
-                display: inline-block;
-        }
+    .sensordiv {
+        width: 40%;
+        margin: 10px 20px;
+        display: inline-block;
+    }
 
 }
 
@@ -208,73 +208,73 @@
 /* ----------- STATIC ----------- */
 
 table {
-        width: 100%;
+    width: 100%;
 }
 .settingsContent input {
-        width: 100%;
+    width: 100%;
 }
 #settingsSphereText {
-        font-size: xx-large;
-        margin-top: 10px;
+    font-size: xx-large;
+    margin-top: 10px;
 }
 
 
 
 /* sensor */
 .sensortext {
-        text-align: center;
-        padding: 10px;
-        font-size: xx-large;
-        cursor: pointer;
-        -webkit-user-select:none; -moz-user-select:none; -ms-user-select: none;
+    text-align: center;
+    padding: 10px;
+    font-size: xx-large;
+    cursor: pointer;
+    -webkit-user-select:none; -moz-user-select:none; -ms-user-select: none;
 
-        /*margin-left: 30px;*/
+    /*margin-left: 30px;*/
 }
 .setSensorState {
-        position: absolute;
-        bottom: 0;
-        padding: 20px;
+    position: absolute;
+    bottom: 0;
+    padding: 20px;
 }
 .setSensorPin {
-        position: absolute;
-        bottom: 0;
-        right: 0;
-        padding: 20px;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    padding: 20px;
 }
 .sensor_alert {
-        box-shadow: inset 0px 30px 40px -20px green;
+    box-shadow: inset 0px 30px 40px -20px green;
 }
 .sensor_noalert {
-        box-shadow: inset 0px 30px 40px -20px red;
+    box-shadow: inset 0px 30px 40px -20px red;
 }
 .sensor_disabled {
-        box-shadow: inset 0px 30px 40px -20px white;
+    box-shadow: inset 0px 30px 40px -20px white;
 }
 .sensor_offline {
-        box-shadow: inset 0px 30px 40px -20px blue;
+    box-shadow: inset 0px 30px 40px -20px blue;
 }
 
 
 
 /* Serien */
 .activeAlarm {
-        /*position: absolute;*/
-        -webkit-animation: background 2s infinite;
-        animation: background 2s infinite;
+    /*position: absolute;*/
+    -webkit-animation: background 2s infinite;
+    animation: background 2s infinite;
 }
 
 @-webkit-keyframes background {
-        0% { background-color: red; }
-        33% { background-color: green; }
-        67% { background-color: blue; }
-        100% { background-color: red; }
+    0% { background-color: red; }
+    33% { background-color: green; }
+    67% { background-color: blue; }
+    100% { background-color: red; }
 }
 
 @keyframes background {
-        0% { background-color: red; }
-        33% { background-color: green; }
-        67% { background-color: blue; }
-        100% { background-color: red; }
+    0% { background-color: red; }
+    33% { background-color: green; }
+    67% { background-color: blue; }
+    100% { background-color: red; }
 }
 
 .armedAlarm {background-color: #090; }
