@@ -156,7 +156,7 @@ class AlarmPiServer(object):
         def getAlarmStatus():
             user = flask_login.current_user.id
             sensorClass = self.users[user]['obj']
-            return json.dumps(sensorClass.getTriggeredStatus())
+            return json.dumps(sensorClass.getAlarmState())
 
         @self.app.route('/getSensorsLog.json', methods=['Get', 'POST'])
         @flask_login.login_required

@@ -4,7 +4,8 @@ var allproperties = {
 	"sensors": [],
 	"serenePin": null,
 	"alarmArmed": null,
-	"alert": null
+	"alert": null,
+	"alarmState": null
 }
 var sensorHTMLTemplate = '<div class="sensordiv" id="sensordiv{sensor}">\
 	<div class="sensortext" id="sensorname{sensor}" \
@@ -56,13 +57,7 @@ $( document ).ready(function() {
 	socket.emit('join', {})
 
 	socket.on('sensorsChanged', function(msg){
-		startAgain();
-	});
-	socket.on('settingsChanged', function(msg){
 		refreshStatus(msg);
-	});
-	socket.on('alarmStatus', function(msg){
-		setAlarmStatus(msg);
 	});
 	socket.on('sensorsLog', function(msg){
 		addSensorLog(msg);
@@ -117,7 +112,7 @@ function refreshLogs(){
 function refreshStatus(data){
 	console.log("refreshing status")
 	allproperties['sensors'] = data.sensors
-	allproperties['alarmArmed'] = data.alarmArmed
+	allproperties['alarmState'] = data.alarmState
 	enabledPins['in'] = []
 	console.log(data);
 	$.each(data.sensors, function(sensor, alertsensor){
@@ -136,31 +131,30 @@ function refreshStatus(data){
 		$("#sensorname"+sensor).text(alertsensor.name);
 		// $("#sensorgpio"+sensor).text(sensor);
 	});
-	if(data.alarmArmed == true) {
-		$("#armButton").removeClass("disarmedAlarm").addClass("armedAlarm");
-	} else {
-		$("#armButton").removeClass("armedAlarm").addClass("disarmedAlarm");
-	}
-	if (data.triggered === true){
-		$("#alertStatus").addClass("activeAlarm");
-		document.getElementById('audioalert').play()
-	} else if (data.triggered === false){
-		$("#alertStatus").removeClass("activeAlarm");
-		document.getElementById('audioalert').pause()
-		document.getElementById('audioalert').currentTime = 0
-	}
 
-}
-
-function setAlarmStatus(data){
-	allproperties['alert'] = data.alert
-	console.log(data);
-	hasActiveClass = $("#alertStatus").hasClass("activeAlarm")
-	if (data.alert === true && hasActiveClass === false){
-		$("#alertStatus").addClass("activeAlarm");
+	if(data.alarmState == "armed") {
+		$("#armButton").removeClass("activeAlarm");
+		$("#armButton").removeClass("pendingAlarm");
+		$("#armButton").removeClass("disarmedAlarm");
+		$("#armButton").addClass("armedAlarm");
+	} else if (data.alarmState == "disarmed") {
+		$("#armButton").removeClass("activeAlarm");
+		$("#armButton").removeClass("pendingAlarm");
+		$("#armButton").removeClass("armedAlarm");
+		$("#armButton").addClass("disarmedAlarm");
+		document.getElementById('audioalert').pause();
+		document.getElementById('audioalert').currentTime = 0;
+	} else if (data.alarmState == "triggered") {
+		$("#armButton").removeClass("disarmedAlarm");
+		$("#armButton").removeClass("pendingAlarm");
+		$("#armButton").addClass("armedAlarm");
+		$("#armButton").addClass("activeAlarm");
 		document.getElementById('audioalert').play()
-	} else if (data.alert === false && hasActiveClass === true){
-		$("#alertStatus").removeClass("activeAlarm");
+	} else if (data.alarmState == "pending") {
+		$("#armButton").removeClass("disarmedAlarm");
+		$("#armButton").removeClass("armedAlarm");
+		$("#armButton").removeClass("activeAlarm");
+		$("#armButton").addClass("pendingAlarm");
 	}
 }
 
@@ -256,12 +250,14 @@ function saveConfigSettings(type, sensor, currentName){
 	});
 
 	closeConfigWindow();
+	startAgain();
 }
 
 function deleteSensor(sensor){
 	delete sensor
 	socket.emit('delSensor', {"sensor": sensor});
 	closeConfigWindow();
+	startAgain();
 }
 
 function ArmDisarmAlarm(){

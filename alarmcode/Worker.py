@@ -73,7 +73,7 @@ class Worker():
                 self.settings['sensors'][sensorUUID]['alert'] is True and
                 self.settings['sensors'][sensorUUID]['enabled'] is True and
                 self.settings['sensors'][sensorUUID]['online'] is True):
-            self.settings['settings']['alarmArmed'] = True
+            self.settings['settings']['alarmState'] = "armed"
         self.writeNewSettingsToFile(self.settings)
         self.mynotify.update_sensor(sensorUUID)
         self.checkIntruderAlert()
@@ -90,6 +90,17 @@ class Worker():
         self.settings['sensors'][sensorUUID]['online'] = True
         self.writeNewSettingsToFile(self.settings)
         self.mynotify.update_sensor(sensorUUID)
+
+        if self.settings['settings']['alarmState'] == "pending":
+            sensorAlertFound = False
+            for sensor, sensorvalue in self.settings['sensors'].items():
+                if (sensorvalue['alert'] is True and
+                        sensorvalue['enabled'] is True and
+                        sensorvalue['online'] is True):
+                    sensorAlertFound = True
+            if not sensorAlertFound:
+                self.activateAlarm()
+
 
     def sensorError(self, sensorUUID):
         """ On Sensor Error, write logs """
@@ -120,13 +131,15 @@ class Worker():
         """ Checks if the alarm is armed and if it finds an active
             sensor then it calls the intruderAlert method """
 
-        if (self.settings['settings']['alarmArmed'] is True):
+        if (self.settings['settings']['alarmState'] == "armed"):
             for sensor, sensorvalue in self.settings['sensors'].items():
                 if (sensorvalue['alert'] is True and
                         sensorvalue['enabled'] is True and
                         sensorvalue['online'] is True and
-                        self.settings['settings']['alarmTriggered'] is False):
-                    self.settings['settings']['alarmTriggered'] = True
+                        self.settings['settings']['alarmState'] != "triggered"):
+                    logging.info("There is an intruder!!!!!!!!!!!!!")
+                    self.settings['settings']['alarmState'] = "triggered"
+                    self.writeNewSettingsToFile(self.settings)
                     threadIntruderAlert = threading.Thread(
                         target=self.mynotify.intruderAlert)
                     threadIntruderAlert.daemon = True
@@ -135,12 +148,51 @@ class Worker():
     def ReadSettings(self):
         """ Reads the json settings file and returns it """
 
-        if not os.path.exists(self.jsonfile):
-            copyfile(os.path.join(self.wd, 'config/settings_template.json'), self.jsonfile)
-
-        with open(self.jsonfile) as data_file:
-            settings = json.load(data_file)
+        settings_template = os.path.join(self.wd, 'config/settings_template.json')
+        settings, missing = self.settings_reconciliation(settings_template, self.jsonfile)
         return settings
+
+    def settings_reconciliation(self, from_json, to_json, ignored=['sensors']):
+        """ Compared the template settings with the one provided to add missing options """
+        missing = []
+        with open(from_json) as data_file:
+            settings_from = json.load(data_file)
+        with open(to_json) as data_file:
+            try:
+                settings_to = json.load(data_file)
+            except:
+                settings_to = {}
+
+        for category, options in settings_from.items():
+            if category not in settings_to:
+                settings_to[category] = options
+                missing.append({
+                    'category': category,
+                    'option': None,
+                    'replacewith': options
+                })
+            elif category not in ignored:
+                for option, data in options.items():
+                    if option not in settings_to[category]:
+                        missing.append({
+                            'category': category,
+                            'option': option,
+                            'replacewith': data
+                        })
+        # return missing
+
+        for miss in missing:
+            if miss['option'] is None:
+                settings_to[miss['category']] = miss['replacewith']
+            else:
+                settings_to[miss['category']][miss['option']] = miss['replacewith']
+
+        if len(missing) > 0:
+            with open(self.jsonfile, 'w') as outfile:
+                json.dump(settings_to, outfile, sort_keys=True,
+                          indent=4, separators=(',', ': '))
+
+        return settings_to, missing
 
     def writeNewSettingsToFile(self, settings):
         """ Write the new settings to the json file """
@@ -157,7 +209,14 @@ class Worker():
                 zones = [zones]
             self.setSensorsZone(zones)
 
-        self.settings['settings']['alarmArmed'] = True
+        # Deside the state of the alarm based on the sensors status
+        self.settings['settings']['alarmState'] = "armed"
+        for sensor, sensorvalue in self.settings['sensors'].items():
+            if (sensorvalue['alert'] is True and
+                    sensorvalue['enabled'] is True and
+                    sensorvalue['online'] is True):
+                self.settings['settings']['alarmState'] = "pending"
+
         self.writeNewSettingsToFile(self.settings)
         self.mynotify.update_alarmstate()
         self.checkIntruderAlert()
@@ -165,8 +224,7 @@ class Worker():
     def deactivateAlarm(self):
         """ Deactivates the alarm """
 
-        self.settings['settings']['alarmTriggered'] = False
-        self.settings['settings']['alarmArmed'] = False
+        self.settings['settings']['alarmState'] = "disarmed"
         self.writeNewSettingsToFile(self.settings)
         self.mynotify.update_alarmstate()
 
@@ -187,14 +245,16 @@ class Worker():
         orderedSensors = OrderedDict(
             sorted(sensors.items(), key=lambda k_v: k_v[1]['name']))
         sensorsArmed['sensors'] = orderedSensors
-        sensorsArmed['triggered'] = self.settings['settings']['alarmTriggered']
-        sensorsArmed['alarmArmed'] = self.settings['settings']['alarmArmed']
+        sensorsArmed['alarmState'] = self.settings['settings']['alarmState']
+        sensorsArmed['alarmArmed'] = False
+        if self.settings['settings']['alarmState'] in ['armed', 'triggered', 'pending']:
+            sensorsArmed['alarmArmed'] = True
         return sensorsArmed
 
-    def getTriggeredStatus(self):
+    def getAlarmState(self):
         """ Returns the status of the alert for the UI """
 
-        return {"alert": self.settings['settings']['alarmTriggered']}
+        return {"state": self.settings['settings']['alarmState']}
 
     def getSensorsLog(self, **args):
         return self.mylogs.getSensorsLog(**args)
@@ -236,7 +296,7 @@ class Worker():
         self.mylogs.writeLog("user_action", "{0} sensor: {1}".format(
             logState, logSensorName))
         self.writeNewSettingsToFile(self.settings)
-        self.mynotify.updateUI('settingsChanged', self.getSensorsArmed())
+        self.mynotify.updateUI('sensorsChanged', self.getSensorsArmed())
 
     def setSensorsZone(self, zones):
         for sensor, sensorvalue in self.settings['sensors'].items():
@@ -246,7 +306,7 @@ class Worker():
                 sensorvalue['enabled'] = True
             else:
                 sensorvalue['enabled'] = False
-        self.mynotify.updateUI('settingsChanged', self.getSensorsArmed())
+        self.mynotify.updateUI('sensorsChanged', self.getSensorsArmed())
         self.writeNewSettingsToFile(self.settings)
 
     def addSensor(self, sensorValues):
@@ -277,7 +337,7 @@ class Worker():
     def setSensorStatus(self, name, status):
         """ Add a new sensor """
         found = False
-        logging.info(name, status)
+        logging.info("{0} -- {1}".format(name, status))
         for sensor, sensorvalue in self.settings['sensors'].items():
             if sensorvalue['name'].lower().replace(' ', '_') == name.lower().replace(' ', '_'):
                 found = True

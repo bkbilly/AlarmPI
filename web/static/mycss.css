@@ -288,3 +288,9 @@ table {
 .disarmedAlarm:active {background-color: #400}
 .disarmedAlarm:after {content: "Activate Alarm";}
 
+
+.pendingAlarm {background-color: #f80;}
+.pendingAlarm:hover {background-color: #c80}
+.pendingAlarm:active {background-color: #a80}
+.pendingAlarm:after {content: "Pending Alarm";}
+
