@@ -43,8 +43,7 @@ class FlaskBookshelfTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTrue('sensors' in mydata)
-        self.assertTrue('triggered' in mydata)
-        self.assertTrue('alarmArmed' in mydata)
+        self.assertTrue('alarmState' in mydata)
 
     def test_logs(self):
         response = self.client.get(
