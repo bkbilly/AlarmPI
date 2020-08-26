@@ -152,6 +152,7 @@ class notifyMQTT():
         # Subscribe to Alarm Set command
         logging.info('MQTT subscribing to: {0}'.format(self.settings['mqtt']['command_topic']))
         self.mqttclient.subscribe(self.settings['mqtt']['command_topic'])
+        self.mqttclient.subscribe(self.settings['mqtt']['command_topic'] + '/available')
 
         # Subscribe to Sensor Set command
         for sensor, sensorvalue in self.settings['sensors'].items():
@@ -242,6 +243,9 @@ class notifyMQTT():
                     self.callbacks['activateAlarm']('away')
                 elif message == "ARM_NIGHT":
                     self.callbacks['activateAlarm']('night')
+            elif msg.topic == self.settings['mqtt']['command_topic'] + '/available':
+                logging.info(msg.topic + " " + message)
+                self.mqttclient.publish(self.settings['mqtt']['state_topic'] + '/available', 'online', retain=False, qos=2)
             elif topicSensorSet in msg.topic:
                 sensorName = msg.topic.replace(topicSensorSet, '')
                 for sensor, sensorvalue in self.settings['sensors'].items():
@@ -267,6 +271,8 @@ class notifyMQTT():
         if self.settings['mqtt']['enable']:
             stateTopic = self.settings['mqtt']['state_topic']
             state = self.settings['settings']['alarmState']
+            if self.settings['settings']['alarmState'] == 'armed':
+                state = 'armed_away'
             self.mqttclient.publish(stateTopic, state, retain=True, qos=2)
 
     def sendSensorMQTT(self, topic, state):
