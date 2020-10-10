@@ -222,9 +222,7 @@ class notifyMQTT():
 
     def on_disconnect(self, client, userdata, rc):
         self.isconnected = False
-        if rc != 0:
-            logging.warning("Unexpected disconnection.")
-        client.reconnect()
+        logging.warning("MQTT disconnecting reason  "  +str(rc))
 
     def on_message_mqtt(self, mqttclient, userdata, msg):
         """ Arm or Disarm on message from subscribed MQTT topics """
