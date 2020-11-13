@@ -218,8 +218,7 @@ class notifyMQTT():
                 }
             }
             code = self.settings['mqtt'].get('code')
-            if code is not None and code is not 'null':
-                print(code)
+            if code is not None:
                 has_config['code'] = code
             has_payload = json.dumps(has_config)
             self.mqttclient.publish(has_topic, has_payload, retain=True, qos=2)
