@@ -261,6 +261,9 @@ function deleteSensor(sensor){
 }
 
 function ArmDisarmAlarm(){
+	if ($("#armButton").hasClass("pendingAlarm") === true){
+		socket.emit('deactivateAlarm');
+	}
 	if ($("#armButton").hasClass("disarmedAlarm") === true){
 		socket.emit('activateAlarm');
 	}
