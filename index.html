@@ -10,7 +10,7 @@
     <meta name="author" content="">
     <link rel="icon" href="img/icon.png">
 
-    <title>LNX Link</title>
+    <title>AlarmPI</title>
 
     <!-- Bootstrap Core CSS -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
@@ -44,7 +44,7 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand topnav" href="#">LNX Link</a>
+                <a class="navbar-brand topnav" href="#">AlarmPI</a>
             </div>
             <!-- Collect the nav links, forms, and other content for toggling -->
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
@@ -53,13 +53,19 @@
                         <a href="#about">About</a>
                     </li>
                     <li>
-                        <a href="#features">Features</a>
+                        <a href="#capabilities">Capabilities</a>
+                    </li>
+                    <li>
+                        <a href="#connectsensors">Sensors</a>
                     </li>
                     <li>
                         <a href="#install">Install</a>
                     </li>
                     <li>
-                        <a href="#homeassistant">Home Assistant</a>
+                        <a href="#openui">WebInterface</a>
+                    </li>
+                    <li>
+                        <a href="#downloadapp">Application</a>
                     </li>
                     <li>
                         <a href="#contact">Contact</a>
@@ -80,12 +86,15 @@
             <div class="row">
                 <div class="col-lg-12">
                     <div class="intro-message">
-                        <h1>LNX Link</h1>
-                        <h3>Home Assistant Companion APP</h3>
+                        <h1>AlarmPI</h1>
+                        <h3>Home Security System</h3>
                         <hr class="intro-divider">
                         <ul class="list-inline intro-social-buttons">
                             <li>
-                                <a href="https://github.com/bkbilly/LNXLink" class="btn btn-default btn-lg"><i class="fa fa-github fa-fw"></i> <span class="network-name">Github</span></a>
+                                <a href="https://github.com/bkbilly/AlarmPI" class="btn btn-default btn-lg"><i class="fa fa-github fa-fw"></i> <span class="network-name">Github</span></a>
+                            </li>
+                            <li>
+                                <a href='https://play.google.com/store/apps/details?id=bkbilly.alarmpi&pcampaignid=MKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1'><img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png' height='70px'/></a>
                             </li>
                         </ul>
                     </div>
@@ -100,7 +109,7 @@
 
     <!-- Page Content -->
     <a  name="about"></a>
-    <div class="content-section" style="border-top: 0;">
+    <div class="content-section-a">
         <div class="container">
 
             <div class="row">
@@ -108,8 +117,9 @@
                     <hr class="section-heading-spacer">
                     <div class="clearfix"></div>
                     <h2 class="section-heading">About</h2>
-                    <p class="lead">LNX Link is a Linux service for integrating your system with an external application using MQTT.</p>
-                    <p class="lead">It starts automatically on boot and you don't need to be a root user to install and use.</p>
+                    <p class="lead">AlarmPI is a home alarm system based on Raspberry PI controlling PIR sensors, Door sensors or any other sensor.
+                    <p class="lead">It is controlled with a Web UI, or a Android Application. Supports multiple users with separate sensors for each user.</p>
+                    </p>
                 </div>
                 <div class="col-lg-5 col-lg-offset-2 col-sm-6">
                     <img class="img-responsive" src="img/icon.png" alt="">
@@ -123,22 +133,21 @@
 
 
     <!-- Page Content -->
-    <a  name="features"></a>
-    <div class="content-section-a">
+    <a  name="capabilities"></a>
+    <div class="content-section-b">
         <div class="container">
 
             <div class="row">
                 <div class="col-lg-5 col-lg-offset-1 col-sm-push-6  col-sm-6">
                     <hr class="section-heading-spacer">
                     <div class="clearfix"></div>
-                    <h2 class="section-heading">Features</h2>
-                    <p class="lead"><b>System control: </b> Shutdown, Restart, Send Keys, Notify, Media.</p>
-                    <p class="lead"><b>System monitor: </b> CPU, Ram, Network, Media.</p>
-                    <p class="lead"><b>Easily expanded: </b> Modular design so that programmers can add more features just by creating a new application.</p>
-
+                    <h2 class="section-heading">Capabilities</h2>
+                    <p class="lead">Supports physical sensors as GPIO inputs and integrates Hikvision LineCrossing as sensor.</p>
+                    <p class="lead">All sensors are controlled by MQTT or HTTP requests and supports integration with HomeAssistant.</p>
+                    <p class="lead">When the alarm is triggered it activates the serene on browser and the RaspberryPI GPIO, sends an email to all users and finally makes VoIP Calls to provided phones.</p>
                 </div>
                 <div class="col-lg-5 col-sm-pull-6 col-sm-6">
-                    <img class="img-responsive" src="img/cpu.png" alt="">
+                    <img class="img-responsive" src="img/micropython.png" alt="">
                 </div>
             </div>
 
@@ -150,20 +159,46 @@
 
 
     <!-- Page Content -->
-    <a  name="install"></a>
-    <div class="content-section-b">
+    <a  name="connectsensors"></a>
+    <div class="content-section-a">
         <div class="container">
 
             <div class="row">
                 <div class="col-lg-5 col-sm-6">
                     <hr class="section-heading-spacer">
                     <div class="clearfix"></div>
-                    <h2 class="section-heading">Install</h2>
-                    <p class="lead">To Install or Update LNX Link, open a terminal and enter:</p>
-                    <pre><code>bash <(curl -s "https://raw.githubusercontent.com/bkbilly/lnxlink/master/install.sh")</code></pre>
-                    <p class="lead">Follow the on-screen instructions to complete the installation.</p>
+                    <h2 class="section-heading">Connect Physical Sensors</h2>
+                    <p class="lead">Connect all your door sensors and PIR Sensors to the Raspberry. One of the cords go to a <b>BCM pin</b> and the other goes to the <b>Ground pin</b>.</p>
+                    <p class="lead">You can find what each pin is here: <a target="_blank" href="https://pinout.xyz/">GPIO Pinout</a><br>
+                    or from the terminal: <code>gpio readall</code></p>
+
                 </div>
                 <div class="col-lg-5 col-lg-offset-2 col-sm-6">
+                    <img class="img-responsive" src="img/connectsensors.png" alt="">
+                </div>
+            </div>
+
+        </div>
+        <!-- /.container -->
+    </div>
+    <!-- /.content-section-a -->
+
+
+    <!-- Page Content -->
+    <a  name="install"></a>
+    <div class="content-section-b">
+        <div class="container">
+
+            <div class="row">
+                <div class="col-lg-5 col-lg-offset-1 col-sm-push-6  col-sm-6">
+                    <hr class="section-heading-spacer">
+                    <div class="clearfix"></div>
+                    <h2 class="section-heading">Install on Raspberry PI</h2>
+                    <p class="lead">To Install or Update AlarmPI, open a terminal on your Raspberry PI and enter:</p>
+                    <pre><code>bash <(curl -s "https://raw.githubusercontent.com/bkbilly/AlarmPI/master/install.sh")</code></pre>
+                    <p class="lead">Follow the on-screen instructions to complete the installation</p>
+                </div>
+                <div class="col-lg-5 col-sm-pull-6 col-sm-6">
                     <img class="img-responsive" src="img/ssh.png" alt="">
                 </div>
             </div>
@@ -174,22 +209,48 @@
     <!-- /.content-section-a -->
 
 
+    <!-- Page Content -->
+    <a  name="openui"></a>
+    <div class="content-section-a">
+        <div class="container">
+
+            <div class="row">
+                <div class="col-lg-5 col-sm-6">
+                    <hr class="section-heading-spacer">
+                    <div class="clearfix"></div>
+                    <h2 class="section-heading">Open the Web Interface</h2>
+                    <p class="lead">Connect from the browser to this URL:<br><a>https://ipoftheraspberry:5000/</a> </p>
+                    <p class="lead">From here you can add/delete sensors, enable/disable sensors, activate/deactivate the alarm, change settings and see any change live with the help of websockets.</p>
+                </div>
+                <div class="col-lg-5 col-lg-offset-2 col-sm-6">
+                    <img class="img-responsive" src="img/ui.png" alt="">
+                </div>
+            </div>
+
+        </div>
+        <!-- /.container -->
+    </div>
+    <!-- /.content-section-a -->
+
+
+
 
     <!-- Page Content -->
-    <a  name="homeassistant"></a>
-    <div class="content-section-a">
+    <a  name="downloadapp"></a>
+    <div class="content-section-b">
         <div class="container">
 
             <div class="row">
                 <div class="col-lg-5 col-lg-offset-1 col-sm-push-6  col-sm-6">
                     <hr class="section-heading-spacer">
                     <div class="clearfix"></div>
-                    <h2 class="section-heading">Home Assistant integration</h2>
-                    <p class="lead">Using Autoconfig, Home Assistant can find all the sensors and switches automatically.</p>
-                    <p class="lead">Using <a href="https://github.com/bkbilly/hass-mqtt-mediaplayer">this custom integration </a> you can have a media player to control your PC on your home assistant frontend.</p>
+                    <h2 class="section-heading">Download Android application</h2>
+                    <p class="lead">The very basic features that are needed to operate the AlarmPI from your smartphone with minimum data usage.</p>
+                    <a href='https://play.google.com/store/apps/details?id=bkbilly.alarmpi&pcampaignid=MKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1'><img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png' height='70px'/></a>
+
                 </div>
                 <div class="col-lg-5 col-sm-pull-6 col-sm-6">
-                    <img class="img-responsive" src="img/hass.png" alt="">
+                    <img class="img-responsive" src="img/android.png" alt="">
                 </div>
             </div>
 
@@ -208,18 +269,18 @@
 
             <div class="row">
                 <div class="col-lg-6">
-                    <h2>Feel free to contact me:</h2>
+                    <h2>Contact me for any problem:</h2>
                 </div>
                 <div class="col-lg-6">
                     <ul class="list-inline banner-social-buttons">
                         <li>
-                            <a href="https://github.com/bkbilly/LNXLink" class="btn btn-default btn-lg"><i class="fa fa-github fa-fw"></i> <span class="network-name">Github</span></a>
+                            <a href="https://github.com/bkbilly/AlarmPI" class="btn btn-default btn-lg"><i class="fa fa-github fa-fw"></i> <span class="network-name">Github</span></a>
                         </li>
                         <li>
                             <a href="https://www.linkedin.com/in/bkbilly" class="btn btn-default btn-lg"><i class="fa fa-linkedin fa-fw"></i> <span class="network-name">Linkedin</span></a>
                         </li>
                         <li>
-                            <a href="mailto:bkbilly@hotmail.com?Subject=LNXLink" target="_blank" class="btn btn-default btn-lg"><i class="fa fa-google fa-fw"></i> <span class="network-name">Mail</span></a>
+                            <a href="mailto:bkbilly@hotmail.com?Subject=AlarmPI" target="_blank" class="btn btn-default btn-lg"><i class="fa fa-google fa-fw"></i> <span class="network-name">Mail</span></a>
                         </li>
                     </ul>
                 </div>
