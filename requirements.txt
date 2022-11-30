@@ -1,6 +1,6 @@
-Flask>=1.1.1
-Flask-SocketIO==4.3.2
-Flask-Login>=0.4.1
+Flask==2.2.2
+Flask-Login==0.6.2
+Flask-SocketIO==5.3.2
 requests>=2.22.0
 pytz>=2019.2
 paho-mqtt>=1.4.0

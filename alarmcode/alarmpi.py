@@ -386,17 +386,20 @@ class AlarmPiServer(object):
                 self.socketio.run(self.app, host="0.0.0.0",
                                   port=self.serverJson['ui']['port'],
                                   certfile=self.certcrtfile,
-                                  keyfile=self.certkeyfile)
+                                  keyfile=self.certkeyfile,
+                                  allow_unsafe_werkzeug=True)
             except Exception:
                 logging.exception("Can't run server with HTTPS:")
                 context = (self.certcrtfile, self.certkeyfile)
                 self.socketio.run(self.app, host="0.0.0.0",
                                   port=self.serverJson['ui']['port'],
-                                  ssl_context=context)
+                                  ssl_context=context,
+                                  allow_unsafe_werkzeug=True)
 
         else:
             self.socketio.run(self.app, host="0.0.0.0",
-                              port=self.serverJson['ui']['port'])
+                              port=self.serverJson['ui']['port'],
+                              allow_unsafe_werkzeug=True)
 
 
 if __name__ == '__main__':
