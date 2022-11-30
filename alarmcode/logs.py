@@ -78,8 +78,8 @@ class Logs():
         """ Trims the log file in an interval of 24 hours to 1000 lines """
 
         # lines = 1000  # Number of lines of logs to keep
-        repeat_every_n_sec = 86400  # 24 Hours
-        while True and lines is None and lines > 0:
+        repeat_every_n_sec = 3600  # 1 Hours
+        while True and lines > 0:
             with open(self.logfile, 'r') as f:
                 data = f.readlines()
             with open(self.logfile, 'w') as f:
