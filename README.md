@@ -1,7 +1,7 @@
 # AlarmPI ![Build Status](https://github.com/bkbilly/AlarmPI/workflows/build/badge.svg) [![GitHub release (latest by date)](https://img.shields.io/github/v/release/bkbilly/AlarmPI)](https://github.com/bkbilly/AlarmPI/releases/latest)
 
 AlarmPI is a home security system based on Raspberry PI. It supports wired sensors (PIR, Magnetic etc.) and wireless through MQTT or Hikvision. It is controlled with a Web UI, a Android Application, or through HTTP & MQTT messages. When the alarm detects movement, it supports the following events:
- * Enables the Serene
+ * Enables the Siren
  * Send Mail
  * VoIP Calls
  * Send MQTT message
@@ -48,11 +48,14 @@ alarm_control_panel:
   * `https://admin:secret@example.com:5000/activateAlarmZone?zones=home,away`
   * `https://admin:secret@example.com:5000/activateAlarmOnline`
   * `https://admin:secret@example.com:5000/deactivateAlarmOnline`
+  * `https://admin:secret@example.com:5000/stopSiren`
+  * `https://admin:secret@example.com:5000/startSiren`
   * `https://example.com:5000/login?username=admin&password=secret`
 
 ### MQTT
 These are the possible mqtt messages. First you will have to setup the MQTT state_topc & command_topic.
   * `home/alarm/set` [ARM_HOME,ARM_AWAY,ARM_NIGHT,DISARM,PENDING]
+  * `home/alarm/set/siren` {"state": "ON"}
   * `home/alarm/set/sensor/test1` [off,online]
   * `home/alarm/sensor/test1` [off,on,error]
   * `home/alarm` [armed_away,disarmed,triggered]
