@@ -114,6 +114,10 @@ class sensorGPIO(sensorGeneral):
     def _checkInputPinState(self, inputPin):
         nowState = GPIO.input(self.pin)
         if nowState == 1:
+            time.sleep(0.2)
+            nowState = GPIO.input(self.pin)
+
+        if nowState == 1:
             self._notify_alert(self.sensorName)
         else:
             self._notify_alert_stop(self.sensorName)
