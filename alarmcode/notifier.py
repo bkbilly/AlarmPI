@@ -34,7 +34,6 @@ class notifyGPIO():
             logging.exception("Can't connect to GPIO Serene:")
             self.connected = False
 
-
     def startSerene(self):
         """ This method enables the output pin for the serene """
 
@@ -59,7 +58,6 @@ class notifyGPIO():
                     requests.get(self.settings['serene']['http_stop'])
                 except Exception:
                     logging.exception("Can't find http_stop on settings:")
-            
 
     def enableOutputPin(self, *pins):
         if self.connected:
@@ -123,7 +121,6 @@ class notifyMQTT():
         if not hasattr(self, 'mqttclient'):
             self.mqttclient = mqtt.Client(client_id=str(random.randint(1,10000)), clean_session=False)
 
-
         self.mqttclient.disconnect()
         self.mqttclient.loop_stop(force=False)
         if self.settings['mqtt']['enable']:
@@ -152,8 +149,16 @@ class notifyMQTT():
         # Subscribe to Alarm Set command
         logging.info('MQTT subscribing to: {0}'.format(self.settings['mqtt']['command_topic']))
         self.mqttclient.subscribe(self.settings['mqtt']['command_topic'])
+        self.mqttclient.subscribe(self.settings['mqtt']['command_topic'] + '/siren')
         self.mqttclient.subscribe(self.settings['mqtt']['command_topic'] + '/available')
 
+        device = {
+            "identifiers": "alarmpi-{0}".format(self.optsUpdateUI['room']),
+            "name": "AlarmPI-{0}".format(self.optsUpdateUI['room']),
+            "sw_version": "AlarmPI {0}".format(self.version),
+            "model": "Raspberry PI",
+            "manufacturer": "bkbilly"
+        }
         # Subscribe to Sensor Set command
         for sensor, sensorvalue in self.settings['sensors'].items():
             # Subscribe to mqtt sensors events
@@ -187,13 +192,7 @@ class notifyMQTT():
                     "state_topic": statemqttsensor,
                     "name": "AlarmPI-{0}-{1}".format(self.optsUpdateUI['room'], sensorvalue['name']),
                     "unique_id": "alarmpi_{0}_{1}".format(self.optsUpdateUI['room'], sensor_name),
-                    "device": {
-                        "identifiers": "alarmpi-{0}".format(self.optsUpdateUI['room']),
-                        "name": "AlarmPI-{0}".format(self.optsUpdateUI['room']),
-                        "sw_version": "AlarmPI {0}".format(self.version),
-                        "model": "Raspberry PI",
-                        "manufacturer": "bkbilly"
-                    }
+                    "device": device
                 }
                 has_payload = json.dumps(has_config)
                 self.mqttclient.publish(has_topic, has_payload, retain=True, qos=2)
@@ -209,19 +208,25 @@ class notifyMQTT():
                 "state_topic": self.settings['mqtt']['state_topic'],
                 "command_topic": self.settings['mqtt']['command_topic'],
                 "unique_id": "alarmpi_{0}".format(self.optsUpdateUI['room']),
-                "device": {
-                    "identifiers": "alarmpi-{0}".format(self.optsUpdateUI['room']),
-                    "name": "AlarmPI-{0}".format(self.optsUpdateUI['room']),
-                    "sw_version": "AlarmPI {0}".format(self.version),
-                    "model": "Raspberry PI",
-                    "manufacturer": "bkbilly"
-                }
+                "device": device
             }
             code = self.settings['mqtt'].get('code')
             if code is not None:
                 has_config['code'] = code
             has_payload = json.dumps(has_config)
             self.mqttclient.publish(has_topic, has_payload, retain=True, qos=2)
+            if self.settings['serene']['enable']:
+                has_topic = "homeassistant/siren/{0}/config".format(self.optsUpdateUI['room'])
+                logging.info(has_topic)
+                has_config = {
+                    "name": "alarmpi {0}".format(self.optsUpdateUI['room']),
+                    "state_topic": self.settings['mqtt']['state_topic'] + "/siren",
+                    "command_topic": self.settings['mqtt']['command_topic'] + "/siren",
+                    "unique_id": "alarmpi_{0}_siren".format(self.optsUpdateUI['room']),
+                    "device": device
+                }
+                has_payload = json.dumps(has_config)
+                self.mqttclient.publish(has_topic, has_payload, retain=True, qos=2)
 
     def on_disconnect(self, client, userdata, rc):
         self.isconnected = False
@@ -244,9 +249,15 @@ class notifyMQTT():
                     self.callbacks['activateAlarm']('away')
                 elif message == "ARM_NIGHT":
                     self.callbacks['activateAlarm']('night')
+            elif msg.topic == self.settings['mqtt']['command_topic'] + '/siren':
+                message = json.loads(message)
+                if message['state'].lower() == "on":
+                    self.callbacks['sirenStart']()
+                elif message['state'].lower() == "off":
+                    self.callbacks['sirenStop']()
             elif msg.topic == self.settings['mqtt']['command_topic'] + '/available':
                 logging.info(msg.topic + " " + message)
-                self.mqttclient.publish(self.settings['mqtt']['state_topic'] + '/available', 'online', retain=False, qos=2)
+                self.mqttclient.publish(self.settings['mqtt']['state_topic'] + '/available', 'online', retain=True, qos=2)
             elif topicSensorSet in msg.topic:
                 sensorName = msg.topic.replace(topicSensorSet, '')
                 for sensor, sensorvalue in self.settings['sensors'].items():
@@ -278,7 +289,13 @@ class notifyMQTT():
 
     def sendSensorMQTT(self, topic, state):
         if self.settings['mqtt']['enable']:
-            self.mqttclient.publish(topic, state, retain=False, qos=2)
+            self.mqttclient.publish(topic, state, retain=True, qos=2)
+
+    def startSiren(self):
+        self.mqttclient.publish(self.settings['mqtt']['state_topic'] + "/siren", "ON", retain=True, qos=2)
+
+    def stopSiren(self):
+        self.mqttclient.publish(self.settings['mqtt']['state_topic'] + "/siren", "OFF", retain=True, qos=2)
 
     def status(self):
         return self.isconnected
@@ -418,6 +435,8 @@ class Notify():
         self.callbacks['activateAlarm'] = lambda *args:0
         self.callbacks['sensorAlert'] = lambda *args:0
         self.callbacks['sensorStopAlert'] = lambda *args:0
+        self.callbacks['sirenStart'] = self.startSiren
+        self.callbacks['sirenStop'] = self.stopSiren
         self.room = 'initial'
         self.optsUpdateUI = optsUpdateUI
         self.settings = settings
@@ -444,9 +463,11 @@ class Notify():
 
     def startSiren(self):
         self.gpio.startSerene()
-        
+        self.mqtt.startSiren()
+
     def stopSiren(self):
         self.gpio.stopSerene()
+        self.mqtt.stopSiren()
 
     def intruderAlert(self):
         """ This method is called when an intruder is detected. It calls
@@ -454,7 +475,7 @@ class Notify():
             Sends MQTT message, enables serene, Send mail, Call Voip.
         """
         self.mylogs.writeLog("alarm", "Intruder Alert")
-        self.gpio.startSerene()
+        self.startSiren()
         self.mqtt.sendStateMQTT()
         self.ui.updateUI('sensorsChanged', self.getSensorsArmed())
         threadSendMail = threading.Thread(target=self.email.sendMail)
@@ -488,7 +509,7 @@ class Notify():
         elif self.settings['settings']['alarmState'] == "pending":
             self.mylogs.writeLog("user_action", "Alarm is pending for activation")
 
-        self.gpio.stopSerene()
+        self.stopSiren()
         self.mqtt.sendStateMQTT()
         self.ui.updateUI('sensorsChanged', self.getSensorsArmed())
 

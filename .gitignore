@@ -6,3 +6,4 @@ server.json
 AlarmPI.egg-info
 settings*.json
 !*_template.json
+venv

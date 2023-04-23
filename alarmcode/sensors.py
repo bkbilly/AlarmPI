@@ -113,13 +113,10 @@ class sensorGPIO(sensorGeneral):
 
     def _checkInputPinState(self, inputPin):
         nowState = GPIO.input(self.pin)
-        if nowState != self.gpioState:
-            if nowState == 1:
-                self._notify_alert(self.sensorName)
-            else:
-                self._notify_alert_stop(self.sensorName)
+        if nowState == 1:
+            self._notify_alert(self.sensorName)
         else:
-            logging.info("{0}GPIO {2}: Wrong state change. Ignoring!!!{1}".format(bcolors.STRIKE, bcolors.ENDC, str(inputPin)))
+            self._notify_alert_stop(self.sensorName)
 
 
 class sensorHikvision(sensorGeneral):
