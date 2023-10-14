@@ -5,3 +5,4 @@ requests>=2.22.0
 pytz>=2019.2
 paho-mqtt>=1.4.0
 RPi.GPIO>=0.7.0
+Werkzeug==2.2.2
