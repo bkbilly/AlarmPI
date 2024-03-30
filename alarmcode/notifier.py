@@ -119,7 +119,10 @@ class notifyMQTT():
 
         # self.mqttclient = mqtt.Client("", True, None, mqtt.MQTTv311)
         if not hasattr(self, 'mqttclient'):
-            self.mqttclient = mqtt.Client(client_id=str(random.randint(1,10000)), clean_session=False)
+            if hasattr(mqtt, "CallbackAPIVersion"):
+                self.mqttclient = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+            else:
+                self.mqttclient = mqtt.Client(client_id=str(random.randint(1,10000)), clean_session=False)
 
         self.mqttclient.disconnect()
         self.mqttclient.loop_stop(force=False)
