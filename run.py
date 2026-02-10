@@ -50,4 +50,4 @@ if __name__ == '__main__':
         myserver.startMyApp()
         myserver.startServer()
     except Exception:
-        rootLogger.exception("Unknown error has occured Contact Author:")
+        rootLogger.exception("Unknown error has occurred Contact Author:")
