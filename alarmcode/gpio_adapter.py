@@ -37,7 +37,6 @@ class MockGPIOModule:
         self._pins: Dict[int, Dict[str, Any]] = {}
         self._callbacks: Dict[int, Dict[str, Any]] = {}
         self._lock = threading.Lock()
-        logger.info("Using MockGPIO (virtual GPIO mode). Hardware GPIO not detected.")
 
     def setmode(self, mode: int) -> None:
         self._mode = mode
@@ -50,11 +49,11 @@ class MockGPIOModule:
 
     def setup(self, pin: int, direction: int, pull_up_down: int = PUD_OFF, initial: int = LOW) -> None:
         with self._lock:
-            state = self.HIGH if pull_up_down == self.PUD_UP else initial
+            # Default input pin to LOW (0 = normal / closed) so mock mode isn't stuck on alert
             self._pins[pin] = {
                 'direction': direction,
                 'pull_up_down': pull_up_down,
-                'state': state
+                'state': initial if direction == self.OUT else self.LOW
             }
 
     def output(self, pin: int, state: int) -> None:
@@ -111,18 +110,25 @@ def get_gpio():
     # 1. Try standard RPi.GPIO
     try:
         import RPi.GPIO as rpi_gpio
+        rpi_gpio.setmode(rpi_gpio.BCM)
+        rpi_gpio.setwarnings(False)
+        logger.info("✅ Hardware GPIO initialized using RPi.GPIO.")
         return rpi_gpio, True
-    except (ImportError, RuntimeError):
-        pass
+    except Exception as e:
+        logger.debug("RPi.GPIO not loaded: %s", e)
 
     # 2. Try rpi_lgpio (Raspberry Pi 5 / Bookworm)
     try:
         import rpi_lgpio as rpi_gpio
+        rpi_gpio.setmode(rpi_gpio.BCM)
+        rpi_gpio.setwarnings(False)
+        logger.info("✅ Hardware GPIO initialized using rpi_lgpio.")
         return rpi_gpio, True
-    except (ImportError, RuntimeError):
-        pass
+    except Exception as e:
+        logger.debug("rpi_lgpio not loaded: %s", e)
 
     # 3. Fallback to mock
+    logger.warning("⚠️ Hardware GPIO library (RPi.GPIO or rpi-lgpio) is not installed! Running in MockGPIO virtual mode. Physical GPIO pins will NOT be read.")
     return MockGPIOModule(), False
 
 

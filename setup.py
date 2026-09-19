@@ -9,6 +9,7 @@ REQUIRES = [
     'paho-mqtt>=2.0.0',
     'simple-websocket>=1.1.0',
     'Werkzeug>=3.0.0',
+    'RPi.GPIO>=0.7.1; sys_platform == "linux" and (platform_machine == "armv7l" or platform_machine == "aarch64" or platform_machine == "armv6l")',
 ]
 
 setup(
@@ -20,5 +21,5 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=REQUIRES,
-    python_requires='>=3.10',
+    python_requires='>=3.9',
 )
