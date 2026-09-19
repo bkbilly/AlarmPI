@@ -448,13 +448,33 @@ body {
   justify-content: space-between;
   position: relative;
   transition: var(--transition);
-  cursor: pointer;
 }
 
 .sensor-card:hover {
   background: var(--bg-card-hover);
-  transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.sensor-config-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 5px 11px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.sensor-config-btn:hover {
+  background: rgba(99, 102, 241, 0.25);
+  border-color: rgba(99, 102, 241, 0.45);
+  color: #e0e7ff;
+  transform: translateY(-1px);
 }
 
 .sensor-card-top {

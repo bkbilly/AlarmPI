@@ -67,6 +67,13 @@ function setupEventListeners() {
       closeAllModals();
     }
   });
+
+  // ESC key to close any open modal
+  $(document).on('keydown', function(e) {
+    if (e.key === 'Escape' || e.keyCode === 27) {
+      closeAllModals();
+    }
+  });
 }
 
 function setupSocketIO() {
@@ -167,7 +174,7 @@ function renderAlarmHero(state) {
     $label.text('Disarmed');
     $label.css('color', 'var(--color-disarmed)');
     $subtitle.text('System is disarmed. Standby mode.');
-    $actionBtn.removeClass('btn-disarm').addClass('btn-arm').html('<span>🛡️</span> Arm Alarm (Full)');
+    $actionBtn.removeClass('btn-disarm').addClass('btn-arm').html('<span>🛡️</span> Arm Alarm');
     if (!sirenIsTesting) stopBrowserSirenSound();
   }
 }
@@ -213,13 +220,40 @@ function getAllSystemZones() {
   return Array.from(zonesSet).sort();
 }
 
+const SENSOR_DEVICE_CLASSES = {
+  door: { icon: '🚪', label: 'Door' },
+  window: { icon: '🪟', label: 'Window' },
+  motion: { icon: '🏃', label: 'Motion' },
+  tamper: { icon: '⚠️', label: 'Tamper' },
+  smoke: { icon: '💨', label: 'Smoke' },
+  glass: { icon: '🔨', label: 'Glass Break' },
+  vibration: { icon: '📳', label: 'Vibration' },
+  generic: { icon: '🔌', label: 'Generic' }
+};
+
+function getSensorDeviceMeta(sensor) {
+  if (sensor && sensor.device_class && SENSOR_DEVICE_CLASSES[sensor.device_class]) {
+    return { key: sensor.device_class, ...SENSOR_DEVICE_CLASSES[sensor.device_class] };
+  }
+  const name = ((sensor && sensor.name) || '').toLowerCase();
+  if (name.includes('motion') || name.includes('pir') || name.includes('move')) return { key: 'motion', ...SENSOR_DEVICE_CLASSES.motion };
+  if (name.includes('window')) return { key: 'window', ...SENSOR_DEVICE_CLASSES.window };
+  if (name.includes('smoke') || name.includes('fire')) return { key: 'smoke', ...SENSOR_DEVICE_CLASSES.smoke };
+  if (name.includes('tamper')) return { key: 'tamper', ...SENSOR_DEVICE_CLASSES.tamper };
+  if (name.includes('glass')) return { key: 'glass', ...SENSOR_DEVICE_CLASSES.glass };
+  if (name.includes('vibrat')) return { key: 'vibration', ...SENSOR_DEVICE_CLASSES.vibration };
+  return { key: 'door', ...SENSOR_DEVICE_CLASSES.door };
+}
+
 function renderSensorsGrid(sensors) {
   const $grid = $('#sensorsGrid');
   $grid.empty();
 
-  if (!sensors || Object.keys(sensors).length === 0) {
+  const sensorKeys = Object.keys(sensors || {});
+  if (sensorKeys.length === 0) {
     $grid.html(`
-      <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-muted);">
+      <div style="grid-column: 1 / -1; text-align: center; padding: 48px 24px; color: var(--text-muted);">
+        <div style="font-size: 3rem; margin-bottom: 12px; opacity: 0.5;">🔌</div>
         <p style="font-size: 1.2rem; margin-bottom: 8px;">No sensors configured yet</p>
         <p style="font-size: 0.9rem;">Click the <b>+</b> button on the bottom right to add your first sensor.</p>
       </div>
@@ -249,11 +283,7 @@ function renderSensorsGrid(sensors) {
       statusClass = 'disabled';
     }
 
-    let typeIcon = '📡';
-    if (s.type === 'GPIO') typeIcon = '🔌';
-    else if (s.type === 'Hikvision') typeIcon = '📹';
-    else if (s.type === 'MQTT') typeIcon = '📶';
-    else if (s.type === 'Virtual') typeIcon = '💻';
+    const devMeta = getSensorDeviceMeta(s);
 
     let zonesHtml = '';
     if (s.zones && Array.isArray(s.zones)) {
@@ -273,10 +303,10 @@ function renderSensorsGrid(sensors) {
     }
 
     const cardHtml = `
-      <div class="sensor-card" style="${cardBorderGlow}" onclick="openEditSensorModal('${id}')">
+      <div class="sensor-card" style="${cardBorderGlow}">
         <div class="sensor-card-top">
-          <span class="sensor-type-badge">${typeIcon} ${s.type || 'Generic'}</span>
-          <div onclick="event.stopPropagation();">
+          <span class="sensor-type-badge">${devMeta.icon} ${devMeta.label} <span style="opacity: 0.65; font-size: 0.7rem; margin-left: 3px;">(${s.type || 'GPIO'})</span></span>
+          <div>
             <label class="switch">
               <input type="checkbox" ${isEnabled ? 'checked' : ''} onchange="toggleSensorEnabled('${id}', this.checked)">
               <span class="slider slider-green"></span>
@@ -292,7 +322,9 @@ function renderSensorsGrid(sensors) {
             <span class="status-indicator-dot ${statusClass}"></span>
             ${statusText}
           </span>
-          <span style="font-size: 0.8rem; color: var(--text-muted);">Configure ⚙️</span>
+          <button class="sensor-config-btn" onclick="openEditSensorModal('${id}')" title="Configure Sensor">
+            <span>⚙️</span> Configure
+          </button>
         </div>
       </div>
     `;
@@ -328,7 +360,7 @@ function armAlarm(zone) {
     });
   } else {
     socket.emit('activateAlarm');
-    showToast('Alarm armed (Full)');
+    showToast('Alarm armed');
   }
 }
 
@@ -1034,6 +1066,7 @@ function openAddSensorModal() {
   $('#sensorModalTitle').text('Add New Sensor');
   $('#sensorModalId').val('');
   $('#sensorInputName').val('');
+  $('#sensorInputDeviceClass').val('door');
   $('#sensorInputBehavior').val('normal');
   $('#sensorDeleteBtn').hide();
 
@@ -1049,9 +1082,12 @@ function openEditSensorModal(sensorId) {
   const sensor = allProperties.sensors[sensorId];
   if (!sensor) return;
 
+  const devMeta = getSensorDeviceMeta(sensor);
+
   $('#sensorModalTitle').text('Edit Sensor');
   $('#sensorModalId').val(sensorId);
   $('#sensorInputName').val(sensor.name || '');
+  $('#sensorInputDeviceClass').val(devMeta.key || 'door');
   $('#sensorInputBehavior').val(sensor.behavior || 'normal');
   $('#sensorDeleteBtn').show().off('click').on('click', () => deleteSensor(sensorId));
 
@@ -1265,8 +1301,26 @@ function renderDynamicSensorFields(sensorType, existingValues = {}) {
   const typeMeta = activeSensorTypes.find(t => t.type === sensorType);
   if (!typeMeta || !typeMeta.fields) return;
 
+  if (sensorType === 'Hikvision') {
+    const discoHtml = `
+      <div class="form-group full-width" style="background: rgba(99, 102, 241, 0.08); border: 1px dashed rgba(99, 102, 241, 0.3); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 8px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+          <div>
+            <div style="font-weight: 600; font-size: 0.88rem; color: #c7d2fe;">🎥 Hikvision Sensor Discovery</div>
+            <div style="font-size: 0.78rem; color: var(--text-secondary);">Query camera/NVR via ISAPI to automatically discover detection channels & sensors</div>
+          </div>
+          <button type="button" class="btn-primary-action" id="btnHikvisionDiscover" onclick="discoverHikvisionSensors()" style="width: auto; padding: 6px 14px; font-size: 0.8rem; background: var(--color-primary);">
+            <span>🔍</span> Connect & Discover
+          </button>
+        </div>
+        <div id="hikvisionDiscoveryStatus" style="margin-top: 8px; font-size: 0.8rem; display: none;"></div>
+      </div>
+    `;
+    $container.append(discoHtml);
+  }
+
   typeMeta.fields.forEach(f => {
-    const val = existingValues[f.name] !== undefined ? existingValues[f.name] : (f.default || '');
+    const rawVal = existingValues[f.name] !== undefined ? existingValues[f.name] : (f.default !== undefined ? f.default : '');
     const fieldId = `sensor_f_${f.name}`;
 
     if (f.type === 'pin') {
@@ -1274,27 +1328,154 @@ function renderDynamicSensorFields(sensorType, existingValues = {}) {
         <div class="form-group">
           <label class="form-label">${f.label}</label>
           <select class="form-control" id="${fieldId}"></select>
-          <span class="form-help">Select a free Raspberry Pi BCM GPIO pin</span>
+          <span class="form-help">${f.help || 'Select a free Raspberry Pi BCM GPIO pin'}</span>
         </div>
       `);
       $container.append(pinSelect);
       const $sel = $(`#${fieldId}`);
       const currentModalSensorId = $('#sensorModalId').val();
-      renderPinSelectOptions($sel, val, currentModalSensorId);
+      renderPinSelectOptions($sel, rawVal, currentModalSensorId);
+    } else if (f.type === 'boolean') {
+      const isChecked = rawVal === true || rawVal === 'true' || rawVal === 1 || rawVal === '1';
+      const onText = f.name === 'invert' ? 'Normally Open (N.O.)' : 'Enabled';
+      const offText = f.name === 'invert' ? 'Normally Closed (N.C.)' : 'Disabled';
+      $container.append(`
+        <div class="form-group">
+          <label class="form-label">${f.label}</label>
+          <div style="display: flex; align-items: center; gap: 12px; margin-top: 6px;">
+            <label class="switch">
+              <input type="checkbox" id="${fieldId}" ${isChecked ? 'checked' : ''}>
+              <span class="slider"></span>
+            </label>
+            <span class="switch-status-text" id="${fieldId}_status" style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 500;">
+              ${isChecked ? onText : offText}
+            </span>
+          </div>
+          ${f.help ? `<span class="form-help" style="margin-top: 6px;">${f.help}</span>` : ''}
+        </div>
+      `);
+      $(`#${fieldId}`).on('change', function() {
+        const checked = $(this).is(':checked');
+        $(`#${fieldId}_status`).text(checked ? onText : offText);
+      });
+    } else if (f.type === 'select') {
+      let optionsHtml = '';
+      (f.options || []).forEach(opt => {
+        const optVal = typeof opt === 'object' ? opt.value : opt;
+        const optLabel = typeof opt === 'object' ? opt.label : opt;
+        const isSelected = String(rawVal) === String(optVal);
+        optionsHtml += `<option value="${optVal}" ${isSelected ? 'selected' : ''}>${optLabel}</option>`;
+      });
+      $container.append(`
+        <div class="form-group">
+          <label class="form-label">${f.label}</label>
+          <select class="form-control" id="${fieldId}">${optionsHtml}</select>
+          ${f.help ? `<span class="form-help">${f.help}</span>` : ''}
+        </div>
+      `);
+    } else if (f.type === 'number') {
+      $container.append(`
+        <div class="form-group">
+          <label class="form-label">${f.label}</label>
+          <input type="number" step="any" class="form-control" id="${fieldId}" value="${rawVal !== undefined && rawVal !== '' ? rawVal : (f.default !== undefined ? f.default : '')}" placeholder="${f.placeholder || ''}">
+          ${f.help ? `<span class="form-help">${f.help}</span>` : ''}
+        </div>
+      `);
     } else if (f.type === 'password') {
       $container.append(`
         <div class="form-group">
           <label class="form-label">${f.label}</label>
-          <input type="password" class="form-control" id="${fieldId}" value="${val}" placeholder="${f.placeholder || ''}">
+          <input type="password" class="form-control" id="${fieldId}" value="${rawVal}" placeholder="${f.placeholder || ''}">
+          ${f.help ? `<span class="form-help">${f.help}</span>` : ''}
         </div>
       `);
     } else {
       $container.append(`
         <div class="form-group">
           <label class="form-label">${f.label}</label>
-          <input type="text" class="form-control" id="${fieldId}" value="${val}" placeholder="${f.placeholder || ''}">
+          <input type="text" class="form-control" id="${fieldId}" value="${rawVal}" placeholder="${f.placeholder || ''}">
+          ${f.help ? `<span class="form-help">${f.help}</span>` : ''}
         </div>
       `);
+    }
+  });
+}
+
+function discoverHikvisionSensors() {
+  const ip = $('#sensor_f_ip').val() ? $('#sensor_f_ip').val().trim() : '';
+  const user = $('#sensor_f_user').val() ? $('#sensor_f_user').val().trim() : '';
+  const pwd = $('#sensor_f_pass').val() ? $('#sensor_f_pass').val().trim() : '';
+
+  if (!ip) {
+    showToast('Please enter Camera IP address');
+    $('#sensor_f_ip').focus();
+    return;
+  }
+
+  const $btn = $('#btnHikvisionDiscover');
+  const $status = $('#hikvisionDiscoveryStatus');
+  $btn.prop('disabled', true).html('<span>⏳</span> Connecting...');
+  $status.show().html('<span style="color: var(--text-secondary);">Connecting to camera and querying ISAPI channels...</span>');
+
+  $.ajax({
+    type: 'POST',
+    url: '/api/hikvision/discover',
+    contentType: 'application/json',
+    data: JSON.stringify({ ip: ip, user: user, pass: pwd }),
+    success: function(resp) {
+      $btn.prop('disabled', false).html('<span>🔍</span> Connect & Discover');
+      const data = typeof resp === 'string' ? JSON.parse(resp) : resp;
+
+      if (data && data.status === 'success') {
+        const dev = data.device || {};
+        $status.html(`
+          <div style="color: #4ade80; font-weight: 600;">
+            ✅ Connected to <b>${dev.model || 'Hikvision Device'}</b> (${dev.name || 'Camera'})
+          </div>
+          <div style="color: var(--text-secondary); font-size: 0.75rem; margin-top: 2px;">
+            Found ${data.events ? data.events.length : 0} available sensor streams across ${dev.channels_count || 1} channel(s).
+          </div>
+        `);
+
+        // Populate event_filter select
+        const $eventSelect = $('#sensor_f_event_filter');
+        if ($eventSelect.length && data.events && data.events.length > 0) {
+          const currentVal = $eventSelect.val();
+          $eventSelect.empty();
+          data.events.forEach(ev => {
+            $eventSelect.append(`<option value="${ev.value}" data-name="${ev.default_name || ''}" data-class="${ev.device_class || 'motion'}">${ev.label}</option>`);
+          });
+          if (currentVal) $eventSelect.val(currentVal);
+
+          $eventSelect.off('change.hikAuto').on('change.hikAuto', function() {
+            const $opt = $(this).find(':selected');
+            const defName = $opt.data('name');
+            const devClass = $opt.data('class');
+            if (defName && (!$('#sensorInputName').val() || $('#sensorInputName').val() === 'Hikvision IP Camera')) {
+              $('#sensorInputName').val(defName);
+            }
+            if (devClass) {
+              $('#sensorInputDeviceClass').val(devClass);
+            }
+          });
+
+          if (!$('#sensorInputName').val() && data.events[0]?.default_name) {
+            $('#sensorInputName').val(data.events[0].default_name);
+          }
+          if (data.events[0]?.device_class) {
+            $('#sensorInputDeviceClass').val(data.events[0].device_class);
+          }
+        }
+        showToast(`Connected to ${dev.model || 'Camera'}! ${data.events.length} sensors found.`);
+      } else {
+        $status.html(`<div style="color: #f87171;">⚠️ ${data.message || 'Connection failed'}</div>`);
+        showToast(data.message || 'Failed to connect to camera');
+      }
+    },
+    error: function() {
+      $btn.prop('disabled', false).html('<span>🔍</span> Connect & Discover');
+      $status.html('<div style="color: #f87171;">⚠️ Network error communicating with camera endpoint</div>');
+      showToast('Error connecting to camera');
     }
   });
 }
@@ -1302,6 +1483,7 @@ function renderDynamicSensorFields(sensorType, existingValues = {}) {
 function saveSensorFromModal() {
   const sensorId = $('#sensorModalId').val() || 'undefined';
   const name = $('#sensorInputName').val().trim();
+  const deviceClass = $('#sensorInputDeviceClass').val() || 'door';
   const behavior = $('#sensorInputBehavior').val();
   const sensorType = $('#sensorTypeSelect').val();
 
@@ -1313,6 +1495,7 @@ function saveSensorFromModal() {
   const sensorObj = {
     name: name,
     type: sensorType,
+    device_class: deviceClass,
     zones: currentModalSelectedZones,
     behavior: behavior
   };
@@ -1320,8 +1503,17 @@ function saveSensorFromModal() {
   const typeMeta = activeSensorTypes.find(t => t.type === sensorType);
   if (typeMeta && typeMeta.fields) {
     typeMeta.fields.forEach(f => {
-      const val = $(`#sensor_f_${f.name}`).val();
-      sensorObj[f.name] = (f.type === 'pin' || f.type === 'number') ? parseInt(val) : val;
+      const fieldSelector = `#sensor_f_${f.name}`;
+      if (f.type === 'boolean') {
+        sensorObj[f.name] = $(fieldSelector).is(':checked');
+      } else if (f.type === 'pin') {
+        sensorObj[f.name] = parseInt($(fieldSelector).val(), 10);
+      } else if (f.type === 'number') {
+        const rawNum = $(fieldSelector).val();
+        sensorObj[f.name] = (rawNum !== '' && !isNaN(parseFloat(rawNum))) ? parseFloat(rawNum) : (f.default !== undefined ? f.default : 0);
+      } else {
+        sensorObj[f.name] = $(fieldSelector).val();
+      }
     });
   }
 
@@ -1453,6 +1645,7 @@ function logout() {
 
 function closeAllModals() {
   $('.modal-backdrop').hide();
+  $('#zoneAutocompleteDropdown').hide();
 }
 
 function showToast(message) {

@@ -42,14 +42,15 @@ class GPIOSensorPlugin(BaseSensorPlugin):
     def define_fields(cls) -> List[SensorField]:
         return [
             SensorField("pin", "BCM Pin Number", "pin", default=1, required=True, help_text="GPIO pin in BCM numbering"),
-            SensorField("invert", "Invert Logic (Normally Open)", "boolean", default=False, help_text="Enable if your sensor reads 1 when closed and 0 when opened"),
-            SensorField("delay", "Glitch Filter / Delay (s)", "number", default=0.15, placeholder="0.15", help_text="Verification delay in seconds before confirming ON/OFF state change"),
+            SensorField("invert", "Invert Logic (Normally Open)", "boolean", default=False, help_text="Enable if your sensor is Normally Open (N.O., reads 1 when closed, 0 when open)"),
+            SensorField("delay", "Glitch Filter / Delay (s)", "number", default=0.15, placeholder="0.15", help_text="Verification delay in seconds before confirming state change (eliminates false triggers)"),
         ]
 
     def add_sensor(self, sensor_data: Dict[str, Any], global_settings: Optional[Dict[str, Any]] = None) -> None:
         self.sensor_data = sensor_data
         self.pin = parse_int(sensor_data.get("pin"), 1)
-        self.delay = parse_float(sensor_data.get("delay", 0.15), 0.15)
+        raw_delay = sensor_data.get("delay")
+        self.delay = parse_float(raw_delay, 0.15) if raw_delay is not None and raw_delay != "" else 0.15
         self.invert = parse_bool(sensor_data.get("invert", False))
 
         if not IS_REAL_HARDWARE:
@@ -95,21 +96,25 @@ class GPIOSensorPlugin(BaseSensorPlugin):
                 self.timer.cancel()
                 self.timer = None
 
+            current_state = GPIO.input(self.pin)
+            if current_state == self.last_reported_state:
+                return
+
             if self.delay > 0:
-                self.timer = Timer(self.delay, self._verify_and_trigger)
+                self.timer = Timer(self.delay, self._verify_and_trigger, args=[current_state])
                 self.timer.daemon = True
                 self.timer.start()
             else:
-                self._verify_and_trigger()
+                self._verify_and_trigger(current_state)
         except Exception:
             logger.exception("Error handling edge detection for sensor %s:", self.sensor_id)
             self._notify_error()
 
-    def _verify_and_trigger(self) -> None:
+    def _verify_and_trigger(self, target_state: int) -> None:
         """Verifies GPIO state after a delay and triggers external alert callbacks."""
         try:
             current_state = GPIO.input(self.pin)
-            if current_state != self.last_reported_state:
+            if current_state == target_state and current_state != self.last_reported_state:
                 self.last_reported_state = current_state
                 is_alert = (current_state == 0) if self.invert else (current_state == 1)
                 if is_alert:

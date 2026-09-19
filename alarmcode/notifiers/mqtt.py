@@ -130,7 +130,7 @@ class MQTTNotifier(BaseNotifier):
                 ha_config = {
                     "payload_on": "on",
                     "payload_off": "off",
-                    "device_class": "door",
+                    "device_class": s_data.get("device_class", "door"),
                     "state_topic": f"{state_topic}/sensor/{s_name}",
                     "name": f"AlarmPI-{room}-{s_name}",
                     "unique_id": f"alarmpi_{room}_{s_slug}",

@@ -27,7 +27,7 @@
 	<header class="app-header">
 		<div class="brand-container">
 			<div class="brand-icon">🛡️</div>
-			<div class="brand-title">AlarmPI System</div>
+			<div class="brand-title">AlarmPI</div>
 		</div>
 		<div class="header-actions">
 			<button class="btn-icon" title="Sensor Timeline" onclick="openTimelineModal()">📊</button>
@@ -48,7 +48,7 @@
 				<p class="alarm-state-subtitle" id="alarmSubtitle">System is disarmed. Standby mode.</p>
 				
 				<button class="btn-primary-action btn-arm" id="alarmActionBtn" onclick="handleMainAlarmAction()">
-					<span>🛡️</span> Arm Alarm (Away)
+					<span>🛡️</span> Arm Alarm
 				</button>
 
 				<!-- Dynamic Zone Arm Buttons (Rendered only for zones that exist in sensors) -->
@@ -150,7 +150,20 @@
 						<input type="text" class="form-control" id="sensorInputName" placeholder="e.g. Front Door Magnet">
 					</div>
 					<div class="form-group">
-						<label class="form-label">Sensor Type</label>
+						<label class="form-label">Device Type</label>
+						<select class="form-control" id="sensorInputDeviceClass">
+							<option value="door" selected>🚪 Door</option>
+							<option value="window">🪟 Window</option>
+							<option value="motion">🏃 Motion (PIR)</option>
+							<option value="tamper">⚠️ Tamper Switch</option>
+							<option value="smoke">💨 Smoke / Fire</option>
+							<option value="glass">🔨 Glass Break</option>
+							<option value="vibration">📳 Vibration</option>
+							<option value="generic">🔌 Generic Contact</option>
+						</select>
+					</div>
+					<div class="form-group">
+						<label class="form-label">Hardware Integration</label>
 						<select class="form-control" id="sensorTypeSelect">
 							<!-- Dynamically populated from backend available sensor types -->
 						</select>

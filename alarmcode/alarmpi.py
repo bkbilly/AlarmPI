@@ -364,6 +364,17 @@ class AlarmPiServer:
             self._apply_settings(user, worker, message)
             return json.dumps("done")
 
+        @self.app.route('/api/hikvision/discover', methods=['POST'])
+        @flask_login.login_required
+        def apiHikvisionDiscover():
+            data = request.get_json(force=True) or {}
+            ip = str(data.get('ip', '')).strip()
+            user = str(data.get('user', '')).strip()
+            pwd = str(data.get('pass', '')).strip()
+            from alarmcode.sensors.hikvision import discover_hikvision
+            result = discover_hikvision(ip, user, pwd)
+            return json.dumps(result)
+
         # Socket.IO Handlers
         @self.socketio.on('setSensorState')
         @flask_login.login_required
