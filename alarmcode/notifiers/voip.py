@@ -28,7 +28,6 @@ class VoIPNotifier(BaseNotifier):
     @classmethod
     def define_fields(cls) -> List[NotifierField]:
         return [
-            NotifierField("enable", "Enable VoIP Calls", "boolean", default=False),
             NotifierField("domain", "SIP Domain / Server", "string", default="", placeholder="sip.provider.com"),
             NotifierField("username", "SIP Username", "string", default="", placeholder="sip_user"),
             NotifierField("password", "SIP Password", "password", default=""),

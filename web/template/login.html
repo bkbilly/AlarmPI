@@ -138,6 +138,13 @@
 		<h1 class="brand-title">AlarmPI Login</h1>
 		<p class="brand-subtitle">Enter your credentials to access security controls</p>
 		
+		{% if error %}
+		<div class="login-error" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; padding: 10px 14px; border-radius: 10px; font-size: 0.85rem; margin-bottom: 20px; text-align: left; display: flex; align-items: center; gap: 8px;">
+			<span>⚠️</span>
+			<span>{{ error }}</span>
+		</div>
+		{% endif %}
+
 		<form method="post">
 			<div class="form-group">
 				<label class="form-label" for="email">Username</label>

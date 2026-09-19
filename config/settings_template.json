@@ -28,6 +28,20 @@
         "username": "",
         "homeassistant": false
     },
+    "push": {
+        "enable": false,
+        "service": "webpush",
+        "subscriptions": [],
+        "telegram_token": "",
+        "telegram_chat_id": "",
+        "ntfy_topic": "",
+        "pushover_user_key": "",
+        "pushover_api_token": "",
+        "webhook_url": "",
+        "notify_on_alarm": true,
+        "notify_on_arm_disarm": true,
+        "notify_on_sensor": true
+    },
     "sensors": {
     },
     "serene": {

@@ -23,7 +23,6 @@ class HTTPRemoteNotifier(BaseNotifier):
     @classmethod
     def define_fields(cls) -> List[NotifierField]:
         return [
-            NotifierField("enable", "Enable HTTP Forwarding", "boolean", default=False),
             NotifierField("host", "Remote Server Host", "string", default="", placeholder="remote.alarmpi.local"),
             NotifierField("port", "Remote Server Port", "number", default=443),
             NotifierField("https", "Use HTTPS", "boolean", default=True),

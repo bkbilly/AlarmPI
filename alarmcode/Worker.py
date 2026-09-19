@@ -313,6 +313,12 @@ class Worker:
         with open(self.jsonfile, 'w') as outfile:
             json.dump(settings, outfile, sort_keys=True, indent=4)
 
+    def saveSettings(self) -> None:
+        """Persist current settings to disk and sync notifiers."""
+        self.writeNewSettingsToFile(self.settings)
+        if hasattr(self, 'mynotify'):
+            self.mynotify.setup_all(self.settings)
+
     def activateAlarm(self, zones: Any = None, force: bool = False) -> None:
         """Arm the alarm system with smart arming (auto-bypass, exit delay, arm after closing)."""
         with self._lock:

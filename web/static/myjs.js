@@ -27,7 +27,18 @@ $(document).ready(function() {
   initApp();
   setupEventListeners();
   setupSocketIO();
+  initServiceWorker();
 });
+
+function initServiceWorker() {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').then(function(reg) {
+      console.log('AlarmPI Service Worker registered with scope:', reg.scope);
+    }).catch(function(err) {
+      console.warn('AlarmPI Service Worker registration failed:', err);
+    });
+  }
+}
 
 function initApp() {
   preloadSettings();
@@ -754,10 +765,11 @@ function renderDynamicSettings(data) {
   sections.forEach((section) => {
     if (section.id === 'system' || section.id === 'settings' || section.id === 'ui') return;
     const sectionVals = values[section.id] || {};
-    const isMasterEnabled = sectionVals.enable !== undefined ? sectionVals.enable : true;
+    const isMasterEnabled = sectionVals.enable !== undefined ? Boolean(sectionVals.enable) : false;
 
     let fieldsHtml = '';
     (section.fields || []).forEach(f => {
+      if (f.name === 'enable') return;
       const fieldVal = sectionVals[f.name] !== undefined ? sectionVals[f.name] : (f.default !== undefined ? f.default : '');
       fieldsHtml += renderFormField(section.id, f, fieldVal);
     });
@@ -782,6 +794,57 @@ function renderDynamicSettings(data) {
         <div class="form-grid">
           ${fieldsHtml}
         </div>
+        ${section.id === 'push' ? `
+          <div id="webpushDeviceSection" class="settings-subgroup full-width" style="margin-top: 16px; background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+              <div>
+                <h4 style="font-size: 0.95rem; font-weight: 600; color: #f8fafc; margin-bottom: 2px;">
+                  <span>📱</span> Browser Web Push Configuration
+                </h4>
+                <p style="font-size: 0.78rem; color: var(--text-secondary); margin: 0;">
+                  Receive direct push notifications on this phone, tablet, or PC browser.
+                </p>
+              </div>
+              <div id="devicePushBadge" style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem; padding: 4px 10px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-color);">
+                <span class="tab-status-dot offline" id="devicePushDot"></span>
+                <span id="devicePushStatusText">Checking status...</span>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px;">
+              <button type="button" class="btn-primary-action" id="btnSubscribeDevice" onclick="subscribeCurrentDevice()" style="width: auto; padding: 7px 16px; font-size: 0.82rem; background: var(--color-primary);">
+                <span>🔔</span> Subscribe This Device
+              </button>
+              <button type="button" class="btn-secondary" id="btnUnsubscribeDevice" onclick="unsubscribeCurrentDevice()" style="padding: 7px 14px; font-size: 0.82rem; display: none;">
+                <span>🔕</span> Unsubscribe This Device
+              </button>
+              <button type="button" class="btn-secondary" id="btnTestThisDevicePush" onclick="testCurrentDevicePush()" style="padding: 7px 14px; font-size: 0.82rem; display: none;">
+                <span>🧪</span> Test Local Notification
+              </button>
+            </div>
+
+            <div style="border-top: 1px solid var(--border-color); padding-top: 12px; margin-top: 6px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 0.82rem; font-weight: 600; color: var(--text-secondary);" id="registeredDevicesHeader">Registered Devices (0)</span>
+                <button type="button" class="btn-secondary" onclick="clearAllPushSubscriptions()" style="padding: 3px 10px; font-size: 0.75rem; color: #f87171; border-color: rgba(239, 68, 68, 0.3);">
+                  🗑️ Clear All Devices
+                </button>
+              </div>
+              <div id="registeredDevicesList" style="max-height: 120px; overflow-y: auto; font-size: 0.8rem; color: var(--text-secondary);">
+                <div style="padding: 8px; text-align: center; color: var(--text-muted);">No devices registered yet. Click 'Subscribe This Device' above to enable push alerts.</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+            <div style="font-size: 0.8rem; color: var(--text-secondary);">
+              Send a test alert to verify your chosen push notification provider.
+            </div>
+            <button type="button" class="btn-primary-action" id="btnTestPush" onclick="testPushNotification()" style="width: auto; padding: 7px 16px; font-size: 0.8rem; background: var(--color-primary);">
+              <span>🔔</span> Send Test Push
+            </button>
+          </div>
+        ` : ''}
       </div>
     `;
 
@@ -944,6 +1007,23 @@ function renderFormField(sectionId, field, value) {
     `;
   }
 
+  if (field.type === 'select') {
+    let optionsHtml = '';
+    (field.options || []).forEach(opt => {
+      const optVal = typeof opt === 'object' ? opt.value : opt;
+      const optLabel = typeof opt === 'object' ? opt.label : opt;
+      const isSelected = String(value) === String(optVal);
+      optionsHtml += `<option value="${optVal}" ${isSelected ? 'selected' : ''}>${optLabel}</option>`;
+    });
+    return `
+      <div class="form-group">
+        <label class="form-label">${label}</label>
+        <select class="form-control" id="${fieldId}">${optionsHtml}</select>
+        ${help}
+      </div>
+    `;
+  }
+
   return `
     <div class="form-group">
       <label class="form-label">${label}</label>
@@ -953,11 +1033,302 @@ function renderFormField(sectionId, field, value) {
   `;
 }
 
+/* ==========================================================================
+   Browser Web Push & Device Subscription Management
+   ========================================================================== */
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/\-/g, '+')
+    .replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+function getDeviceName() {
+  const ua = navigator.userAgent;
+  let browser = 'Browser';
+  if (ua.indexOf('Firefox') > -1) browser = 'Firefox';
+  else if (ua.indexOf('SamsungBrowser') > -1) browser = 'Samsung Internet';
+  else if (ua.indexOf('Opera') > -1 || ua.indexOf('OPR') > -1) browser = 'Opera';
+  else if (ua.indexOf('Edge') > -1 || ua.indexOf('Edg') > -1) browser = 'Edge';
+  else if (ua.indexOf('Chrome') > -1) browser = 'Chrome';
+  else if (ua.indexOf('Safari') > -1) browser = 'Safari';
+
+  let os = 'Device';
+  if (ua.indexOf('Android') > -1) os = 'Android';
+  else if (ua.indexOf('iPhone') > -1 || ua.indexOf('iPad') > -1) os = 'iOS';
+  else if (ua.indexOf('Windows') > -1) os = 'Windows';
+  else if (ua.indexOf('Macintosh') > -1 || ua.indexOf('Mac OS') > -1) os = 'macOS';
+  else if (ua.indexOf('Linux') > -1) os = 'Linux';
+
+  return `${browser} on ${os}`;
+}
+
+function checkDevicePushSubscription() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    $('#devicePushStatusText').text('Web Push not supported in this browser');
+    $('#devicePushDot').removeClass('online').addClass('offline');
+    $('#btnSubscribeDevice, #btnUnsubscribeDevice, #btnTestThisDevicePush').hide();
+    return;
+  }
+
+  navigator.serviceWorker.ready.then(function(reg) {
+    reg.pushManager.getSubscription().then(function(sub) {
+      if (sub) {
+        $('#devicePushStatusText').text('This device is Subscribed');
+        $('#devicePushDot').removeClass('offline').addClass('online');
+        $('#btnSubscribeDevice').hide();
+        $('#btnUnsubscribeDevice, #btnTestThisDevicePush').show();
+      } else {
+        $('#devicePushStatusText').text('This device is Not Subscribed');
+        $('#devicePushDot').removeClass('online').addClass('offline');
+        $('#btnSubscribeDevice').show();
+        $('#btnUnsubscribeDevice, #btnTestThisDevicePush').hide();
+      }
+    });
+  }).catch(function() {
+    $('#devicePushStatusText').text('Subscription check failed');
+  });
+
+  loadPushSubscriptionsList();
+}
+
+function subscribeCurrentDevice() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    showToast('Web Push is not supported by your current browser');
+    return;
+  }
+
+  if (window.Notification && Notification.permission === 'denied') {
+    showToast('Notification permission is blocked in browser settings. Please allow notifications for this site.');
+    return;
+  }
+
+  const $btn = $('#btnSubscribeDevice');
+  $btn.prop('disabled', true).html('<span>⏳</span> Requesting permission...');
+
+  Notification.requestPermission().then(function(perm) {
+    if (perm !== 'granted') {
+      $btn.prop('disabled', false).html('<span>🔔</span> Subscribe This Device');
+      showToast('Notification permission was not granted.');
+      return;
+    }
+
+    $btn.html('<span>⏳</span> Subscribing device...');
+
+    $.getJSON('/api/push/vapid-public-key').done(function(data) {
+      if (!data || data.status !== 'success' || !data.public_key) {
+        $btn.prop('disabled', false).html('<span>🔔</span> Subscribe This Device');
+        showToast('Failed to retrieve VAPID key from server.');
+        return;
+      }
+
+      const applicationServerKey = urlBase64ToUint8Array(data.public_key);
+
+      navigator.serviceWorker.ready.then(function(reg) {
+        return reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: applicationServerKey
+        });
+      }).then(function(subscription) {
+        const payload = {
+          subscription: subscription.toJSON(),
+          device_name: getDeviceName(),
+          created_at: new Date().toLocaleString()
+        };
+
+        $.ajax({
+          type: 'POST',
+          url: '/api/push/subscribe',
+          contentType: 'application/json',
+          data: JSON.stringify(payload),
+          success: function(resp) {
+            $btn.prop('disabled', false).html('<span>🔔</span> Subscribe This Device');
+            showToast('🎉 This device is now subscribed to Push Notifications!');
+            checkDevicePushSubscription();
+          },
+          error: function() {
+            $btn.prop('disabled', false).html('<span>🔔</span> Subscribe This Device');
+            showToast('Failed to save push subscription on server.');
+          }
+        });
+      }).catch(function(err) {
+        $btn.prop('disabled', false).html('<span>🔔</span> Subscribe This Device');
+        console.error('Push subscription failed:', err);
+        showToast('Push subscription failed: ' + err.message);
+      });
+    }).fail(function() {
+      $btn.prop('disabled', false).html('<span>🔔</span> Subscribe This Device');
+      showToast('Error contacting server for push configuration.');
+    });
+  });
+}
+
+function unsubscribeCurrentDevice() {
+  const $btn = $('#btnUnsubscribeDevice');
+  $btn.prop('disabled', true).html('<span>⏳</span> Unsubscribing...');
+
+  navigator.serviceWorker.ready.then(function(reg) {
+    reg.pushManager.getSubscription().then(function(sub) {
+      if (sub) {
+        const endpoint = sub.endpoint;
+        sub.unsubscribe().then(function() {
+          $.ajax({
+            type: 'POST',
+            url: '/api/push/unsubscribe',
+            contentType: 'application/json',
+            data: JSON.stringify({ endpoint: endpoint }),
+            complete: function() {
+              $btn.prop('disabled', false).html('<span>🔕</span> Unsubscribe This Device');
+              showToast('Device unsubscribed from push notifications.');
+              checkDevicePushSubscription();
+            }
+          });
+        }).catch(function(err) {
+          $btn.prop('disabled', false).html('<span>🔕</span> Unsubscribe This Device');
+          showToast('Failed to unsubscribe: ' + err.message);
+        });
+      } else {
+        $btn.prop('disabled', false).html('<span>🔕</span> Unsubscribe This Device');
+        checkDevicePushSubscription();
+      }
+    });
+  });
+}
+
+function testCurrentDevicePush() {
+  if (window.Notification && Notification.permission === 'granted') {
+    navigator.serviceWorker.ready.then(function(reg) {
+      reg.showNotification('🔔 AlarmPI Test Notification', {
+        body: '✅ Local Web Push and browser notifications are functioning properly on this device!',
+        icon: '/static/icon.png',
+        badge: '/static/icon.png',
+        vibrate: [200, 100, 200]
+      });
+      showToast('Test notification sent to this device!');
+    });
+  } else {
+    showToast('Notification permission not granted.');
+  }
+}
+
+function loadPushSubscriptionsList() {
+  $.getJSON('/api/push/subscriptions').done(function(data) {
+    if (data && data.status === 'success') {
+      const subs = data.subscriptions || [];
+      $('#registeredDevicesHeader').text(`Registered Devices (${subs.length})`);
+      const $list = $('#registeredDevicesList');
+      $list.empty();
+      if (subs.length === 0) {
+        $list.html('<div style="padding: 8px; text-align: center; color: var(--text-muted);">No devices registered yet. Click \'Subscribe This Device\' above to enable push alerts.</div>');
+      } else {
+        subs.forEach(function(s) {
+          $list.append(`
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+              <div>
+                <strong style="color: #f8fafc;">📱 ${s.device_name || 'Browser Device'}</strong>
+                <div style="font-size: 0.72rem; color: var(--text-muted);">${s.created_at ? 'Subscribed: ' + s.created_at : ''}</div>
+              </div>
+              <span style="font-size: 0.72rem; font-family: monospace; color: var(--text-muted);">${s.endpoint_preview || ''}</span>
+            </div>
+          `);
+        });
+      }
+    }
+  });
+}
+
+function clearAllPushSubscriptions() {
+  if (confirm('Are you sure you want to remove all registered push devices?')) {
+    $.post('/api/push/subscriptions/clear', function() {
+      showToast('All registered devices cleared.');
+      checkDevicePushSubscription();
+    });
+  }
+}
+
+function updatePushServiceFields() {
+  const service = $('#field_push_service').val() || 'webpush';
+  const $allGrouped = $('#field_push_telegram_token, #field_push_telegram_chat_id, #field_push_ntfy_topic, #field_push_pushover_user_key, #field_push_pushover_api_token, #field_push_webhook_url').closest('.form-group');
+  $allGrouped.hide();
+
+  if (service === 'webpush') {
+    $('#webpushDeviceSection').fadeIn(200);
+    checkDevicePushSubscription();
+  } else if (service === 'all_configured') {
+    $allGrouped.fadeIn(200);
+    $('#webpushDeviceSection').fadeIn(200);
+    checkDevicePushSubscription();
+  } else {
+    $('#webpushDeviceSection').hide();
+    if (service === 'telegram') {
+      $('#field_push_telegram_token, #field_push_telegram_chat_id').closest('.form-group').fadeIn(200);
+    } else if (service === 'ntfy') {
+      $('#field_push_ntfy_topic').closest('.form-group').fadeIn(200);
+    } else if (service === 'pushover') {
+      $('#field_push_pushover_user_key, #field_push_pushover_api_token').closest('.form-group').fadeIn(200);
+    } else if (service === 'webhook') {
+      $('#field_push_webhook_url').closest('.form-group').fadeIn(200);
+    }
+  }
+}
+
+function testPushNotification() {
+  const $btn = $('#btnTestPush');
+  const origText = $btn.html();
+  $btn.prop('disabled', true).html('<span>⏳</span> Sending test...');
+
+  const pushConfig = {
+    enable: true,
+    service: $('#field_push_service').val() || 'webpush',
+    telegram_token: $('#field_push_telegram_token').val() || '',
+    telegram_chat_id: $('#field_push_telegram_chat_id').val() || '',
+    ntfy_topic: $('#field_push_ntfy_topic').val() || '',
+    pushover_user_key: $('#field_push_pushover_user_key').val() || '',
+    pushover_api_token: $('#field_push_pushover_api_token').val() || '',
+    webhook_url: $('#field_push_webhook_url').val() || '',
+    notify_on_alarm: $('#field_push_notify_on_alarm').is(':checked'),
+    notify_on_arm_disarm: $('#field_push_notify_on_arm_disarm').is(':checked'),
+    notify_on_sensor: $('#field_push_notify_on_sensor').is(':checked')
+  };
+
+  $.ajax({
+    type: 'POST',
+    url: '/api/notifiers/test',
+    contentType: 'application/json',
+    data: JSON.stringify({ notifier: 'push', config: pushConfig }),
+    success: function(resp) {
+      $btn.prop('disabled', false).html(origText);
+      const data = typeof resp === 'string' ? JSON.parse(resp) : resp;
+      if (data && data.status === 'success') {
+        showToast(data.message || 'Test push notification delivered!');
+      } else {
+        showToast(data.message || 'Failed to deliver push notification');
+      }
+    },
+    error: function() {
+      $btn.prop('disabled', false).html(origText);
+      showToast('Error communicating with test notification endpoint');
+    }
+  });
+}
+
 function switchSettingsTab(sectionId) {
   $('.settings-tab-btn').removeClass('active');
   $(`#settings_tab_btn_${sectionId}`).addClass('active');
   $('.settings-pane').hide();
   $(`#pane_${sectionId}`).show();
+
+  if (sectionId === 'push') {
+    updatePushServiceFields();
+    $('#field_push_service').off('change.pushFilter').on('change.pushFilter', updatePushServiceFields);
+  }
 }
 
 function populatePinSelectors() {

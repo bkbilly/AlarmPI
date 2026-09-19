@@ -2,19 +2,22 @@
 """AlarmPI Server - REST and Socket.IO API Backend."""
 
 from copy import deepcopy
+from datetime import datetime
 import json
 import logging
 import os
+import secrets
 import sys
 from typing import Any, Dict, Optional
 
-from flask import Flask, redirect, render_template, request, Response, send_from_directory
+from flask import Flask, make_response, redirect, render_template, request, Response, send_from_directory
 from flask_socketio import join_room, SocketIO
 import flask_login
 
 from alarmcode.notifiers import NotifierManager
 from alarmcode.sensors import get_available_sensor_types
 from alarmcode.utils import parse_bool, parse_int
+from alarmcode.webpush_helper import get_or_create_vapid_keys
 from alarmcode.Worker import Worker
 
 logger = logging.getLogger('alarmpi')
@@ -43,26 +46,58 @@ class AlarmPiServer:
     def setServerConfig(self, jsonfile: str) -> None:
         """Set server configuration file and load users."""
         self.serverfile = os.path.join(self.wd, jsonfile)
-        if not os.path.exists(self.serverfile):
-            # Fallback to server_template.json if server.json doesn't exist yet
-            template_file = os.path.join(self.wd, 'config', 'server_template.json')
-            if os.path.exists(template_file):
+        save_needed = False
+
+        template_file = os.path.join(self.wd, 'config', 'server_template.json')
+        template_json = {}
+        if os.path.exists(template_file):
+            try:
                 with open(template_file, 'r') as f:
-                    self.serverJson = json.load(f)
-            else:
-                self.serverJson = {
-                    "ui": {"https": False, "port": 5000},
-                    "users": {"admin": {"pw": "admin", "admin": True, "logfile": "alert.log", "settings": "settings.json"}}
-                }
+                    template_json = json.load(f)
+            except Exception:
+                pass
+
+        if not os.path.exists(self.serverfile):
+            self.serverJson = deepcopy(template_json) if template_json else {
+                "ui": {"https": False, "port": 5000},
+                "users": {"test1": {"pw": "secret", "admin": True, "logfile": "alert.log", "settings": "settings.json"}}
+            }
+            save_needed = True
+        else:
+            with open(self.serverfile, 'r') as data_file:
+                self.serverJson = json.load(data_file)
+
+        # Ensure UI configuration exists
+        if not self.serverJson.get('ui'):
+            self.serverJson['ui'] = template_json.get('ui', {"https": False, "port": 5000})
+            save_needed = True
+
+        # Ensure users configuration exists and is not empty
+        if not self.serverJson.get('users'):
+            self.serverJson['users'] = template_json.get('users', {
+                "test1": {"pw": "secret", "admin": True, "logfile": "alert.log", "settings": "settings.json"}
+            })
+            save_needed = True
+
+        # Auto-generate cryptographically secure secret_key if not already present
+        if not self.serverJson.get('secret_key'):
+            self.serverJson['secret_key'] = secrets.token_hex(32)
+            save_needed = True
+
+        # Auto-generate VAPID keypair for Browser Web Push if needed
+        try:
+            get_or_create_vapid_keys(self.wd, self.serverJson)
+        except Exception:
+            pass
+
+        if save_needed:
             try:
                 os.makedirs(os.path.dirname(os.path.abspath(self.serverfile)), exist_ok=True)
                 with open(self.serverfile, 'w') as f:
                     json.dump(self.serverJson, f, sort_keys=True, indent=4)
             except Exception:
                 pass
-        else:
-            with open(self.serverfile, 'r') as data_file:
-                self.serverJson = json.load(data_file)
+
         self.users = deepcopy(self.serverJson.get('users', {}))
 
     def create_app(self) -> Flask:
@@ -72,7 +107,7 @@ class AlarmPiServer:
             template_folder=self.templateDirectory,
             static_folder=self.staticDirectory
         )
-        self.app.secret_key = self.serverJson.get('secret_key', 'alarmpi-super-secret-key-2026')
+        self.app.secret_key = self.serverJson.get('secret_key') or secrets.token_hex(32)
         self.login_manager = flask_login.LoginManager()
         self.login_manager.init_app(self.app)
         self.socketio = SocketIO(self.app, cors_allowed_origins="*")
@@ -89,13 +124,10 @@ class AlarmPiServer:
         def request_loader(req):
             username = None
             password = None
-            if len(req.form) > 0:
-                username = req.form.get('email')
-                password = req.form.get('pw')
-            elif req.authorization:
+            if req.authorization:
                 username = req.authorization.username
                 password = req.authorization.password
-            elif len(req.args) > 0:
+            elif len(req.args) > 0 and 'username' in req.args and 'password' in req.args:
                 username = req.args.get('username')
                 password = req.args.get('password')
 
@@ -103,7 +135,6 @@ class AlarmPiServer:
                 if password == self.users[username].get('pw'):
                     user = User()
                     user.id = username
-                    flask_login.login_user(user)
                     return user
             return None
 
@@ -111,15 +142,28 @@ class AlarmPiServer:
         def login():
             if flask_login.current_user.is_authenticated:
                 return redirect('/')
-            if request.method == 'GET':
-                return render_template('login.html')
-            request_loader(request)
-            return redirect('/')
+            error = None
+            if request.method == 'POST':
+                username = request.form.get('email', '').strip()
+                password = request.form.get('pw', '')
+                if username in self.users and self.users[username].get('pw') == password:
+                    user = User()
+                    user.id = username
+                    flask_login.login_user(user, remember=True)
+                    logger.info("User '%s' logged in successfully.", username)
+                    next_url = request.args.get('next') or '/'
+                    return redirect(next_url)
+                else:
+                    logger.warning("Failed login attempt for username: '%s'", username)
+                    error = "Invalid username or password. Please try again."
+            return render_template('login.html', error=error)
 
         @self.app.route('/logout')
         def logout():
             flask_login.logout_user()
-            return json.dumps("done")
+            if request.is_json or request.path.endswith('.json'):
+                return json.dumps("done")
+            return redirect('/login')
 
         @self.login_manager.unauthorized_handler
         def unauthorized_handler():
@@ -374,6 +418,147 @@ class AlarmPiServer:
             from alarmcode.sensors.hikvision import discover_hikvision
             result = discover_hikvision(ip, user, pwd)
             return json.dumps(result)
+
+        @self.app.route('/sw.js')
+        def serviceWorker():
+            resp = make_response(send_from_directory(self.staticDirectory, 'sw.js'))
+            resp.headers['Content-Type'] = 'application/javascript'
+            resp.headers['Service-Worker-Allowed'] = '/'
+            return resp
+
+        @self.app.route('/api/push/vapid-public-key', methods=['GET'])
+        @flask_login.login_required
+        def apiPushVapidPublicKey():
+            _, pub_key = get_or_create_vapid_keys(self.wd, self.serverJson)
+            if not pub_key:
+                return json.dumps({"status": "error", "message": "VAPID key generation not available."})
+            return json.dumps({"status": "success", "public_key": pub_key})
+
+        @self.app.route('/api/push/subscribe', methods=['POST'])
+        @flask_login.login_required
+        def apiPushSubscribe():
+            data = request.get_json(force=True) or {}
+            sub = data.get('subscription')
+            if not sub or not isinstance(sub, dict) or not sub.get('endpoint'):
+                return json.dumps({"status": "error", "message": "Invalid subscription object."})
+
+            user = flask_login.current_user.id
+            worker: Worker = self.users[user]['obj']
+            push_cfg = worker.settings.setdefault('push', {})
+            subs = push_cfg.setdefault('subscriptions', [])
+
+            endpoint = sub.get('endpoint')
+            existing_idx = None
+            for idx, item in enumerate(subs):
+                item_sub = item.get('subscription', item) if isinstance(item, dict) else {}
+                if item_sub.get('endpoint') == endpoint:
+                    existing_idx = idx
+                    break
+
+            device_entry = {
+                "subscription": sub,
+                "user_agent": request.headers.get('User-Agent', 'Unknown Browser'),
+                "device_name": data.get('device_name', 'Web Browser'),
+                "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S") if 'datetime' in globals() else str(request.date or 'now'),
+            }
+
+            if existing_idx is not None:
+                subs[existing_idx] = device_entry
+            else:
+                subs.append(device_entry)
+
+            worker.saveSettings()
+            logger.info("Registered Web Push subscription for user '%s' (%s). Total: %d", user, device_entry.get('device_name'), len(subs))
+            return json.dumps({"status": "success", "message": "Device subscribed successfully!", "total_devices": len(subs)})
+
+        @self.app.route('/api/push/unsubscribe', methods=['POST'])
+        @flask_login.login_required
+        def apiPushUnsubscribe():
+            data = request.get_json(force=True) or {}
+            endpoint = data.get('endpoint')
+            user = flask_login.current_user.id
+            worker: Worker = self.users[user]['obj']
+            push_cfg = worker.settings.get('push', {})
+            subs = push_cfg.get('subscriptions', [])
+
+            if endpoint:
+                new_subs = []
+                for item in subs:
+                    item_sub = item.get('subscription', item) if isinstance(item, dict) else {}
+                    if item_sub.get('endpoint') != endpoint:
+                        new_subs.append(item)
+                push_cfg['subscriptions'] = new_subs
+                worker.saveSettings()
+                return json.dumps({"status": "success", "message": "Device unsubscribed.", "total_devices": len(new_subs)})
+            return json.dumps({"status": "error", "message": "No endpoint provided."})
+
+        @self.app.route('/api/push/subscriptions', methods=['GET'])
+        @flask_login.login_required
+        def apiPushSubscriptions():
+            user = flask_login.current_user.id
+            worker: Worker = self.users[user]['obj']
+            push_cfg = worker.settings.get('push', {})
+            subs = push_cfg.get('subscriptions', [])
+            sanitized = []
+            for s in subs:
+                sub_dict = s if isinstance(s, dict) else {}
+                sub_info = sub_dict.get('subscription', sub_dict)
+                ep = sub_info.get('endpoint', '')
+                sanitized.append({
+                    "device_name": sub_dict.get('device_name', 'Web Browser'),
+                    "user_agent": sub_dict.get('user_agent', ''),
+                    "endpoint_preview": ep[:35] + '...' if len(ep) > 35 else ep,
+                    "created_at": sub_dict.get('created_at', '')
+                })
+            return json.dumps({"status": "success", "subscriptions": sanitized, "count": len(sanitized)})
+
+        @self.app.route('/api/push/subscriptions/clear', methods=['POST'])
+        @flask_login.login_required
+        def apiPushClearSubscriptions():
+            user = flask_login.current_user.id
+            worker: Worker = self.users[user]['obj']
+            push_cfg = worker.settings.setdefault('push', {})
+            push_cfg['subscriptions'] = []
+            worker.saveSettings()
+            return json.dumps({"status": "success", "message": "All device subscriptions cleared."})
+
+        @self.app.route('/api/notifiers/test', methods=['POST'])
+        @flask_login.login_required
+        def apiTestNotifier():
+            data = request.get_json(force=True) or {}
+            notifier_id = str(data.get('notifier', '')).strip()
+            custom_cfg = data.get('config')
+            user = flask_login.current_user.id
+            worker: Worker = self.users[user]['obj']
+
+            plugin = worker.mynotify.plugins.get(notifier_id)
+            if not plugin:
+                return json.dumps({"status": "error", "message": f"Notifier '{notifier_id}' not found."})
+
+            test_cfg = custom_cfg if isinstance(custom_cfg, dict) else deepcopy(worker.settings.get(notifier_id, {}))
+
+            try:
+                if notifier_id == "push":
+                    # Ensure subscriptions from worker settings are available for webpush test if not in test_cfg
+                    if not test_cfg.get("subscriptions"):
+                        test_cfg["subscriptions"] = worker.settings.get("push", {}).get("subscriptions", [])
+                    success = plugin._send_push_payload(
+                        cfg=test_cfg,
+                        title="🔔 AlarmPI Test Push",
+                        message="✅ <b>AlarmPI Test Alert</b>\n\nYour push notifications are configured and working properly!",
+                        priority="normal",
+                        is_alarm=False
+                    )
+                    if success:
+                        return json.dumps({"status": "success", "message": "Test push notification sent successfully!"})
+                    else:
+                        svc = test_cfg.get("service", "push")
+                        err_hint = "Ensure at least one device is subscribed above." if svc == "webpush" else "Verify provider credentials and settings."
+                        return json.dumps({"status": "error", "message": f"Failed to deliver push notification via {svc}. {err_hint}"})
+                else:
+                    return json.dumps({"status": "success", "message": f"Test executed for {plugin.display_name}."})
+            except Exception as e:
+                return json.dumps({"status": "error", "message": str(e)})
 
         # Socket.IO Handlers
         @self.socketio.on('setSensorState')

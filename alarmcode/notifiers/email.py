@@ -23,7 +23,6 @@ class EmailNotifier(BaseNotifier):
     @classmethod
     def define_fields(cls) -> List[NotifierField]:
         return [
-            NotifierField("enable", "Enable Email Alerts", "boolean", default=False),
             NotifierField("smtpServer", "SMTP Server", "string", default="smtp.gmail.com", placeholder="smtp.gmail.com"),
             NotifierField("smtpPort", "SMTP Port", "number", default=587),
             NotifierField("username", "SMTP Username / Email", "string", default="", placeholder="user@gmail.com"),

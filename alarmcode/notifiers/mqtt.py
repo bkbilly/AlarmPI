@@ -31,7 +31,6 @@ class MQTTNotifier(BaseNotifier):
     @classmethod
     def define_fields(cls) -> List[NotifierField]:
         return [
-            NotifierField("enable", "Enable MQTT", "boolean", default=False, help_text="Connect to MQTT broker"),
             NotifierField("host", "MQTT Broker Host", "string", default="127.0.0.1", placeholder="192.168.1.100"),
             NotifierField("port", "MQTT Broker Port", "number", default=1883),
             NotifierField("authentication", "Require Auth", "boolean", default=False),

@@ -32,7 +32,6 @@ class GPIOSirenNotifier(BaseNotifier):
     @classmethod
     def define_fields(cls) -> List[NotifierField]:
         return [
-            NotifierField("enable", "Enable Siren", "boolean", default=False, help_text="Enable physical/HTTP siren on alarm breach"),
             NotifierField("pin", "BCM Pin", "pin", default=14, help_text="Raspberry Pi BCM GPIO pin connected to siren relay"),
             NotifierField("http_start", "Start Siren HTTP URL", "string", default="", placeholder="http://192.168.1.50/siren/on", help_text="Optional URL to trigger on alarm activation"),
             NotifierField("http_stop", "Stop Siren HTTP URL", "string", default="", placeholder="http://192.168.1.50/siren/off", help_text="Optional URL to trigger on alarm deactivation"),

@@ -67,14 +67,12 @@ class BaseNotifier:
     @classmethod
     def define_fields(cls) -> List[NotifierField]:
         """Override this method to define the fields for the plugin."""
-        return [
-            NotifierField("enable", "Enable Plugin", field_type="boolean", default=False)
-        ]
+        return []
 
     @classmethod
     def get_default_settings(cls) -> Dict[str, Any]:
         """Generate default configuration dictionary from schema."""
-        defaults = {}
+        defaults = {"enable": False}
         for f in cls.define_fields():
             if isinstance(f, NotifierField):
                 defaults[f.name] = f.default
