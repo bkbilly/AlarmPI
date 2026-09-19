@@ -1,340 +1,240 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<!-- 	<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
-	<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-	<meta http-equiv="Pragma" content="no-cache">
-	<meta http-equiv="Expires" content="0">
- -->
-	<title>Alarm</title>
-	<meta name="viewport" content="width=device-width">
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta name="mobile-web-app-capable" content="yes">
-	<link rel="icon" sizes="192x192" href="static/icon.png">
+	<meta name="theme-color" content="#0b0f19">
+	<title>AlarmPI - Smart Security System</title>
+	<link rel="icon" sizes="192x192" href="{{ url_for('static', filename='icon.png') }}">
 
-
-	<script src="{{ url_for('static',filename='jquery.js') }}"></script>
-	<script src="{{ url_for('static',filename='socket.io.min.js') }}"></script>
-
-	<link rel="stylesheet" href="{{ url_for('static',filename='main.css') }}">
-	<link rel="stylesheet" href="{{ url_for('static',filename='mycss.css') }}">
-	<script type="text/javascript" src="{{ url_for('static',filename='myjs.js') }}"></script>
-	<script src="{{ url_for('static',filename='vis-timeline-graph2d.min.js') }}"></script>
-	<link href="{{ url_for('static',filename='vis-timeline-graph2d.min.css') }}" rel="stylesheet" type="text/css" />
-
-	
+	<!-- Scripts & Styles -->
+	<script src="{{ url_for('static', filename='jquery.js') }}"></script>
+	<script src="{{ url_for('static', filename='socket.io.min.js') }}"></script>
+	<script src="{{ url_for('static', filename='vis-timeline-graph2d.min.js') }}"></script>
+	<link rel="stylesheet" href="{{ url_for('static', filename='vis-timeline-graph2d.min.css') }}">
+	<link rel="stylesheet" href="{{ url_for('static', filename='mycss.css') }}">
+	<script src="{{ url_for('static', filename='myjs.js') }}"></script>
 </head>
 
-<body class="bg_carbon">
+<body>
+	<!-- Audio Alert for Triggered State -->
 	<audio id="audioalert" loop>
-		<source src="static/play_alert.mp3" type="audio/mpeg">
+		<source src="{{ url_for('static', filename='play_alert.mp3') }}" type="audio/mpeg">
 	</audio>
-	<div id="sensorsListModal" class="modal">
-		<div class="modal-content sensorModalContent">
-			<span class="close" onclick="closeConfigWindow()">x</span><br>
-			<div class="settingsContent">
-				<div id="visualization"></div>
-			</div>
+
+	<!-- Header Bar -->
+	<header class="app-header">
+		<div class="brand-container">
+			<div class="brand-icon">🛡️</div>
+			<div class="brand-title">AlarmPI System</div>
 		</div>
-	</div>
-	<div id="sensorModal" class="modal">
-		<div class="modal-content sensorModalContent">
-			<span class="close" onclick="closeConfigWindow()">x</span><br>
-			<div class="settingsContent">
-				<table>
-					<tr>
-						<td>
-							<label for="inputName">Select new name</label><br>
-							<input type="text" id="inputName" placeholder="Select new name"><br>
-						</td>
-						<td>
-							<label for="inputZones">Zones</label><br>
-							<input type="text" id="inputZones" placeholder="Zones"><br>
-						</td>
-						<td>
-							<label for="inputBehavior">Behavior</label><br>
-							<select id="inputBehavior">
-								<option value="normal" selected>Normal</option>
-								<option value="24hours">24hours</option>
-							</select>
-						</td>
-					</tr>
-				</table>
-			</div>
-			<select id="sensorType" onchange="selectSensorType($(this));">
-				<option value="GPIO" selected>GPIO</option>
-				<option value="Hikvision">Hikvision</option>
-				<option value="MQTT">MQTT</option>
-			</select><br>
-
-			<div id="inputDivGPIO">
-				<label for="GPIO-pin">BCM Pin:</label>
-				<select id="GPIO-pin" class="pinSelect">
-					<option value="" disabled selected></option></select>
-				<br>
-			</div>
-			<div id="inputDivHikvision" class="settingsContent">
-				<label for="Hikvision-ip">IP Address</label><br>
-				<input type="text" id="Hikvision-ip" placeholder="Enter IP Address of camera"><br>
-				<label for="Hikvision-user">Username</label><br>
-				<input type="text" id="Hikvision-user" placeholder="Enter Username"><br>
-				<label for="Hikvision-pass">Password</label><br>
-				<input type="password" id="Hikvision-pass" placeholder="Enter Password"><br>
-			</div>
-			<div id="inputDivMQTT" class="settingsContent">
-				<label for="MQTT-topic">MQTT Topic</label><br>
-				<input type="text" id="MQTT-topic" placeholder="Enter custom set topic"><br>
-				<label for="MQTT-payload">MQTT Payload</label><br>
-				<input type="text" id="MQTT-payload" placeholder="Enter custom set payload"><br>
-			</div>
-			<button class="button delbutton" id="delSensorBTN">Delete</button><br>
-			<button class="button" id="okButton">OK</button>
-			<button class="button" onclick="closeConfigWindow()">Cancel</button>
-			<div id="logs">
-				<ul id="sensorListLog">
-				</ul>
-			</div>
+		<div class="header-actions">
+			<button class="btn-icon" title="Sensor Timeline" onclick="openTimelineModal()">📊</button>
+			<button class="btn-icon" title="System Settings" onclick="openSettingsModal()">⚙️</button>
+			<button class="btn-icon" title="Logout" onclick="logout()">🚪</button>
 		</div>
-	</div>
-	<div id="settingsModal" class="modal">
-		<div class="modal-content settingsModalContent">
-			
-			<span class="close" onclick="closeConfigWindow()">x</span><br><br>
+	</header>
 
-			<!-- USERS SWITCH -->
-			<h1 class="settingsTitle">USER/SERVER</h1>
-			<div class="settingsContent">
-				<select name="newuser" id="userslist"></select>
-				<button class="button" onclick="changeUser()">Change User</button>
-				<button class="button" onclick="logout()">Logout</button>
-				<button class="button" onclick="restart()">Restart</button>
-				<p>
-			</div>
+	<!-- Main Layout -->
+	<main class="app-container">
+		<!-- Alarm Hero Controller Card -->
+		<section class="hero-control-section">
+			<div class="hero-alarm-card">
+				<div class="alarm-status-ring" id="alarmRing">
+					<div class="alarm-icon" id="alarmIcon">🔓</div>
+				</div>
+				<h2 class="alarm-state-label" id="alarmLabel">Disarmed</h2>
+				<p class="alarm-state-subtitle" id="alarmSubtitle">System is disarmed. Standby mode.</p>
+				
+				<button class="btn-primary-action btn-arm" id="alarmActionBtn" onclick="handleMainAlarmAction()">
+					<span>🛡️</span> Arm Alarm (Away)
+				</button>
 
-			<!-- UI SETTINGS -->
-			<div class="onoffswitch settingsOnOffSwitch">
-				<input type="checkbox" name="onoffswitchUI" class="onoffswitch-checkbox" id="settUI-enable">
-				<label class="onoffswitch-label" for="settUI-enable">
-					<span class="onoffswitch-inner onoffswitch-innerHttps"></span>
-					<span class="onoffswitch-switch notificationstate_ui"></span>
-				</label>
-			</div>
-			<h1 class="settingsTitle">UI Settings</h1>
-			<div class="settingsContent">
-				<table>
-					<tr>
-						<td>
-							<label for="settUI-username">username</label><br>
-							<input type="text" id="settUI-username" placeholder="username" readonly="readonly"><br>
-							<label for="settUI-password">password</label><br>
-							<input type="password" id="settUI-password" placeholder="password"><br>
-						</td>
-						<td>
-							<label for="settUI-timezone">timezone</label><br>
-							<input type="text" id="settUI-timezone" placeholder="timezone"><br>
-							<label for="settUI-port">port</label><br>
-							<input type="text" id="settUI-port" placeholder="port"><br>
-						</td>
-					</tr>
-				</table>
-			</div>
+				<!-- Dynamic Zone Arm Buttons (Rendered only for zones that exist in sensors) -->
+				<div class="zone-buttons-container" id="heroZoneButtonsContainer">
+					<!-- Dynamically populated via myjs.js -->
+				</div>
 
-			<!-- SERENE SETTINGS -->
-			<div class="onoffswitch settingsOnOffSwitch">
-				<input type="checkbox" name="onoffswitchSerene" class="onoffswitch-checkbox" id="settSiren-enable">
-				<label class="onoffswitch-label" for="settSiren-enable">
-					<span class="onoffswitch-inner"></span>
-					<span class="onoffswitch-switch notificationstate_gpio"></span>
-				</label>
+				<button class="btn-siren-test" onclick="toggleSirenTest()">🔊 Sound Siren Test</button>
 			</div>
-			<h1 class="settingsTitle">Serene Settings</h1>
-			<div class="settingsContent">
-				<table>
-					<tr>
-						<td>
-							<label for="settSiren-Pin">BCM Pin:</label><br>
-							<select id="settSiren-Pin" class="pinSelect">
-								<option value="" disabled selected></option>
-							</select><br>
-						</td>
-						<td>
-							<label for="settSiren-http_start">Siren Start HTTP Request</label><br>
-							<input type="text" id="settSiren-http_start" placeholder="Siren Start HTTP Request"><br>
-						</td>
-						<td>
-							<label for="settSiren-http_stop">Siren Stop HTTP Request</label><br>
-							<input type="text" id="settSiren-http_stop" placeholder="Siren Stop HTTP Request"><br>
-						</td>
-					</tr>
-				</table>
-			</div>
+		</section>
 
-			<!-- MAIL SETTINGS -->
-			<div class="onoffswitch settingsOnOffSwitch">
-				<input type="checkbox" name="onoffswitchMail" class="onoffswitch-checkbox" id="settMail-enable">
-				<label class="onoffswitch-label" for="settMail-enable">
-					<span class="onoffswitch-inner"></span>
-					<span class="onoffswitch-switch notificationstate_email"></span>
-				</label>
+		<!-- Protected Sensors Grid -->
+		<section class="main-content">
+			<!-- Sensors Dynamic Grid -->
+			<div class="sensors-grid" id="sensorsGrid">
+				<!-- Dynamically populated via myjs.js -->
 			</div>
-			<h1 class="settingsTitle">Mail Settings </h1>
-			<div class="settingsContent">
-				<table>
-					<tr>
-						<td>
-							<label for="settMail-username">username</label><br>
-							<input type="text" id="settMail-username" placeholder="Username"><br>
-							<label for="settMail-password">password</label><br>
-							<input type="password" id="settMail-password" placeholder="Password"><br>
-							<label for="settMail-smtpServer">SMTP Server</label><br>
-							<input type="text" id="settMail-smtpServer" placeholder="SMTP Server"><br>
-							<label for="settMail-smtpPort">smtpPort</label><br>
-							<input type="text" id="settMail-smtpPort" placeholder="SmtpPort"><br>
-						</td>
-						<td>
-							<label for="settMail-recipients">recipients</label><br>
-							<input type="text" id="settMail-recipients" placeholder="Recipients"><br>
-							<label for="settMail-messageSubject">messageSubject</label><br>
-							<input type="text" id="settMail-messageSubject" placeholder="MessageSubject"><br>
-							<label for="settMail-messageBody">messageBody</label><br>
-							<input type="text" id="settMail-messageBody" placeholder="MessageBody"><br>
-						</td>
-					</tr>
-				</table>
-			</div>
+		</section>
 
-			<!-- VOIP SETTINGS -->
-			<div class="onoffswitch settingsOnOffSwitch">
-				<input type="checkbox" name="onoffswitchVoip" class="onoffswitch-checkbox" id="settVoip-enable">
-				<label class="onoffswitch-label" for="settVoip-enable">
-					<span class="onoffswitch-inner"></span>
-					<span class="onoffswitch-switch notificationstate_voip"></span>
-				</label>
-			</div>
-			<h1 class="settingsTitle">Voip Settings</h1>
-			<div class="settingsContent">
-				<table>
-					<tr>
-						<td>
-							<label for="settVoip-domain">domain</label><br>
-							<input type="text" id="settVoip-domain" placeholder="domain"><br>
-							<label for="settVoip-username">username</label><br>
-							<input type="text" id="settVoip-username" placeholder="username"><br>
-							<label for="settVoip-password">password</label><br>
-							<input type="password" id="settVoip-password" placeholder="password"><br>
-						</td>
-						<td>
-							<label for="settVoip-numbersToCall">numbersToCall</label><br>
-							<input type="text" id="settVoip-numbersToCall" placeholder="numbersToCall"><br>
-							<label for="settVoip-timesOfRepeat">timesOfRepeat</label><br>
-							<input type="text" id="settVoip-timesOfRepeat" placeholder="timesOfRepeat"><br>
-						</td>
-					</tr>
-				</table>
-			</div>
-
-			<!-- MQTT SETTINGS -->
-			<div class="onoffswitch settingsOnOffSwitch">
-				<input type="checkbox" name="onoffswitchMQTT" class="onoffswitch-checkbox" id="settMQTT-enable">
-				<label class="onoffswitch-label" for="settMQTT-enable">
-					<span class="onoffswitch-inner"></span>
-					<span class="onoffswitch-switch notificationstate_mqtt"></span>
-				</label>
-			</div>
-			<h1 class="settingsTitle">MQTT Settings</h1>
-			<div class="settingsContent">
-				<table>
-					<tr>
-						<td>
-							<label for="settMQTT-host">Host</label><br>
-							<input type="text" id="settMQTT-host" placeholder="Host"><br>
-							<label for="settMQTT-port">Port</label><br>
-							<input type="text" id="settMQTT-port" placeholder="Port"><br>
-							<label for="settMQTT-state_topic">State Topic</label><br>
-							<input type="text" id="settMQTT-state_topic" placeholder="State Topic"><br>
-							<label for="settMQTT-command_topic">Command Topic</label><br>
-							<input type="text" id="settMQTT-command_topic" placeholder="Command Topic"><br>
-						</td>
-						<td>
-							<label for="settMQTT-username">Username</label><br>
-							<input type="text" id="settMQTT-username" placeholder="Username"><br>
-							<label for="settMQTT-authentication">Authentication</label><br>
-							<input type="text" id="settMQTT-authentication" placeholder="Authentication"><br>
-							<label for="settMQTT-password">Password</label><br>
-							<input type="password" id="settMQTT-password" placeholder="Password"><br>
-							<label for="settMQTT-homeassistant">HomeAssistant Integration</label><br>
-							<input type="text" id="settMQTT-homeassistant" placeholder="HomeAssistant Integration"><br>
-						</td>
-					</tr>
-				</table>
-			</div>
-
-			<!-- HTTP SETTINGS -->
-			<div class="onoffswitch settingsOnOffSwitch">
-				<input type="checkbox" name="onoffswitchHTTP" class="onoffswitch-checkbox" id="settHTTP-enable">
-				<label class="onoffswitch-label" for="settHTTP-enable">
-					<span class="onoffswitch-inner"></span>
-					<span class="onoffswitch-switch notificationstate_http"></span>
-				</label>
-			</div>
-			<h1 class="settingsTitle">Host Alarm Settings</h1>
-			<div class="settingsContent">
-				<table>
-					<tr>
-						<td>
-							<label for="settHTTP-host">Host</label><br>
-							<input type="text" id="settHTTP-host" placeholder="Host"><br>
-							<label for="settHTTP-port">Port</label><br>
-							<input type="text" id="settHTTP-port" placeholder="Port"><br>
-							<label for="settHTTP-https">Https</label><br>
-							<input type="text" id="settHTTP-https" placeholder="Https"><br>
-						</td>
-						<td>
-							<label for="settHTTP-username">Username</label><br>
-							<input type="text" id="settHTTP-username" placeholder="Username"><br>
-							<label for="settHTTP-password">Password</label><br>
-							<input type="password" id="settHTTP-password" placeholder="Password"><br>
-						</td>
-					</tr>
-				</table>
-			</div>
-
-			<button class="button" id="okButton" onclick="saveSettings()">OK</button>
-			<button class="button" onclick="closeConfigWindow()">Cancel</button>
-		</div>
-	</div>
-	<div class="container">
-		<div id="sereneSettings">
-			<div class="sphere" id="alertStatus"><div id="serenePin"></div></div>
-			<button class="button" id="armButton" onclick="ArmDisarmAlarm()"></button>
-			<div class="sphere" id="settingsSphere" onclick="settingsMenu()">
-				<div id="settingsSphereText">&#9881;</div>
-			</div>
-		</div>
-		<div id="sensors" class="smallSensors"></div>
-		<div id="systemLog">
-			<div id="logSettings">
-				<select id="logtype">
-						<option value="all" selected="selected">Show all Logs</option>
+		<!-- Live Activity Log Section -->
+		<section class="activity-log-section">
+			<div class="activity-card">
+				<div class="activity-header">
+					<h3 class="card-title"><span>📋</span> Activity Log</h3>
+					<button class="btn-icon" style="width: 32px; height: 32px; font-size: 14px;" onclick="openTimelineModal()" title="View Visual Timeline">📊</button>
+				</div>
+				<div class="log-filters">
+					<select id="logtype" class="select-filter" style="flex: 1;">
+						<option value="all" selected>All Events</option>
 						<option value="sensor">Sensors</option>
-						<option value="alarm">Alarm Actions</option>
+						<option value="alarm">Alarm Breaches</option>
 						<option value="user_action">User Actions</option>
 						<option value="system">System</option>
-						<option value="error">Errors</option>
-				</select>
-				<select id="loglimit">
-						<option value="10" selected="selected">10</option>
-						<option value="20">20</option>
-						<option value="40">40</option>
-						<option value="50">50</option>
+					</select>
+					<select id="loglimit" class="select-filter" style="width: 75px;">
+						<option value="15">15</option>
+						<option value="30" selected>30</option>
+						<option value="60">60</option>
 						<option value="100">100</option>
-						<option value="200">200</option>
-				</select>
-				<button class="button" id="sensorsListButton" onclick="openSensorsListWindow()">&#9883;</button>
+					</select>
+				</div>
+				<ul class="activity-list" id="activityList">
+					<li class="activity-item" style="color: var(--text-muted); text-align: center;">Loading activity history...</li>
+				</ul>
 			</div>
-			<ul id="systemListLog"></ul>
+		</section>
+	</main>
+
+	<!-- Floating Action Button for Adding Sensors -->
+	<button class="fab-btn" title="Add New Sensor" onclick="openAddSensorModal()">+</button>
+
+	<!-- ==========================================================================
+	     Dynamic Settings Modal (Populated Dynamically from Backend Schema)
+	     ========================================================================== -->
+	<div class="modal-backdrop" id="settingsModalBackdrop">
+		<div class="modal-dialog" style="max-width: 850px;">
+			<div class="modal-header">
+				<h3 class="modal-title"><span>⚙️</span> System & Plugin Settings</h3>
+				<button class="modal-close-btn" onclick="closeAllModals()">&times;</button>
+			</div>
+			
+			<div class="modal-body">
+				<!-- Dynamic Section Tabs Nav (Wrapped without horizontal scrollbar) -->
+				<nav class="settings-tabs-nav" id="settingsTabsNav">
+					<!-- Dynamically populated from backend sections -->
+				</nav>
+
+				<!-- Dynamic Tab Panes -->
+				<div id="settingsTabContent">
+					<!-- Dynamically populated from backend fields -->
+				</div>
+			</div>
+
+			<div class="modal-footer">
+				<button class="btn-secondary" onclick="closeAllModals()">Cancel</button>
+				<button class="btn-primary-action btn-arm" style="width: auto; padding: 10px 24px;" onclick="saveDynamicSettings()">
+					Save Changes
+				</button>
+			</div>
 		</div>
-		
 	</div>
-	<button class="kc_fab_main_btn" onclick="changeSensorSettings(undefined, 'newSensor')">+</button>
+
+	<!-- ==========================================================================
+	     Dynamic Sensor Modal (Add / Edit) with Interactive Zone Tag Selector
+	     ========================================================================== -->
+	<div class="modal-backdrop" id="sensorModalBackdrop">
+		<div class="modal-dialog">
+			<div class="modal-header">
+				<h3 class="modal-title" id="sensorModalTitle"><span>🔌</span> Sensor Configuration</h3>
+				<button class="modal-close-btn" onclick="closeAllModals()">&times;</button>
+			</div>
+			
+			<div class="modal-body">
+				<input type="hidden" id="sensorModalId">
+
+				<div class="form-grid">
+					<div class="form-group">
+						<label class="form-label">Sensor Name</label>
+						<input type="text" class="form-control" id="sensorInputName" placeholder="e.g. Front Door Magnet">
+					</div>
+					<div class="form-group">
+						<label class="form-label">Sensor Type</label>
+						<select class="form-control" id="sensorTypeSelect">
+							<!-- Dynamically populated from backend available sensor types -->
+						</select>
+					</div>
+					<div class="form-group">
+						<label class="form-label">Behavior</label>
+						<select class="form-control" id="sensorInputBehavior">
+							<option value="normal" selected>Normal (Armed only)</option>
+							<option value="entry_exit">Entry / Exit (Delay Countdown)</option>
+							<option value="instant">Instant Breach (No Delay)</option>
+							<option value="24hours">24-Hours (Always Active, Smoke/Tamper)</option>
+							<option value="chime">Chime (Ding when Disarmed)</option>
+						</select>
+					</div>
+
+					<!-- GitHub-Style Interactive Zone Tag Selector -->
+					<div class="form-group full-width" style="position: relative;">
+						<label class="form-label">Assigned Zones / Tags</label>
+						<div class="github-topic-input-container" id="githubTopicContainer" onclick="focusZoneInput()">
+							<div class="github-topic-tags" id="sensorActiveZonesContainer"></div>
+							<input type="text" class="github-topic-input" id="sensorZoneNewInput" placeholder="Type to search or create tag..." autocomplete="off">
+						</div>
+						<!-- Autocomplete Dropdown List -->
+						<div class="github-topic-dropdown" id="zoneAutocompleteDropdown" style="display: none;"></div>
+					</div>
+				</div>
+
+				<!-- Dynamic Fields for chosen Sensor Type -->
+				<div id="sensorDynamicFields" class="form-grid" style="margin-top: 10px; border-top: 1px solid var(--border-color); padding-top: 16px;">
+					<!-- Dynamically populated from backend type schema -->
+				</div>
+
+				<!-- Sensor Activity History -->
+				<div style="margin-top: 10px;">
+					<h4 style="font-size: 0.9rem; margin-bottom: 8px; color: var(--text-secondary);">Recent Sensor Activity</h4>
+					<div id="sensorDetailLogs" style="background: var(--bg-input); border: 1px solid var(--border-color); border-radius: var(--radius-sm); max-height: 140px; overflow-y: auto; padding: 6px;">
+						<div style="color: var(--text-muted); font-size: 0.8rem; text-align: center; padding: 10px;">No recent events for this sensor</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="modal-footer">
+				<button class="btn-danger" id="sensorDeleteBtn" style="margin-right: auto; display: none;">Delete Sensor</button>
+				<button class="btn-secondary" onclick="closeAllModals()">Cancel</button>
+				<button class="btn-primary-action btn-arm" style="width: auto; padding: 10px 24px;" onclick="saveSensorFromModal()">
+					Save Sensor
+				</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- ==========================================================================
+	     Sensor Visual Timeline Modal (Modernized)
+	     ========================================================================== -->
+	<div class="modal-backdrop" id="timelineModalBackdrop">
+		<div class="modal-dialog" style="max-width: 950px;">
+			<div class="modal-header">
+				<h3 class="modal-title"><span>📊</span> Sensor Timeline Analysis</h3>
+				<button class="modal-close-btn" onclick="closeAllModals()">&times;</button>
+			</div>
+			<div class="modal-body">
+				<!-- Timeline Toolbar & Stats -->
+				<div class="timeline-toolbar">
+					<div class="timeline-stats">
+						<span class="timeline-stat-badge" id="timelineTotalEvents">Events: 0</span>
+						<span class="timeline-stat-badge" id="timelineActiveSensors">Sensors: 0</span>
+					</div>
+					<div class="timeline-controls">
+						<button class="btn-timeline-action" onclick="setTimelineWindow('1h')">1 Hour</button>
+						<button class="btn-timeline-action" onclick="setTimelineWindow('24h')">24 Hours</button>
+						<button class="btn-timeline-action" onclick="setTimelineWindow('7d')">7 Days</button>
+						<button class="btn-timeline-action" onclick="fitTimelineView()">Fit View</button>
+					</div>
+				</div>
+
+				<div id="timelineContainer" style="min-height: 380px;"></div>
+			</div>
+			<div class="modal-footer">
+				<button class="btn-secondary" onclick="closeAllModals()">Close</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- Toast Container -->
+	<div class="toast-container" id="toastContainer"></div>
 </body>
 </html>

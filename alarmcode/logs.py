@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import re
 import threading
 import time
@@ -76,14 +77,17 @@ class Logs():
 
     def trimLogFile(self, lines):
         """ Trims the log file in an interval of 24 hours to 1000 lines """
-
-        # lines = 1000  # Number of lines of logs to keep
-        repeat_every_n_sec = 3600  # 1 Hours
+        repeat_every_n_sec = 3600  # 1 Hour
         while True and lines > 0:
-            with open(self.logfile, 'r') as f:
-                data = f.readlines()
-            with open(self.logfile, 'w') as f:
-                f.writelines(data[-lines:])
+            try:
+                if os.path.exists(self.logfile):
+                    with open(self.logfile, 'r') as f:
+                        data = f.readlines()
+                    if len(data) > lines:
+                        with open(self.logfile, 'w') as f:
+                            f.writelines(data[-lines:])
+            except Exception:
+                pass
             time.sleep(repeat_every_n_sec)
 
     def getSensorsLog(self, limit=100, fromText=None,
@@ -119,8 +123,10 @@ class Logs():
 
         # Read from File the Logs
         logs = []
-        with open(self.logfile, "r") as f:
-            lines = f.readlines()
+        lines = []
+        if os.path.exists(self.logfile):
+            with open(self.logfile, "r") as f:
+                lines = f.readlines()
         startedSensors = {}
         for line in lines:
             logType = None

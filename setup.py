@@ -1,23 +1,24 @@
 from setuptools import setup, find_packages
 
 REQUIRES = [
-    'Flask>=1.1.1',
-    'Flask-SocketIO>=4.2.1',
-    'Flask-Login>=0.4.1',
-    'requests>=2.22.0',
-    'pytz>=2019.2',
-    'paho-mqtt>=1.4.0',
-    'RPi.GPIO>=0.7.0',
+    'Flask>=3.0.0',
+    'Flask-SocketIO>=5.3.6',
+    'Flask-Login>=0.6.3',
+    'requests>=2.31.0',
+    'pytz>=2024.1',
+    'paho-mqtt>=2.0.0',
+    'simple-websocket>=1.1.0',
+    'Werkzeug>=3.0.0',
 ]
-
 
 setup(
     name='AlarmPI',
-    version='4.9',
-    description='Home Security System',
+    version='5.0',
+    description='Modular Home Security & Automation System for Raspberry Pi and Modern Linux',
     author='bkbilly',
     author_email='bkbilly@hotmail.com',
     packages=find_packages(),
+    include_package_data=True,
     install_requires=REQUIRES,
-    # long_description=open('README.md').read()
+    python_requires='>=3.10',
 )

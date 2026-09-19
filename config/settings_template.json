@@ -38,6 +38,12 @@
     },
     "settings": {
         "alarmState": "disarmed",
+        "arm_after_closing": true,
+        "auto_bypass_open": false,
+        "door_chime": false,
+        "entry_delay": 30,
+        "exit_delay": 0,
+        "siren_duration": 180,
         "timezone": "Europe/Athens",
         "trim": 1000
     },

@@ -1,4 +1,6 @@
 *.pyc
+*.pyo
+__pycache__/
 *.log
 play.wav
 server.json
@@ -6,4 +8,6 @@ server.json
 AlarmPI.egg-info
 settings*.json
 !*_template.json
-venv
+venv/
+.venv/
+.pytest_cache/
